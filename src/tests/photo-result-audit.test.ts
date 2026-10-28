@@ -32,7 +32,7 @@ describe('Photo Result Audit',()=>{
     const empty=summarizeAudit(checks,{})
     expect(empty.complete).toBe(false)
     expect(empty.unreviewed).toBe(8)
-    const ratings=Object.fromEntries(checks.map(c=>[c.id,'pass' as const]))
+    const ratings: Record<string, 'pass' | 'fail' | 'unreviewed'>=Object.fromEntries(checks.map(c=>[c.id,'pass' as const]))
     ratings['hair']='fail'
     const result=summarizeAudit(checks,ratings)
     expect(result).toMatchObject({passed:7,failed:1,unreviewed:0,complete:true})
