@@ -313,6 +313,26 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(compiled.validation.isValid).toBe(true)
     expect(compiled.result.sections.find(s=>s.id==='camera_physics')?.content).toContain('FRONT SELFIE CAPTURE:')
   })
+  it.each(bedroomShots)('Body contact and arm ownership consistent for $id', shot => {
+    const lighting=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
+    const compiled=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:true,poseId:'standing'})
+    expect(compiled.validation.isValid).toBe(true)
+    const section=compiled.result.sections.filter(s=>s.id==='body_pose_physics')
+    expect(section).toHaveLength(1)
+    const body=section[0].content
+    expect(body).toContain('193 cm')
+    if (shot.mode==='timer') expect(body).toContain('No phone grip from the subject')
+    else if (shot.mode==='mirror') expect(body).toContain('Mirror shot:')
+    else expect(body).toContain('Handheld capture:')
+    if (getShotPosture(shot.id)==='supine') {
+      expect(body).toContain('Back, pelvis and head are supported')
+      expect(body).not.toContain('Hips and thighs bear weight')
+    }
+  })
+  it('Default body profile keeps linked anatomy', () => {
+    const {result}=compilePrompt(defaultCtx)
+    expect(result.sections.find(s=>s.id==='body_pose_physics')?.content).toContain('BODY AND POSE PHYSICS:')
+  })
   it('Lower garment optional selection', () => {
     const withLower = compilePrompt({ ...defaultCtx, lowerGarmentId: 'lounge_shorts' })
     expect(withLower.result.sections.some(s=>s.id.startsWith('lower_'))).toBe(true)
