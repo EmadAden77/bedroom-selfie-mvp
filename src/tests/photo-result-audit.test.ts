@@ -41,7 +41,7 @@ describe('Photo Result Audit',()=>{
   it('generates a readable review report with clear manual-review provenance',()=>{
     const report=formatAuditFeedback(ctx,{identity:'pass',hair:'fail'},'الشعر لم يتغير')
     expect(report).toContain('Generator: chatgpt')
-    expect(report).toContain('hair')
+    expect(report).toContain('تسريحة الشعر')
     expect(report).toContain('الشعر لم يتغير')
     expect(report).toContain('NOT REVIEWED')
     expect(report).toContain('not an automated image recognition assessment')
