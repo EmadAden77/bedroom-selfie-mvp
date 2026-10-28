@@ -180,11 +180,11 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(result.result.promptText).toContain('Phone display is the sole active light source')
     expect(result.result.sections.filter(s=>s.id==='light_pose_geometry')).toHaveLength(1)
   })
-  it('Offers exactly 60 unique bedroom shots and four groups', async () => {
+  it('Offers exactly 90 unique bedroom shots and four groups', async () => {
     const { bedroomShots } = await import('../data/bedroom-shots')
-    expect(bedroomShots.length).toBe(60)
-    expect(new Set(bedroomShots.map(p=>p.id)).size).toBe(60)
-    expect([0,1,2,3].map(i=>bedroomShots.filter(s=>s.category===i).length)).toEqual([15,15,15,15])
+    expect(bedroomShots.length).toBe(90)
+    expect(new Set(bedroomShots.map(p=>p.id)).size).toBe(90)
+    expect([0,1,2,3].map(i=>bedroomShots.filter(s=>s.category===i).length)).toEqual([33,15,21,21])
   })
   it('Rejects mirror flash shot without actual flash lighting', () => {
     expect(compilePrompt({...defaultCtx, bedroomShotId:'mirror_rear_flash'}).validation.isValid).toBe(false)

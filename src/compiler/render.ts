@@ -7,6 +7,7 @@ import { renderAdvancedHair } from '../data/hair-advanced'
 import { expressionVariants } from '../data/expressions'
 import { renderGazeMicro } from '../data/gaze-micro'
 import { renderBodyPosePhysics } from '../data/body-pose-physics'
+import { renderPoseInteraction } from '../data/pose-interaction'
 import { renderCameraPhysics } from '../data/camera-physics'
 import { renderRealismIntensity } from '../data/realism-intensity'
 import { renderBedroomEnvironment } from '../data/bedroom-environment'
@@ -107,6 +108,8 @@ export function renderSections(ctx: CompilationContext): PromptSection[] {
   sections.push({ id: 'background_continuity', content: renderBackgroundContinuity(ctx) })
   sections.push({ id: 'light_pose_geometry', content: renderLightGeometry(ctx) })
   sections.push({ id: 'body_pose_physics', content: renderBodyPosePhysics(ctx) })
+  const interaction=renderPoseInteraction(ctx)
+  if(interaction) sections.push({id:'pose_interaction',content:interaction})
   sections.push({ id: 'camera_physics', content: renderCameraPhysics(ctx) })
   sections.push({ id: 'realism_intensity', content: renderRealismIntensity(ctx) })
 
