@@ -1,10 +1,12 @@
 
 import React from 'react'
 import { hairVariants } from '../../data/hair'
+import { hairDirections, hairVolumes, hairTextures } from '../../data/hair-advanced'
+import type { CompilationContext } from '../../domain/types'
 
-type Props = { selectedId: string, mode: 'preserve' | 'apply', onModeChange: (mode: 'preserve' | 'apply') => void, onSelect: (id: string) => void }
+type Props = { direction: string, volume: string, texture: string, onAdvancedChange: (patch: Partial<CompilationContext>) => void, selectedId: string, mode: 'preserve' | 'apply', onModeChange: (mode: 'preserve' | 'apply') => void, onSelect: (id: string) => void }
 
-export const HairSelector: React.FC<Props> = ({ selectedId, mode, onModeChange, onSelect }) => {
+export const HairSelector: React.FC<Props> = ({ direction, volume, texture, onAdvancedChange, selectedId, mode, onModeChange, onSelect }) => {
   return (
     <div className="card">
       <div style={{fontWeight:600, fontSize:'14px', marginBottom:'4px'}}>٢. الشعر - ٧ تسريحات مجمدة</div>
@@ -34,6 +36,21 @@ export const HairSelector: React.FC<Props> = ({ selectedId, mode, onModeChange, 
           )
         })}
       </div>
+      {mode==='apply' && selectedId!=='reference_natural_dry' && <div style={{marginTop:'12px',borderTop:'1px solid var(--border)',paddingTop:'10px'}}>
+        <div style={{fontSize:'13px',fontWeight:600,marginBottom:'8px'}}>التحكم المتقدم بالتسريحة</div>
+        {([
+          ['اتجاه الشعر',hairDirections,direction,'hairDirection'],
+          ['ارتفاع الشعر',hairVolumes,volume,'hairVolume'],
+          ['ترتيب الخصلات',hairTextures,texture,'hairTexture']
+        ] as const).map(([label,choices,value,field])=>(
+          <label key={field} style={{display:'block',fontSize:'12px',marginBottom:'10px'}}>{label}
+            <select aria-label={label} value={value} onChange={e=>onAdvancedChange({[field]:e.target.value})} style={{display:'block',width:'100%',padding:'8px',marginTop:'5px'}}>
+              {choices.map(choice=><option key={choice.id} value={choice.id}>{choice.label}</option>)}
+            </select>
+          </label>
+        ))}
+        <div style={{fontSize:'11px',color:'var(--muted)'}}>خط الشعر واللون والكثافة محفوظة؛ يمكن إبقاء الإعدادات حسب التسريحة.</div>
+      </div>}
     </div>
   )
 }

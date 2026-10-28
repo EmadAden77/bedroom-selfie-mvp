@@ -2,6 +2,7 @@
 import { CompilationContext, PromptSection } from '../domain/types'
 import { hairIdentityGuard, facialIdentityGuard, clothingOutputGuard, referenceIdentityFragment } from '../data/identity'
 import { hairVariants } from '../data/hair'
+import { renderAdvancedHair } from '../data/hair-advanced'
 import { expressionVariants } from '../data/expressions'
 import { renderBodyPosePhysics } from '../data/body-pose-physics'
 import { renderCameraPhysics } from '../data/camera-physics'
@@ -28,6 +29,8 @@ export function renderSections(ctx: CompilationContext): PromptSection[] {
       sections.push({ id: 'hairstyle_application', content: 'Apply the selected hairstyle visibly. Preserve the original hairline, total density, natural hair color, underlying texture, skull shape and facial identity. Redirect existing hair strands with realistic gravity and volume. The reference strand arrangement is not locked when applying the chosen style.' })
     }
     sections.push({ id: `hair_${hair.id}`, content: hair.renderableFragment })
+    const advancedHair=renderAdvancedHair(ctx)
+    if (advancedHair) sections.push({id:'advanced_hairstyle',content:advancedHair})
   }
 
   // 4. Facial identity guard

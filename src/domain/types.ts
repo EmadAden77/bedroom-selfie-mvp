@@ -103,6 +103,9 @@ export type ReferenceImageMeta = {
 export type CompilationContext = {
   hairVariantId: string
   hairstyleMode?: 'preserve' | 'apply'
+  hairDirection?: 'auto' | 'back' | 'forward' | 'left' | 'right'
+  hairVolume?: 'auto' | 'flat' | 'natural' | 'lifted'
+  hairTexture?: 'auto' | 'tidy' | 'soft' | 'messy'
   promptTarget?: 'gemini' | 'chatgpt'
   expressionVariantId: string
   upperGarmentId: string
