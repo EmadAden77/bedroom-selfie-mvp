@@ -56,7 +56,7 @@ export const bedroomShots:BedroomShot[]=[
 {id:"frame_foreground",label:"عنصر أمام العدسة",description:"Existing object near lens partially frames face, no invented depth separation.",category:3,mode:'front'},
 {id:"silhouette",label:"سيلويت",description:"Subject between lens and actual brighter lamp/screen behind; no face fill.",category:3,mode:'front'},
 {id:"motion_blur",label:"اهتزاز طبيعي",description:"Slight head movement during realistic low-light exposure, mild motion blur only.",category:3,mode:'front'},
-{id:"wall_lean",label:"الاتكاء على الجدار",description:"Back or shoulder resting against wall with believable weight transfer.",category:3,mode:'front'},
+{id:"wall_lean",label:"الاتكاء على الجدار",description:"Back resting against wall with believable weight transfer.",category:3,mode:'front'},
 {id:"laptop_reflection",label:"انعكاس شاشة اللابتوب",description:"Dark laptop screen used as a faint specular reflection, not a strong mirror.",category:3,mode:'front'},
 {id:"phone_on_floor",label:"الهاتف على الأرض",description:"Smartphone rests on stable floor with timer, subject looks down from bed edge.",category:3,mode:'timer'},
 {id:"door_light_strip",label:"خط ضوء الباب",description:"Thin light leak from partially open door, visible only along unobstructed path.",category:3,mode:'front'},
