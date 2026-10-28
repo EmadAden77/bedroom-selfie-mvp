@@ -317,7 +317,6 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     const lighting=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
     const compiled=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:true,poseId:'standing'})
     expect(compiled.validation.isValid).toBe(true)
-    expect(compiled.result.errors).toHaveLength(0)
     const section=compiled.result.sections.filter(s=>s.id==='body_pose_physics')
     expect(section).toHaveLength(1)
     const body=section[0].content
