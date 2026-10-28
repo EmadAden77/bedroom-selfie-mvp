@@ -1,6 +1,7 @@
 
 import { CompilationContext, ValidationResult } from '../domain/types'
 import { hairVariants } from '../data/hair'
+import { hairDirections,hairVolumes,hairTextures } from '../data/hair-advanced'
 import { expressionVariants, deferredCompositeStates } from '../data/expressions'
 import { poseOptions, faceOptions, lampSideOptions } from '../data/light-geometry'
 import { bedroomShots } from '../data/bedroom-shots'
@@ -12,6 +13,9 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
   const warnings: string[] = []
 
   if (ctx.hairstyleMode && !['preserve','apply'].includes(ctx.hairstyleMode)) errors.push('Invalid hairstyle mode')
+  if (ctx.hairDirection && !hairDirections.some(x=>x.id===ctx.hairDirection)) errors.push('Invalid hair direction')
+  if (ctx.hairVolume && !hairVolumes.some(x=>x.id===ctx.hairVolume)) errors.push('Invalid hair volume')
+  if (ctx.hairTexture && !hairTextures.some(x=>x.id===ctx.hairTexture)) errors.push('Invalid hair texture')
   // Hair single selection
   if (!ctx.hairVariantId) {
     errors.push('Hair variant required')
