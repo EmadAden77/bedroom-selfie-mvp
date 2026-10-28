@@ -1,6 +1,7 @@
 
 import React, { useState, useCallback, useMemo } from 'react'
 import { Header } from '../components/Header'
+import { RoomReferenceSection } from '../features/reference-room/RoomReferenceSection'
 import { ReferenceImageSection } from '../features/reference-image/ReferenceImageSection'
 import { HairSelector } from '../features/subject-options/HairSelector'
 import { ExpressionSelector } from '../features/subject-options/ExpressionSelector'
@@ -31,6 +32,7 @@ const defaultContext: CompilationContext = {
   color: 'apparent dark charcoal-gray as observed',
   surface: 'apparent knit-like surface character',
   referenceImagePresent: false,
+  roomReferencePresent: false,
   nightLightingId: 'phone_screen_only',
   windowUncovered: false,
   poseId: 'seated_bed',
@@ -42,10 +44,12 @@ const defaultContext: CompilationContext = {
 export const App: React.FC = () => {
   const { meta, error: imageError, loading: imageLoading, handleFile, removeImage } = useReferenceImage()
   const [ctx, setCtx] = useState<CompilationContext>(defaultContext)
+  const room = useReferenceImage()
 
   const ctxWithImage = useMemo(() => ({
     ...ctx,
-    referenceImagePresent: !!meta
+    referenceImagePresent: !!meta,
+    roomReferencePresent: !!room.meta
   }), [ctx, meta])
 
   const { validation, result } = useMemo(() => {
@@ -67,12 +71,14 @@ export const App: React.FC = () => {
   const handleReset = useCallback(() => {
     setCtx(defaultContext)
     removeImage()
-  }, [removeImage])
+    room.removeImage()
+  }, [removeImage, room.removeImage])
 
   return (
     <div className="container" dir="rtl">
       <Header />
       <ReferenceImageSection meta={meta} error={imageError} loading={imageLoading} onFile={handleFile} onRemove={removeImage} />
+      <RoomReferenceSection meta={room.meta} loading={room.loading} error={room.error} onFile={room.handleFile} onRemove={room.removeImage} />
       <HairSelector direction={ctx.hairDirection || 'auto'} volume={ctx.hairVolume || 'auto'} texture={ctx.hairTexture || 'auto'} onAdvancedChange={handleContextChange} selectedId={ctx.hairVariantId} mode={ctx.hairstyleMode || 'preserve'} onModeChange={mode=>handleContextChange({hairstyleMode:mode})} onSelect={(id) => handleContextChange({ hairVariantId: id, hairstyleMode: id==='reference_natural_dry'?'preserve':'apply' })} />
       <ExpressionSelector selectedId={ctx.expressionVariantId} onSelect={(id) => handleContextChange({ expressionVariantId: id })} />
       <ClothingSelector ctx={ctxWithImage} onChange={handleContextChange} />

@@ -374,6 +374,29 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(result.result.promptText).toContain('Direct the existing strands backward')
     expect(result.result.sections.filter(s=>s.id==='advanced_hairstyle')).toHaveLength(1)
   })
+  it('Room reference is an additional authority without replacing the subject identity',()=>{
+    const without=compilePrompt({...defaultCtx,roomReferencePresent:false})
+    const withRoom=compilePrompt({...defaultCtx,roomReferencePresent:true})
+    expect(without.validation.isValid).toBe(true)
+    expect(withRoom.validation.isValid).toBe(true)
+    expect(without.result.promptText).not.toContain('ROOM IMAGE REFERENCE:')
+    expect(withRoom.result.promptText).toContain('ROOM IMAGE REFERENCE:')
+    expect(withRoom.result.promptText).toContain('subject identity reference controls the person only')
+    expect(withRoom.result.promptText).toContain('queen bed approximately 160 by 200 cm')
+    expect(withRoom.result.sections.filter(x=>x.id==='bedroom_environment_lock')).toHaveLength(1)
+    expect(withRoom.result.sections.filter(x=>x.id==='reference_identity')).toEqual(without.result.sections.filter(x=>x.id==='reference_identity'))
+  })
+  it.each(['gemini','chatgpt'] as const)('Room reference works with %s output',target=>{
+    const compiled=compilePrompt({...defaultCtx,promptTarget:target,roomReferencePresent:true})
+    expect(compiled.validation.isValid).toBe(true)
+    expect(compiled.result.promptText).toContain('ROOM IMAGE REFERENCE:')
+  })
+  it.each(bedroomShots)('Room reference leaves shot $id valid',shot=>{
+    const light=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
+    const compiled=compilePrompt({...defaultCtx,roomReferencePresent:true,bedroomShotId:shot.id,nightLightingId:light,windowUncovered:true})
+    expect(compiled.validation.isValid).toBe(true)
+    expect(compiled.result.errors).toEqual([])
+  })
   it('Lower garment optional selection', () => {
     const withLower = compilePrompt({ ...defaultCtx, lowerGarmentId: 'lounge_shorts' })
     expect(withLower.result.sections.some(s=>s.id.startsWith('lower_'))).toBe(true)

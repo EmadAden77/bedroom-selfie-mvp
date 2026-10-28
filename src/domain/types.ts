@@ -116,6 +116,7 @@ export type CompilationContext = {
   color: string
   surface: string
   referenceImagePresent: boolean
+  roomReferencePresent?: boolean
   nightLightingId?: string
   windowUncovered?: boolean
   poseId?: string
