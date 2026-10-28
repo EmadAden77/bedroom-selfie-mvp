@@ -1,5 +1,5 @@
-import type { CompilationContext } from '../domain/types'
-import { bedroomShots } from '../data/bedroom-shots'
+import type { CompilationContext } from '../../domain/types'
+import { bedroomShots } from '../../data/bedroom-shots'
 
 export type AuditStatus = 'pass' | 'fail' | 'unreviewed'
 export type AuditCriterion = { id: string; label: string; expectation: string }
