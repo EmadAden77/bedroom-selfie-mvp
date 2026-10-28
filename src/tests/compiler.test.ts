@@ -29,7 +29,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
 
   it('Hair variant single selection only', () => {
     expect(hairVariants.length).toBe(7)
-    const { result } = compilePrompt({ ...defaultCtx, hairVariantId: 'neatly_combed' })
+    const { result } = compilePrompt({ ...defaultCtx, hairVariantId: 'neatly_combed', hairstyleMode: 'apply' })
     expect(result.promptText).toContain('neatly combed')
   })
 
