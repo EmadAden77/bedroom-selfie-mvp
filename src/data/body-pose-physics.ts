@@ -22,9 +22,9 @@ export function renderBodyPosePhysics(ctx: CompilationContext): string {
     ? 'Mirror shot: one hand grips the visible phone with believable thumb and finger contacts; the other hand alone performs any independent gesture. Its reflection agrees with the real wrist.'
     : 'Handheld capture: one arm supports the photographing phone through a connected shoulder, elbow, forearm and wrist. The free arm alone performs any added gesture. No duplicate fingers.'
   return [
-    'BODY AND POSE PHYSICS: Keep the same person and natural reference body proportions. Height 193 cm, lean-athletic build approximately 83 kg; never widen shoulders, enlarge muscles, shorten limbs, or reshape the torso.',
+    'BODY AND POSE PHYSICS: Keep the same person and natural reference body proportions. Height 193 cm, lean-athletic build approximately 83 kg; never widen shoulders, enlarge muscles, shorten limbs, and reshape the torso.',
     support, grip,
-    'A hand may support a pillow, hold a cup, touch the face, or operate the camera only when physically available. Each arm has one continuous shoulder-to-wrist chain; no third arm and no simultaneous incompatible grips.',
+    'A hand may support a pillow, hold a cup, touch the face, and operate the camera only when physically available. Each arm has one continuous shoulder-to-wrist chain; no third arm and no simultaneous incompatible grips.',
     'Gravity shapes shirt drape, skin pressure, pillow compression, mattress depression and limb balance from real contact points. Keep the pelvis, shoulders and neck in one plausible skeletal arrangement.',
     'Match body orientation to the selected bedroom shot and camera placement. The face direction alters head rotation within neck limits, not the underlying torso posture. No impossible twisting or weightless limbs.'
   ].join(' ')
