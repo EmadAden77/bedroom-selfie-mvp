@@ -13,6 +13,6 @@ export function renderBedroomEnvironment(ctx: CompilationContext): string {
     'Lived-in belongings: mug, headphones and cable on the sole nightstand; open book and folded clothing on dresser; bag and shoes near storage; only context-visible papers and notebooks on bed.',
     'No second bedside table, freestanding framed mirror, office desk, extra bed, duplicate furniture, hotel-scale decor, or relocated architecture. Televisions and special decorative light fixtures appear solely when the selected lighting mode explicitly requires the actual physical source; keep them absent otherwise.',
     'Camera framing and posture determine which actual items are visible; never force all furniture into the frame. Mirror shots use the existing sliding mirrored wardrobe door.',
-    'Preserve the same furniture sizes, materials, locations, background continuity and real light-source positions; do not invent bright fixtures or alter room layout.'
+    'Preserve the same furniture sizes, materials, locations, background continuity and real light-source positions; do not invent bright fixtures; never alter the room layout.'
   ].join(' ')
 }
