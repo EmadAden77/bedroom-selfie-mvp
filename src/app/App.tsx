@@ -10,6 +10,7 @@ import { BedroomShotsSelector } from '../features/bedroom-shots/BedroomShotsSele
 import { LightGeometrySelector } from '../features/night-lighting/LightGeometrySelector'
 import { NightLightingSelector } from '../features/night-lighting/NightLightingSelector'
 import { PromptPreview } from '../features/prompt-preview/PromptPreview'
+import { PhotoResultAudit } from '../features/photo-result-audit/PhotoResultAudit'
 import { useReferenceImage } from '../hooks/useReferenceImage'
 import { CompilationContext } from '../domain/types'
 import { compilePrompt } from '../compiler'
@@ -90,6 +91,7 @@ export const App: React.FC = () => {
         </div>
       </div>
       <PromptPreview result={result} validation={validation} onCopy={handleCopy} onReset={handleReset} />
+      <PhotoResultAudit ctx={ctxWithImage} />
       <footer style={{fontSize:'10px', color:'var(--muted)', textAlign:'center', padding:'20px 0', borderTop:'1px solid var(--border)', marginTop:'20px'}} className="ltr">
         <div>PHYSICAL CLOTHING SYSTEM = APPROVED AND FROZEN</div>
         <div>Pending: Body profile, Pose mechanics, Selfie geometry, Bedroom environment, Camera pipeline, Final realism validation</div>
