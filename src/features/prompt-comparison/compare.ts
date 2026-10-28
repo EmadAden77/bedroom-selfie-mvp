@@ -1,4 +1,4 @@
-import type { CompilationContext, PromptSection } from '../domain/types'
+import type { CompilationContext, PromptSection } from '../../domain/types'
 import { compilePrompt } from '../../compiler'
 
 export type TargetComparison = {
