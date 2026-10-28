@@ -32,12 +32,24 @@ export function renderLightGeometry(ctx: CompilationContext): string {
   const stationary = shot?.mode === 'timer'
   const reflected = shot?.mode === 'mirror'
   const rear = shot?.mode === 'rear'
+  // Capture mode owns camera-facing directions. A mirror never inherits a front-selfie instruction.
+  const faceDescription = shot?.id === 'mirror_phone_gaze'
+    ? 'Face and eyes directed toward the handset screen as seen in the wardrobe mirror; the rear camera records the reflection.'
+    : face.id === 'toward_camera'
+      ? reflected
+        ? 'Face oriented toward the reflected rear-camera lens in the existing wardrobe mirror.'
+        : stationary
+          ? 'Face oriented toward the camera lens on its fixed timer support.'
+          : rear
+            ? 'Face oriented toward the hand-held rear-camera lens.'
+            : face.text
+      : face.text
   const usesLamp = lighting === 'bedside_warm' || lighting === 'lamp_and_screen'
   const usesPhone = lighting === 'phone_screen_only' || lighting === 'lamp_and_screen' || lighting === 'ceiling_and_screen'
   const usesCeiling = lighting === 'ceiling_dim' || lighting === 'ceiling_neutral' || lighting === 'ceiling_and_screen'
   const pieces = [
     'Selfie pose geometry: ' + pose.text,
-    'Face direction: ' + face.text,
+    'Face direction: ' + faceDescription,
     stationary ? 'The phone rests securely on a fixed support and captures with a timer; no hand holds it.' : reflected ? 'The camera points into the existing wardrobe mirror; subject and phone positions must satisfy real reflection lines.' : rear ? 'The subject holds the rear camera within feasible arm reach; camera viewpoint never floats.' : 'The hand-held front camera remains at feasible arm reach; the face orientation changes which surfaces receive light. Do not rotate room light sources with the head.'
   ]
   if (usesLamp) pieces.push('Bedside lamp fixed ' + side.text + ' on the nightstand. Recompute cheek, nose, pillow and neck shadows from this source and the actual head tilt; do not force the same bright cheek across poses.')
