@@ -450,6 +450,30 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(out.result.errors).toEqual([])
     expect(out.result.sections.filter(s=>s.id==='background_continuity')).toHaveLength(1)
   })
+  it('Gaze and single-eye wink preserve identity and work in both target models',()=>{
+    for(const target of ['gemini','chatgpt'] as const){
+      const output=compilePrompt({...defaultCtx,promptTarget:target,gazeId:'screen',microExpressionId:'wink_left'})
+      expect(output.validation.isValid).toBe(true)
+      expect(output.result.promptText).toContain('Left eyelids briefly close')
+      expect(output.result.promptText).toContain('right eye stays open')
+      expect(output.result.promptText).toContain('face identity')
+      expect(output.result.sections.filter(s=>s.id==='gaze_micro_expression')).toHaveLength(1)
+    }
+  })
+  it('Default gaze and expression do not add conflicting facial commands',()=>{
+    const output=compilePrompt({...defaultCtx,gazeId:'auto',microExpressionId:'none'})
+    expect(output.result.sections.some(s=>s.id==='gaze_micro_expression')).toBe(false)
+  })
+  it('Invalid gaze and micro selection is rejected',()=>{
+    expect(compilePrompt({...defaultCtx,gazeId:'wrong' as any}).validation.isValid).toBe(false)
+    expect(compilePrompt({...defaultCtx,microExpressionId:'wrong' as any}).validation.isValid).toBe(false)
+  })
+  it.each(bedroomShots)('Gaze and wink compile with $id',shot=>{
+    const lighting=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
+    const output=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:true,gazeId:'lens',microExpressionId:'wink_right'})
+    expect(output.validation.isValid).toBe(true)
+    expect(output.result.errors).toEqual([])
+  })
   it('Lower garment optional selection', () => {
     const withLower = compilePrompt({ ...defaultCtx, lowerGarmentId: 'lounge_shorts' })
     expect(withLower.result.sections.some(s=>s.id.startsWith('lower_'))).toBe(true)
