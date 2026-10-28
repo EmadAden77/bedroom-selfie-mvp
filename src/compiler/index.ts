@@ -7,6 +7,7 @@ import { renderSections } from './render'
 import { stripInternalMetadata } from './strip'
 import { compressSections } from './compress'
 import { assemblePrompt } from './assemble'
+import { validateFinalRealism } from './final-realism'
 
 export function compilePrompt(ctx: CompilationContext): { validation: ValidationResult, result: CompilationResult } {
   // select is implicit in validate/resolve
@@ -23,10 +24,18 @@ export function compilePrompt(ctx: CompilationContext): { validation: Validation
   const stripped = stripInternalMetadata(rendered)
   const compressed = compressSections(stripped)
   const result = assemblePrompt(compressed)
+  const finalCheck = validateFinalRealism(synchronized, compressed)
+  validation.errors.push(...finalCheck.errors)
+  validation.warnings.push(...finalCheck.warnings)
+  validation.isValid = validation.errors.length === 0
 
   // Merge validation errors into result errors
   result.errors = [...validation.errors, ...result.errors]
   result.warnings = [...validation.warnings, ...result.warnings]
+  if (result.errors.length > 0) {
+    validation.isValid = false
+    result.promptText = ''
+  }
 
   return { validation, result }
 }

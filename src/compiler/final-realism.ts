@@ -1,0 +1,36 @@
+import type { CompilationContext, PromptSection, ValidationResult } from '../domain/types'
+import { bedroomShots, getShotPosture } from '../data/bedroom-shots'
+
+/** Final deterministic consistency gate. Only proven contradictions block export. */
+export function validateFinalRealism(ctx: CompilationContext, sections: PromptSection[]): ValidationResult {
+  const errors: string[] = []
+  const warnings: string[] = []
+  const shot = bedroomShots.find(s => s.id === ctx.bedroomShotId)
+  const posture = shot ? getShotPosture(shot.id) : (ctx.poseId || 'seated_bed')
+  const byId = new Map(sections.map(s => [s.id, s.content]))
+  const geometry = byId.get('light_pose_geometry') || ''
+  const camera = byId.get('camera_physics') || ''
+  const body = byId.get('body_pose_physics') || ''
+  const room = byId.get('bedroom_environment_lock') || ''
+  const light = ctx.nightLightingId || 'phone_screen_only'
+  if (!geometry || !camera || !body || !room) errors.push('Final realism: a required physics section is missing')
+  if (!posture) errors.push('Final realism: shot posture was not resolved')
+  if (posture === 'supine' && !body.includes('Back, pelvis and head are supported')) errors.push('Final realism: supine body support conflicts with shot')
+  if (posture === 'standing' && !body.includes('Feet support the whole body')) errors.push('Final realism: standing body support conflicts with shot')
+  if (posture === 'side_lying_right' && !body.includes('Right shoulder, right hip')) errors.push('Final realism: right-side contact missing')
+  if (posture === 'side_lying_left' && !body.includes('Left shoulder, left hip')) errors.push('Final realism: left-side contact missing')
+  if (shot?.mode === 'mirror') {
+    if (!camera.includes('MIRROR CAPTURE:') || !byId.get('bedroom_shot_' + shot.id)?.includes('iPhone 15 Pro Max')) errors.push('Final realism: mirror capture device mismatch')
+  } else if (shot?.mode === 'timer') {
+    if (!camera.includes('TIMER CAPTURE:') || !body.includes('No phone grip from the subject')) errors.push('Final realism: timer camera conflicts with hand occupancy')
+  } else if (shot?.mode === 'rear') {
+    if (!camera.includes('REAR CAMERA CAPTURE:')) errors.push('Final realism: rear capture camera mismatch')
+  } else if (!camera.includes('FRONT SELFIE CAPTURE:')) errors.push('Final realism: front camera profile missing')
+  if (!room.includes('exactly one bedside nightstand') || !room.includes('sliding-door wardrobe')) errors.push('Final realism: fixed bedroom topology missing')
+  if (light === 'phone_screen_only' && !byId.get('night_lighting_phone_screen_only')?.includes('sole active light source')) errors.push('Final realism: phone-only lighting contradicts source')
+  if (light === 'window_streetlight' && !ctx.windowUncovered) errors.push('Final realism: external streetlight blocked by closed curtains')
+  if (shot?.id === 'mirror_rear_flash' && light !== 'rear_flash') errors.push('Final realism: mirror flash requires rear LED source')
+  if (ctx.faceDirectionId === 'toward_window' && !ctx.windowUncovered) warnings.push('Final realism: gaze points toward a curtained window')
+  if (light === 'phone_screen_only' && shot?.mode === 'timer') warnings.push('Final realism: timer setup with phone screen as the only illuminant may be underexposed')
+  return { isValid: errors.length === 0, errors, warnings }
+}
