@@ -474,6 +474,26 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(output.validation.isValid).toBe(true)
     expect(output.result.errors).toEqual([])
   })
+  it.each(['natural','candid','raw'] as const)('Realism intensity %s is valid and preserves identity',intensity=>{
+    const result=compilePrompt({...defaultCtx,realismIntensity:intensity})
+    expect(result.validation.isValid).toBe(true)
+    expect(result.result.errors).toEqual([])
+    const realism=result.result.sections.filter(s=>s.id==='realism_intensity')
+    expect(realism).toHaveLength(1)
+    expect(realism[0].content).toContain('Never alter facial identity')
+    expect(result.result.sections.filter(s=>s.id==='reference_identity')).toHaveLength(1)
+  })
+  it('Unknown realism intensity cannot produce a copyable prompt',()=>{
+    const result=compilePrompt({...defaultCtx,realismIntensity:'invalid' as any})
+    expect(result.validation.isValid).toBe(false)
+    expect(result.result.promptText).toBe('')
+  })
+  it.each(bedroomShots)('Realism remains valid for $id',shot=>{
+    const lighting=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
+    const out=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:true,realismIntensity:'raw',promptTarget:'chatgpt'})
+    expect(out.validation.isValid).toBe(true)
+    expect(out.result.errors).toEqual([])
+  })
   it('Lower garment optional selection', () => {
     const withLower = compilePrompt({ ...defaultCtx, lowerGarmentId: 'lounge_shorts' })
     expect(withLower.result.sections.some(s=>s.id.startsWith('lower_'))).toBe(true)
