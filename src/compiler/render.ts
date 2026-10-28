@@ -2,6 +2,7 @@
 import { CompilationContext, PromptSection } from '../domain/types'
 import { hairIdentityGuard, facialIdentityGuard, clothingOutputGuard, referenceIdentityFragment } from '../data/identity'
 import { hairVariants } from '../data/hair'
+import { renderIdentityFidelity } from '../data/identity-fidelity'
 import { renderAdvancedHair } from '../data/hair-advanced'
 import { expressionVariants } from '../data/expressions'
 import { renderBodyPosePhysics } from '../data/body-pose-physics'
@@ -17,6 +18,7 @@ export function renderSections(ctx: CompilationContext): PromptSection[] {
 
   // 1. Reference identity - must be first
   sections.push({ id: 'reference_identity', content: referenceIdentityFragment })
+  sections.push({ id: 'identity_fidelity', content: renderIdentityFidelity(ctx) })
 
   // 2. Hair identity guard
   sections.push({ id: 'hair_identity_guard', content: hairIdentityGuard.fragment })
