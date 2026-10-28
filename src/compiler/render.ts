@@ -3,6 +3,7 @@ import { CompilationContext, PromptSection } from '../domain/types'
 import { hairIdentityGuard, facialIdentityGuard, clothingOutputGuard, referenceIdentityFragment } from '../data/identity'
 import { hairVariants } from '../data/hair'
 import { expressionVariants } from '../data/expressions'
+import { renderCameraPhysics } from '../data/camera-physics'
 import { renderBedroomEnvironment } from '../data/bedroom-environment'
 import { renderLightGeometry } from '../data/light-geometry'
 import { bedroomShots,renderBedroomShot } from '../data/bedroom-shots'
@@ -93,6 +94,7 @@ export function renderSections(ctx: CompilationContext): PromptSection[] {
 
   sections.push({ id: 'bedroom_environment_lock', content: renderBedroomEnvironment(ctx) })
   sections.push({ id: 'light_pose_geometry', content: renderLightGeometry(ctx) })
+  sections.push({ id: 'camera_physics', content: renderCameraPhysics(ctx) })
 
   if (ctx.bedroomShotId) {
     const shot=bedroomShots.find(s=>s.id===ctx.bedroomShotId)
