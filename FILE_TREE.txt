@@ -1,0 +1,61 @@
+bedroom-selfie-mvp/
+├── public
+│   ├── icons
+│   │   ├── icon-192.png
+│   │   └── icon-512.png
+│   ├── manifest.webmanifest
+│   └── sw.js
+├── scripts
+│   ├── build.js
+│   ├── lint.js
+│   ├── test.js
+│   └── typecheck.js
+├── src
+│   ├── app
+│   │   └── App.tsx
+│   ├── compiler
+│   │   ├── assemble.ts
+│   │   ├── compress.ts
+│   │   ├── index.ts
+│   │   ├── render.ts
+│   │   ├── resolve.ts
+│   │   ├── select.ts
+│   │   ├── strip.ts
+│   │   └── validate.ts
+│   ├── components
+│   │   └── Header.tsx
+│   ├── data
+│   │   ├── clothing.ts
+│   │   ├── expressions.ts
+│   │   ├── hair.ts
+│   │   └── identity.ts
+│   ├── domain
+│   │   └── types.ts
+│   ├── features
+│   │   ├── clothing-options
+│   │   │   └── ClothingSelector.tsx
+│   │   ├── prompt-preview
+│   │   │   └── PromptPreview.tsx
+│   │   ├── reference-image
+│   │   │   └── ReferenceImageSection.tsx
+│   │   └── subject-options
+│   │       ├── ExpressionSelector.tsx
+│   │       └── HairSelector.tsx
+│   ├── hooks
+│   │   └── useReferenceImage.ts
+│   ├── styles
+│   │   └── global.css
+│   ├── tests
+│   │   ├── compiler.test.ts
+│   │   └── setup.ts
+│   ├── utils
+│   │   ├── crypto.ts
+│   │   └── validation.ts
+│   └── main.tsx
+├── command_results.json
+├── index.html
+├── package.json
+├── sw.js
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts
