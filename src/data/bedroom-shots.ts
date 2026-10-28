@@ -64,7 +64,8 @@ export const bedroomShots:BedroomShot[]=[
 ]
 export function renderBedroomShot(shot:BedroomShot):string {
  const mode=shot.mode==='mirror'?'Existing real mirrored wardrobe door; optical reflection obeys camera, subject and glass geometry. The smartphone is present in reflection where sightlines require it.':shot.mode==='timer'?'Phone is securely placed on stable support, timer shutter; not a hand-held selfie.':shot.mode==='rear'?'Phone rear camera held by subject within realistic reach; no floating third-person point of view.':'Subject holds front-facing smartphone at plausible arm reach; the photographing hand is occupied, free hand performs the selected action.'
- return 'Bedroom shot: '+shot.description.replace(/\\bor\\b/gi,'and')+' '+mode+' Maintain physical contacts, gravity, real source positions, consistent shadows and unaltered reference identity.'
+ const phoneLock = shot.mode === 'mirror' ? ' Mirror selfie device lock: The visible handset is an Apple iPhone 15 Pro Max in Black Titanium. Its authentic rear face has three camera lenses arranged in the correct triangular camera cluster, with the real flash and LiDAR positions, correct body dimensions and natural dark titanium finish. Preserve physically accurate reflected orientation, perspective, grip and phone-to-face occlusion. No extra lenses, model substitutions, duplicate phones, floating device, or impossible reflections.' : ''
+ return 'Bedroom shot: '+shot.description.replace(/\\bor\\b/gi,'and')+' '+mode+phoneLock+' Maintain physical contacts, gravity, real source positions, consistent shadows and unaltered reference identity.'
 }
 
 // One canonical anatomical posture per shot; never append a second competing posture.
