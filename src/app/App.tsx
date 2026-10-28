@@ -11,6 +11,7 @@ import { BedroomShotsSelector } from '../features/bedroom-shots/BedroomShotsSele
 import { LightGeometrySelector } from '../features/night-lighting/LightGeometrySelector'
 import { NightLightingSelector } from '../features/night-lighting/NightLightingSelector'
 import { PromptPreview } from '../features/prompt-preview/PromptPreview'
+import { PromptComparison } from '../features/prompt-comparison/PromptComparison'
 import { RealismIntensitySelector } from '../features/realism-intensity/RealismIntensitySelector'
 import { PhotoResultAudit } from '../features/photo-result-audit/PhotoResultAudit'
 import { useReferenceImage } from '../hooks/useReferenceImage'
@@ -105,6 +106,7 @@ export const App: React.FC = () => {
       </div>
       <RealismIntensitySelector value={ctx.realismIntensity || 'natural'} onChange={value=>handleContextChange({realismIntensity:value})}/>
       <PromptPreview result={result} validation={validation} onCopy={handleCopy} onReset={handleReset} />
+      <PromptComparison ctx={ctxWithImage} />
       <PhotoResultAudit ctx={ctxWithImage} />
       <footer style={{fontSize:'10px', color:'var(--muted)', textAlign:'center', padding:'20px 0', borderTop:'1px solid var(--border)', marginTop:'20px'}} className="ltr">
         <div>PHYSICAL CLOTHING SYSTEM = APPROVED AND FROZEN</div>
