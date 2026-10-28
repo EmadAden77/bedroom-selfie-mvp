@@ -3,6 +3,7 @@ import { CompilationContext, PromptSection } from '../domain/types'
 import { hairIdentityGuard, facialIdentityGuard, clothingOutputGuard, referenceIdentityFragment } from '../data/identity'
 import { hairVariants } from '../data/hair'
 import { expressionVariants } from '../data/expressions'
+import { renderBedroomEnvironment } from '../data/bedroom-environment'
 import { renderLightGeometry } from '../data/light-geometry'
 import { bedroomShots,renderBedroomShot } from '../data/bedroom-shots'
 import { nightLightingPresets } from '../data/night-lighting'
@@ -90,11 +91,15 @@ export function renderSections(ctx: CompilationContext): PromptSection[] {
   const lighting = nightLightingPresets.find(p => p.id === (ctx.nightLightingId || 'phone_screen_only'))
   if (lighting) sections.push({ id: `night_lighting_${lighting.id}`, content: 'Night bedroom lighting: ' + lighting.renderableFragment })
 
+  sections.push({ id: 'bedroom_environment_lock', content: renderBedroomEnvironment(ctx) })
   sections.push({ id: 'light_pose_geometry', content: renderLightGeometry(ctx) })
 
   if (ctx.bedroomShotId) {
     const shot=bedroomShots.find(s=>s.id===ctx.bedroomShotId)
     if (shot) sections.push({id:'bedroom_shot_'+shot.id,content:renderBedroomShot(shot)})
+  }
+  if ((ctx.promptTarget || 'gemini') === 'chatgpt' && (ctx.hairstyleMode || 'preserve') === 'apply' && ctx.hairVariantId !== 'reference_natural_dry') {
+    sections.push({ id: 'chatgpt_hairstyle_priority', content: 'ChatGPT hairstyle priority: The selected hairstyle must visibly change the direction, arrangement and silhouette of existing strands compared with the reference hairstyle. The selected style takes precedence over the reference strand arrangement only. Keep the facial identity, skull, hairline, hair density, hair color and original strand texture unchanged. Do not simply reproduce the original hairstyle.' })
   }
   return sections
 }
