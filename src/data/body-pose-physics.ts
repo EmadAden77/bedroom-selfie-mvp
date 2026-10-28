@@ -26,6 +26,6 @@ export function renderBodyPosePhysics(ctx: CompilationContext): string {
     support, grip,
     'A hand may support a pillow, hold a cup, touch the face, and operate the camera only when physically available. Each arm has one continuous shoulder-to-wrist chain; no third arm and no simultaneous incompatible grips.',
     'Gravity shapes shirt drape, skin pressure, pillow compression, mattress depression and limb balance from real contact points. Keep the pelvis, shoulders and neck in one plausible skeletal arrangement.',
-    'Match body orientation to the selected bedroom shot and camera placement. The face direction alters head rotation within neck limits, not the underlying torso posture. No impossible twisting or weightless limbs.'
+    'Match body orientation to the selected bedroom shot and camera placement. The face direction alters head rotation within neck limits, not the underlying torso posture. No impossible twisting; limbs must retain natural weight.'
   ].join(' ')
 }
