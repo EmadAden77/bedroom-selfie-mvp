@@ -21,6 +21,10 @@ export function validateFinalRealism(ctx: CompilationContext, sections: PromptSe
   if (posture === 'side_lying_left' && !body.includes('Left shoulder, left hip')) errors.push('Final realism: left-side contact missing')
   if (shot?.mode === 'mirror') {
     if (!camera.includes('MIRROR CAPTURE:') || !byId.get('bedroom_shot_' + shot.id)?.includes('iPhone 15 Pro Max')) errors.push('Final realism: mirror capture device mismatch')
+    // Catch incompatible instructions even when leaked by another prompt section.
+    if (/FRONT SELFIE CAPTURE:|front-facing smartphone|front-facing camera|held front camera|hand-held front camera/i.test(sections.map(s => s.content).join(' '))) {
+      errors.push('Final realism: front selfie camera instruction leaked into mirror capture')
+    }
   } else if (shot?.mode === 'timer') {
     if (!camera.includes('TIMER CAPTURE:') || !body.includes('No phone grip from the subject')) errors.push('Final realism: timer camera conflicts with hand occupancy')
   } else if (shot?.mode === 'rear') {
