@@ -1,5 +1,6 @@
 
 import { CompilationContext, CompilationResult, ValidationResult } from '../domain/types'
+import { getShotPosture } from '../data/bedroom-shots'
 import { validateContext } from './validate'
 import { resolveContext } from './resolve'
 import { renderSections } from './render'
@@ -9,12 +10,15 @@ import { assemblePrompt } from './assemble'
 
 export function compilePrompt(ctx: CompilationContext): { validation: ValidationResult, result: CompilationResult } {
   // select is implicit in validate/resolve
-  const validation = validateContext(ctx)
+  const matchedPosture = ctx.bedroomShotId ? getShotPosture(ctx.bedroomShotId) : undefined
+  // One authority: a selected shot determines the anatomical posture.
+  const synchronized = matchedPosture ? { ...ctx, poseId: matchedPosture } : ctx
+  const validation = validateContext(synchronized)
   // Invalid selections are never silently rewritten into a plausible prompt.
   if (!validation.isValid) {
     return { validation, result: { promptText: '', sections: [], completedModules: [], pendingModules: [], errors: [...validation.errors], warnings: [...validation.warnings] } }
   }
-  const resolved = resolveContext(ctx)
+  const resolved = resolveContext(synchronized)
   const rendered = renderSections(resolved)
   const stripped = stripInternalMetadata(rendered)
   const compressed = compressSections(stripped)
