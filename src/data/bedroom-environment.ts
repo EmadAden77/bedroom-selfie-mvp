@@ -4,6 +4,7 @@ import type { CompilationContext } from '../domain/types'
 export function renderBedroomEnvironment(ctx: CompilationContext): string {
   const curtainState = ctx.windowUncovered ? 'Curtains may be parted only for a specifically selected window-light scene; do not move the window and furniture.' : 'Back-wall curtains stay fully closed, black-to-charcoal, with no exposed window.'
   return [
+    ...(ctx.roomReferencePresent ? ['ROOM IMAGE REFERENCE: The separately supplied room photograph is the authoritative visual reference for the room appearance and visible furniture. Keep fixed architectural boundaries and object positions consistent with that photograph. The subject identity reference controls the person only; do not copy a person shown in the room reference. Adapt furniture visibility to the camera viewpoint without rearranging the room. If the photograph differs from fixed room topology, retain the established room geometry and use the photograph solely for compatible visual details.'] : []),
     'BEDROOM ENVIRONMENT LOCK: The same modest lived-in bedroom in every shot, approximately 5.2 m by 6.2 m, 2.9 m ceiling.',
     'Fixed room topology: queen bed approximately 160 by 200 cm against the LEFT wall with a dark tufted headboard and exactly one bedside nightstand.',
     'FRONT wall: compact chair with a casually draped garment and a high-mounted split air conditioner.',
