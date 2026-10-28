@@ -350,6 +350,30 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(broken.isValid).toBe(false)
     expect(broken.errors.length).toBeGreaterThan(1)
   })
+  it('Advanced hairstyle direction, volume and disorder render only in apply mode',()=>{
+    const settings={...defaultCtx,hairVariantId:'neatly_combed',hairstyleMode:'apply' as const,hairDirection:'forward' as const,hairVolume:'lifted' as const,hairTexture:'messy' as const}
+    const result=compilePrompt(settings)
+    expect(result.validation.isValid).toBe(true)
+    expect(result.result.promptText).toContain('Bring existing front strands forward')
+    expect(result.result.promptText).toContain('Lift the existing top strands')
+    expect(result.result.promptText).toContain('visibly uneven strand directions')
+    expect(result.result.promptText).toContain('original hairline')
+    expect(result.result.sections.filter(s=>s.id==='advanced_hairstyle')).toHaveLength(1)
+    const preserve=compilePrompt({...settings,hairstyleMode:'preserve'})
+    expect(preserve.result.sections.some(s=>s.id==='advanced_hairstyle')).toBe(false)
+    const automatic=compilePrompt({...settings,hairDirection:'auto',hairVolume:'auto',hairTexture:'auto'})
+    expect(automatic.result.sections.some(s=>s.id==='advanced_hairstyle')).toBe(false)
+  })
+  it('Advanced hairstyle validates invalid configuration',()=>{
+    const result=compilePrompt({...defaultCtx,hairDirection:'diagonal' as any})
+    expect(result.validation.isValid).toBe(false)
+  })
+  it.each(['gemini','chatgpt'] as const)('Advanced hair preserved for %s engine', engine=>{
+    const result=compilePrompt({...defaultCtx,promptTarget:engine,hairstyleMode:'apply',hairVariantId:'natural_slightly_tousled',hairDirection:'back'})
+    expect(result.validation.isValid).toBe(true)
+    expect(result.result.promptText).toContain('Direct the existing strands backward')
+    expect(result.result.sections.filter(s=>s.id==='advanced_hairstyle')).toHaveLength(1)
+  })
   it('Lower garment optional selection', () => {
     const withLower = compilePrompt({ ...defaultCtx, lowerGarmentId: 'lounge_shorts' })
     expect(withLower.result.sections.some(s=>s.id.startsWith('lower_'))).toBe(true)
