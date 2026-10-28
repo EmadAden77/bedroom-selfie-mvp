@@ -11,6 +11,7 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
   const errors: string[] = []
   const warnings: string[] = []
 
+  if (ctx.hairstyleMode && !['preserve','apply'].includes(ctx.hairstyleMode)) errors.push('Invalid hairstyle mode')
   // Hair single selection
   if (!ctx.hairVariantId) {
     errors.push('Hair variant required')

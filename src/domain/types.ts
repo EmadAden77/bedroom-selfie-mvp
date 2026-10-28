@@ -102,6 +102,7 @@ export type ReferenceImageMeta = {
 
 export type CompilationContext = {
   hairVariantId: string
+  hairstyleMode?: 'preserve' | 'apply'
   expressionVariantId: string
   upperGarmentId: string
   lowerGarmentId: string | null

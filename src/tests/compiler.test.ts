@@ -29,7 +29,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
 
   it('Hair variant single selection only', () => {
     expect(hairVariants.length).toBe(7)
-    const { result } = compilePrompt({ ...defaultCtx, hairVariantId: 'neatly_combed' })
+    const { result } = compilePrompt({ ...defaultCtx, hairVariantId: 'neatly_combed', hairstyleMode: 'apply' })
     expect(result.promptText).toContain('neatly combed')
   })
 
@@ -227,6 +227,24 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(result.promptText).not.toContain('Seated on the bed; upright')
   })
 
+  it('Preserve mode keeps reference hairstyle even with a pending selection', () => {
+    const compiled=compilePrompt({...defaultCtx,hairVariantId:'neatly_combed',hairstyleMode:'preserve'})
+    expect(compiled.validation.isValid).toBe(true)
+    expect(compiled.result.promptText).toContain('natural dry hair as observed')
+    expect(compiled.result.promptText).not.toContain('Hair: neatly combed')
+    expect(compiled.result.sections.some(s=>s.id==='hairstyle_application')).toBe(false)
+  })
+  it('Apply mode explicitly changes arrangement while preserving identity', () => {
+    const compiled=compilePrompt({...defaultCtx,hairVariantId:'neatly_combed',hairstyleMode:'apply'})
+    expect(compiled.validation.isValid).toBe(true)
+    expect(compiled.result.promptText).toContain('Apply the selected hairstyle visibly')
+    expect(compiled.result.promptText).toContain('Hair: neatly combed')
+    expect(compiled.result.promptText).not.toContain('Hair: natural dry hair as observed')
+  })
+  it.each(['preserve','apply'] as const)('Hairstyle mode %s has one hair description', mode => {
+    const compiled=compilePrompt({...defaultCtx,hairVariantId:'wind_blown_natural',hairstyleMode:mode})
+    expect(compiled.result.sections.filter(s=>s.id.startsWith('hair_') && s.id!=='hair_identity_guard')).toHaveLength(1)
+  })
   it('Lower garment optional selection', () => {
     const withLower = compilePrompt({ ...defaultCtx, lowerGarmentId: 'lounge_shorts' })
     expect(withLower.result.sections.some(s=>s.id.startsWith('lower_'))).toBe(true)
