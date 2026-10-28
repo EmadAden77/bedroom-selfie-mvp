@@ -333,6 +333,23 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     const {result}=compilePrompt(defaultCtx)
     expect(result.sections.find(s=>s.id==='body_pose_physics')?.content).toContain('BODY AND POSE PHYSICS:')
   })
+  it.each(bedroomShots)('Final realism accepts coherent $id', shot => {
+    const light = shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
+    const output=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:light,windowUncovered:true})
+    expect(output.validation.isValid).toBe(true)
+    expect(output.result.errors).toHaveLength(0)
+  })
+  it('Final realism rejects mismatched camera and room', async () => {
+    const {validateFinalRealism}=await import('../compiler/final-realism')
+    const broken=validateFinalRealism({...defaultCtx,bedroomShotId:'supine_high_phone'},[
+      {id:'light_pose_geometry',content:'Seated'},
+      {id:'camera_physics',content:'TIMER CAPTURE'},
+      {id:'body_pose_physics',content:'Standing'},
+      {id:'bedroom_environment_lock',content:'Different room'}
+    ])
+    expect(broken.isValid).toBe(false)
+    expect(broken.errors.length).toBeGreaterThan(1)
+  })
   it('Lower garment optional selection', () => {
     const withLower = compilePrompt({ ...defaultCtx, lowerGarmentId: 'lounge_shorts' })
     expect(withLower.result.sections.some(s=>s.id.startsWith('lower_'))).toBe(true)
