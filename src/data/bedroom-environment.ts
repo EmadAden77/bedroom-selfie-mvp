@@ -11,7 +11,7 @@ export function renderBedroomEnvironment(ctx: CompilationContext): string {
     'BACK wall: full-width dark curtains. '+curtainState,
     'Floor: ordinary glossy light-beige 60 by 60 cm tiles, central rug and small beige bedside carpet.',
     'Lived-in belongings: mug, headphones and cable on the sole nightstand; open book and folded clothing on dresser; bag and shoes near storage; only context-visible papers and notebooks on bed.',
-    'No second bedside table, freestanding framed mirror, television, office desk, extra bed, duplicate furniture, hotel-scale decor, or relocated architecture.',
+    'No second bedside table, freestanding framed mirror, office desk, extra bed, duplicate furniture, hotel-scale decor, or relocated architecture. A television or special decorative light appears only when its explicitly selected lighting mode requires that physical source; otherwise do not add it.',
     'Camera framing and posture determine which actual items are visible; never force all furniture into the frame. Mirror shots use the existing sliding mirrored wardrobe door.',
     'Preserve the same furniture sizes, materials, locations, background continuity and real light-source positions; do not invent bright fixtures or alter room layout.'
   ].join(' ')
