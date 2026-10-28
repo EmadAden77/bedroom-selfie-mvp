@@ -422,6 +422,34 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(result.result.errors).toEqual([])
     expect(result.result.sections.filter(s=>s.id==='identity_fidelity')).toHaveLength(1)
   })
+  it('Background anchors remain stable when camera pose changes',()=>{
+    const seated=compilePrompt({...defaultCtx,poseId:'seated_bed'})
+    const standing=compilePrompt({...defaultCtx,poseId:'standing'})
+    expect(seated.validation.isValid).toBe(true)
+    expect(standing.validation.isValid).toBe(true)
+    for(const output of [seated,standing]){
+      const sections=output.result.sections.filter(s=>s.id==='background_continuity')
+      expect(sections).toHaveLength(1)
+      expect(sections[0].content).toContain('sole nightstand keeps the same mug')
+      expect(sections[0].content).toContain('two ordinary sleeping pillows')
+      expect(output.result.errors).toEqual([])
+    }
+    expect(seated.result.promptText).toContain('BED CONTACT CONTINUITY:')
+    expect(standing.result.promptText).toContain('NO BED CONTACT:')
+  })
+  it('Room image reference reinforces background textures without changing face',()=>{
+    const result=compilePrompt({...defaultCtx,roomReferencePresent:true})
+    expect(result.validation.isValid).toBe(true)
+    expect(result.result.promptText).toContain('ROOM REFERENCE PRIORITY:')
+    expect(result.result.promptText).toContain('Do not replace the subject identity')
+  })
+  it.each(bedroomShots)('Background continuity remains compatible with $id',shot=>{
+    const light=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
+    const out=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:light,windowUncovered:true})
+    expect(out.validation.isValid).toBe(true)
+    expect(out.result.errors).toEqual([])
+    expect(out.result.sections.filter(s=>s.id==='background_continuity')).toHaveLength(1)
+  })
   it('Lower garment optional selection', () => {
     const withLower = compilePrompt({ ...defaultCtx, lowerGarmentId: 'lounge_shorts' })
     expect(withLower.result.sections.some(s=>s.id.startsWith('lower_'))).toBe(true)
