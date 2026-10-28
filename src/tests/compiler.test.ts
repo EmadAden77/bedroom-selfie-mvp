@@ -4,6 +4,7 @@ import { compilePrompt } from '../compiler'
 import { CompilationContext } from '../domain/types'
 import { hairVariants } from '../data/hair'
 import { expressionVariants, deferredCompositeStates } from '../data/expressions'
+import { bedroomShots,getShotPosture } from '../data/bedroom-shots'
 import { garmentRecords } from '../data/clothing'
 
 const defaultCtx: CompilationContext = {
@@ -194,6 +195,38 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(result.validation.isValid).toBe(true)
     expect(result.result.sections.find(s=>s.id==='light_pose_geometry')?.content).toContain('fixed support')
   })
+  it.each(bedroomShots)('Synchronizes posture for $id without contradictory base pose', (shot) => {
+    const posture = getShotPosture(shot.id)
+    expect(posture).toBeTruthy()
+    const lighting = shot.id === 'mirror_rear_flash' ? 'rear_flash'
+      : shot.id === 'silhouette' ? 'bedside_warm'
+      : shot.id === 'half_light' ? 'bedside_warm'
+      : shot.id === 'curtain_shadows' ? 'window_streetlight' : 'ceiling_dim'
+    const result = compilePrompt({...defaultCtx, poseId:'standing', bedroomShotId:shot.id, nightLightingId:lighting,
+      windowUncovered:true})
+    expect(result.validation.isValid).toBe(true)
+    const geometry = result.result.sections.find(s=>s.id==='light_pose_geometry')?.content || ''
+    expect(geometry).toContain('Selfie pose geometry:')
+    const text = result.result.promptText
+    expect(text).toBeTruthy()
+    if (posture === 'supine') {
+      expect(geometry).toContain('Lying on the back')
+      expect(geometry).not.toContain('Standing near the bed')
+    }
+    if (posture === 'seated_floor') expect(geometry).toContain('Seated on bedroom floor')
+    if (shot.mode === 'timer') expect(geometry).toContain('fixed support')
+    if (shot.mode === 'mirror') expect(geometry).toContain('wardrobe mirror')
+    if (shot.mode === 'rear') expect(geometry).toContain('rear camera')
+  })
+
+  it('Selecting supine shot overrides old seated state throughout prompt geometry', () => {
+    const {result,validation} = compilePrompt({...defaultCtx,poseId:'seated_bed',
+      bedroomShotId:'supine_high_phone',nightLightingId:'ceiling_dim'})
+    expect(validation.isValid).toBe(true)
+    expect(result.promptText).toContain('Lying on the back')
+    expect(result.promptText).not.toContain('Seated on the bed; upright')
+  })
+
   it('Lower garment optional selection', () => {
     const withLower = compilePrompt({ ...defaultCtx, lowerGarmentId: 'lounge_shorts' })
     expect(withLower.result.sections.some(s=>s.id.startsWith('lower_'))).toBe(true)

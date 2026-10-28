@@ -7,6 +7,8 @@ export const poseOptions = [
   { id: 'side_lying_right', label: 'مستلقي على الجانب الأيمن', text: 'Lying on the right side; right cheek and shoulder approach pillow support. Light direction is evaluated relative to the tilted face, not the room floor.' },
   { id: 'side_lying_left', label: 'مستلقي على الجانب الأيسر', text: 'Lying on the left side; left cheek and shoulder approach pillow support. Light direction is evaluated relative to the tilted face, not the room floor.' },
   { id: 'supine', label: 'مستلقي على الظهر', text: 'Lying on the back; face directed upward unless separately turned. Mattress supports the back and head.' },
+  { id: 'prone', label: 'على البطن', text: 'Prone on mattress; chest and pelvis supported, head lifted only as far as the neck permits, one arm free for camera.' },
+  { id: 'seated_floor', label: 'جالس على الأرض', text: 'Seated on bedroom floor, hips supported by floor; legs folded comfortably, torso upright.' },
   { id: 'standing', label: 'واقف بجانب السرير', text: 'Standing near the bed; upright gravity-dependent shadows and clothing drape.' }
 ] as const
 export const faceOptions = [
