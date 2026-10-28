@@ -5,7 +5,7 @@ export function renderIdentityFidelity(ctx: CompilationContext): string {
  const applying=(ctx.hairstyleMode || 'preserve')==='apply' && ctx.hairVariantId!=='reference_natural_dry'
  const hairRule=applying
    ? 'The selected styling may move existing strands visibly. Preserve the original hairline contour, natural temple recession, density map, hair color and underlying texture; a changed strand arrangement is not a changed identity.'
-   : 'Keep the reference hairstyle and its strand arrangement natural, with no new cut, invented hairline, added density, or altered hair color.'
+   : 'Keep the reference hairstyle and its strand arrangement natural, with no new cut, invented hairline, added density, and altered hair color.'
  const expressionRule=ctx.expressionVariantId==='reference_expression_preserved'
    ? 'Keep the expression seen in the identity reference.'
    : 'Only the selected transient facial expression may move eyelids, brows, cheeks and lips through realistic muscle action; permanent facial anatomy stays fixed.'
