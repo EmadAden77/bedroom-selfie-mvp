@@ -8,6 +8,7 @@ import { expressionVariants } from '../data/expressions'
 import { renderGazeMicro } from '../data/gaze-micro'
 import { renderBodyPosePhysics } from '../data/body-pose-physics'
 import { renderCameraPhysics } from '../data/camera-physics'
+import { renderRealismIntensity } from '../data/realism-intensity'
 import { renderBedroomEnvironment } from '../data/bedroom-environment'
 import { renderBackgroundContinuity } from '../data/background-continuity'
 import { renderLightGeometry } from '../data/light-geometry'
@@ -107,6 +108,7 @@ export function renderSections(ctx: CompilationContext): PromptSection[] {
   sections.push({ id: 'light_pose_geometry', content: renderLightGeometry(ctx) })
   sections.push({ id: 'body_pose_physics', content: renderBodyPosePhysics(ctx) })
   sections.push({ id: 'camera_physics', content: renderCameraPhysics(ctx) })
+  sections.push({ id: 'realism_intensity', content: renderRealismIntensity(ctx) })
 
   if (ctx.bedroomShotId) {
     const shot=bedroomShots.find(s=>s.id===ctx.bedroomShotId)

@@ -11,6 +11,7 @@ import { BedroomShotsSelector } from '../features/bedroom-shots/BedroomShotsSele
 import { LightGeometrySelector } from '../features/night-lighting/LightGeometrySelector'
 import { NightLightingSelector } from '../features/night-lighting/NightLightingSelector'
 import { PromptPreview } from '../features/prompt-preview/PromptPreview'
+import { RealismIntensitySelector } from '../features/realism-intensity/RealismIntensitySelector'
 import { PhotoResultAudit } from '../features/photo-result-audit/PhotoResultAudit'
 import { useReferenceImage } from '../hooks/useReferenceImage'
 import { CompilationContext } from '../domain/types'
@@ -23,6 +24,7 @@ const defaultContext: CompilationContext = {
   hairVolume: 'auto',
   hairTexture: 'auto',
   promptTarget: 'gemini',
+  realismIntensity:'natural',
   expressionVariantId: 'reference_expression_preserved',
   gazeId:'auto',
   microExpressionId:'none',
@@ -101,6 +103,7 @@ export const App: React.FC = () => {
           نفس الملابس والوجه والغرفة والوضعيات. نسخة ChatGPT تعطي أولوية أوضح لتغيير التسريحة المختارة.
         </div>
       </div>
+      <RealismIntensitySelector value={ctx.realismIntensity || 'natural'} onChange={value=>handleContextChange({realismIntensity:value})}/>
       <PromptPreview result={result} validation={validation} onCopy={handleCopy} onReset={handleReset} />
       <PhotoResultAudit ctx={ctxWithImage} />
       <footer style={{fontSize:'10px', color:'var(--muted)', textAlign:'center', padding:'20px 0', borderTop:'1px solid var(--border)', marginTop:'20px'}} className="ltr">
