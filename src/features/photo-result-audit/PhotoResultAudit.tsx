@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { makeAuditCorrection } from './correction'
 import type { CompilationContext } from '../../domain/types'
 import { formatAuditFeedback, getAuditCriteria, summarizeAudit, type AuditRatings, type AuditStatus } from './audit'
 
@@ -24,6 +25,12 @@ export const PhotoResultAudit: React.FC<Props> = ({ ctx }) => {
     setNotes('')
   }
   const mark = (id: string, value: AuditStatus) => setRatings(previous => ({ ...previous, [id]: value }))
+  const correction = summary.complete ? makeAuditCorrection(ctx, ratings, notes) : ''
+  const copyCorrection = async () => {
+    if (!imageUrl || !summary.complete || !correction) return
+    try { await navigator.clipboard.writeText(correction); setNotice('تم نسخ التصحيح') }
+    catch { setNotice('تعذر النسخ') }
+  }
   const copyFeedback = async () => {
     if (!summary.complete) return
     try {
@@ -67,6 +74,7 @@ export const PhotoResultAudit: React.FC<Props> = ({ ctx }) => {
       </label>
       <div style={{fontSize:'12px',margin:'10px 0'}}>مطابق: {summary.passed} — مشاكل: {summary.failed} — لم يُراجع: {summary.unreviewed}</div>
       <button type="button" className="btn" disabled={!imageUrl || !summary.complete} onClick={copyFeedback}>نسخ تقرير مراجعة الصورة</button>
+      {imageUrl && summary.complete && summary.failed > 0 && <div style={{marginTop:'12px'}}><div style={{fontSize:'12px',fontWeight:600}}>تصحيح موجه للأخطاء</div><div className="ltr preview-box" style={{whiteSpace:'pre-wrap',maxHeight:'220px',overflowY:'auto'}}>{correction}</div><button type="button" className="btn" onClick={copyCorrection}>نسخ البرومبت التصحيحي</button></div>}
       {notice && <div role="status" style={{fontSize:'12px',marginTop:'8px'}}>{notice}</div>}
     </section>
   )
