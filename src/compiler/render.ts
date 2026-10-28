@@ -5,6 +5,7 @@ import { hairVariants } from '../data/hair'
 import { renderIdentityFidelity } from '../data/identity-fidelity'
 import { renderAdvancedHair } from '../data/hair-advanced'
 import { expressionVariants } from '../data/expressions'
+import { renderGazeMicro } from '../data/gaze-micro'
 import { renderBodyPosePhysics } from '../data/body-pose-physics'
 import { renderCameraPhysics } from '../data/camera-physics'
 import { renderBedroomEnvironment } from '../data/bedroom-environment'
@@ -43,6 +44,8 @@ export function renderSections(ctx: CompilationContext): PromptSection[] {
   const expr = expressionVariants.find(e => e.id === ctx.expressionVariantId)
   if (expr) {
     sections.push({ id: `expression_${expr.id}`, content: expr.renderableFragment })
+    const micro=renderGazeMicro(ctx)
+    if(micro) sections.push({id:'gaze_micro_expression',content:micro})
   }
 
   // 6. Upper garment

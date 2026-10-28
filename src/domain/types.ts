@@ -108,6 +108,8 @@ export type CompilationContext = {
   hairTexture?: 'auto' | 'tidy' | 'soft' | 'messy'
   promptTarget?: 'gemini' | 'chatgpt'
   expressionVariantId: string
+  gazeId?: 'auto' | 'lens' | 'screen' | 'off_left' | 'off_right' | 'down'
+  microExpressionId?: 'none' | 'wink_left' | 'wink_right' | 'brow_raise' | 'micro_smile'
   upperGarmentId: string
   lowerGarmentId: string | null
   materialId: string

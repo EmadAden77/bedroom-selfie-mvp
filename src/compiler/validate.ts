@@ -3,6 +3,7 @@ import { CompilationContext, ValidationResult } from '../domain/types'
 import { hairVariants } from '../data/hair'
 import { hairDirections,hairVolumes,hairTextures } from '../data/hair-advanced'
 import { expressionVariants, deferredCompositeStates } from '../data/expressions'
+import { gazeChoices, microChoices } from '../data/gaze-micro'
 import { poseOptions, faceOptions, lampSideOptions } from '../data/light-geometry'
 import { bedroomShots } from '../data/bedroom-shots'
 import { nightLightingPresets } from '../data/night-lighting'
@@ -23,6 +24,8 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
     errors.push(`Hair variant invalid: ${ctx.hairVariantId}`)
   }
 
+  if(ctx.gazeId && !gazeChoices.some(v=>v.id===ctx.gazeId)) errors.push('Invalid gaze selection')
+  if(ctx.microExpressionId && !microChoices.some(v=>v.id===ctx.microExpressionId)) errors.push('Invalid micro-expression selection')
   // Expression single selection
   if (!ctx.expressionVariantId) {
     errors.push('Expression variant required')
