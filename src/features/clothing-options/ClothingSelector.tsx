@@ -3,6 +3,42 @@ import React from 'react'
 import { CompilationContext } from '../../domain/types'
 import { garmentRecords, materialProfiles, fitProfiles, garmentStates } from '../../data/clothing'
 
+const clothingColors = [
+  { id: 'white', label: 'أبيض', hex: '#FFFFFF' },
+  { id: 'black', label: 'أسود', hex: '#161616' },
+  { id: 'charcoal', label: 'فحمي', hex: '#393B3D' },
+  { id: 'dark_gray', label: 'رمادي غامق', hex: '#595D63' },
+  { id: 'light_gray', label: 'رمادي فاتح', hex: '#B5B9BE' },
+  { id: 'navy', label: 'كحلي', hex: '#1D3152' },
+  { id: 'beige', label: 'بيج', hex: '#D2BD9D' },
+  { id: 'olive', label: 'زيتي', hex: '#667044' },
+  { id: 'brown', label: 'بني', hex: '#755440' },
+  { id: 'burgundy', label: 'عنابي', hex: '#692F3C' },
+  { id: 'blue', label: 'أزرق', hex: '#447AA5' },
+  { id: 'cream', label: 'كريمي', hex: '#F3E6CE' }
+] as const
+
+type ColorPaletteProps = {
+  value: string
+  onSelect: (color: string) => void
+  label: string
+}
+const ColorPalette: React.FC<ColorPaletteProps> = ({ value, onSelect, label }) => (
+  <div style={{marginBottom:'12px'}}>
+    <div style={{fontSize:'12px', fontWeight:600, marginBottom:'8px'}}>{label}</div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(76px, 1fr))',gap:'7px'}}>
+      {clothingColors.map(color => (
+        <button key={color.id} type="button" aria-pressed={value === color.id} aria-label={color.label}
+          onClick={() => onSelect(color.id)}
+          style={{background:'var(--bg)',border:value===color.id?'2px solid #111':'1px solid var(--border)',borderRadius:'10px',padding:'8px 3px',display:'flex',alignItems:'center',flexDirection:'column',gap:'5px',color:'inherit',fontSize:'11px',cursor:'pointer'}}>
+          <span aria-hidden="true" style={{width:'27px',height:'27px',borderRadius:'50%',background:color.hex,border:'1px solid #8888'}}/>
+          <span>{color.label}</span>
+        </button>
+      ))}
+    </div>
+  </div>
+)
+
 type Props = {
   ctx: CompilationContext
   onChange: (patch: Partial<CompilationContext>) => void
@@ -66,8 +102,9 @@ export const ClothingSelector: React.FC<Props> = ({ ctx, onChange }) => {
             </div>
           </div>
 
+          <ColorPalette label="لون القطعة العلوية" value={ctx.color} onSelect={color=>onChange({color})} />
           <div style={{marginBottom:'12px'}}>
-            <div style={{fontSize:'11px', fontWeight:600, marginBottom:'4px'}}>Color:</div>
+            <div style={{fontSize:'11px', fontWeight:600, marginBottom:'4px'}}>لون مخصص (اختياري):</div>
             <input className="input" value={ctx.color} onChange={e=>onChange({ color: e.target.value })} placeholder="مثال: charcoal أو apparent dark charcoal-gray as observed" />
           </div>
         </>
@@ -81,6 +118,14 @@ export const ClothingSelector: React.FC<Props> = ({ ctx, onChange }) => {
           return <button key={g.id} className={`option ${sel?'selected':''}`} onClick={()=>onChange({ lowerGarmentId: g.id })} style={{padding:'6px 12px', fontSize:'12px'}}>{g.arabicLabel} - {g.id}</button>
         })}
       </div>
+
+      {ctx.lowerGarmentId && (
+        <ColorPalette label="لون القطعة السفلية" value={ctx.lowerColor || (lowers.find(g=>g.id===ctx.lowerGarmentId)?.defaultColor ?? '')}
+          onSelect={color=>onChange({lowerColor:color})} />
+      )}
+      {ctx.lowerGarmentId && <input className="input" style={{marginBottom:'12px'}} aria-label="لون مخصص للقطعة السفلية"
+        value={ctx.lowerColor || (lowers.find(g=>g.id===ctx.lowerGarmentId)?.defaultColor ?? '')}
+        onChange={e=>onChange({lowerColor:e.target.value})} placeholder="لون مخصص للقطعة السفلية" />}
 
       {isRef && <div style={{fontSize:'11px', background:'#fff7ed', border:'1px solid #fed7aa', borderRadius:'8px', padding:'8px'}}>reference_garment_preserved مقفل - لا يمكن تغيير المادة أو اللون أو السطح - يحافظ على المرجع تماما كما يظهر</div>}
     </div>
