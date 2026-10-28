@@ -16,6 +16,7 @@ import { compilePrompt } from '../compiler'
 
 const defaultContext: CompilationContext = {
   hairVariantId: 'reference_natural_dry',
+  hairstyleMode: 'preserve',
   expressionVariantId: 'reference_expression_preserved',
   upperGarmentId: 'reference_garment_preserved',
   lowerGarmentId: null,
@@ -67,7 +68,7 @@ export const App: React.FC = () => {
     <div className="container" dir="rtl">
       <Header />
       <ReferenceImageSection meta={meta} error={imageError} loading={imageLoading} onFile={handleFile} onRemove={removeImage} />
-      <HairSelector selectedId={ctx.hairVariantId} onSelect={(id) => handleContextChange({ hairVariantId: id })} />
+      <HairSelector selectedId={ctx.hairVariantId} mode={ctx.hairstyleMode || 'preserve'} onModeChange={mode=>handleContextChange({hairstyleMode:mode})} onSelect={(id) => handleContextChange({ hairVariantId: id, hairstyleMode: id==='reference_natural_dry'?'preserve':'apply' })} />
       <ExpressionSelector selectedId={ctx.expressionVariantId} onSelect={(id) => handleContextChange({ expressionVariantId: id })} />
       <ClothingSelector ctx={ctxWithImage} onChange={handleContextChange} />
       <NightLightingSelector selectedId={ctx.nightLightingId || 'phone_screen_only'} windowUncovered={!!ctx.windowUncovered} onSelect={id=>handleContextChange({ nightLightingId:id })} onWindowChange={open=>handleContextChange({ windowUncovered:open })}/>
