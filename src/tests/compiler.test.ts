@@ -245,6 +245,19 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     const compiled=compilePrompt({...defaultCtx,hairVariantId:'wind_blown_natural',hairstyleMode:mode})
     expect(compiled.result.sections.filter(s=>s.id.startsWith('hair_') && s.id!=='hair_identity_guard')).toHaveLength(1)
   })
+  it.each(bedroomShots.filter(s=>s.mode === 'mirror'))('Mirror $id uses Black Titanium iPhone 15 Pro Max', shot => {
+    const {result,validation}=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:shot.id==='mirror_rear_flash'?'rear_flash':'ceiling_dim'})
+    expect(validation.isValid).toBe(true)
+    expect(result.promptText).toContain('iPhone 15 Pro Max in Black Titanium')
+    expect(result.promptText).toContain('three camera lenses')
+    expect(result.promptText).toContain('LiDAR')
+  })
+  it.each(bedroomShots.filter(s=>s.mode !== 'mirror'))('Non-mirror $id has no iPhone model lock',shot => {
+    const lighting = shot.id==='silhouette'||shot.id==='half_light'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
+    const {result,validation}=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:true})
+    expect(validation.isValid).toBe(true)
+    expect(result.promptText).not.toContain('iPhone 15 Pro Max')
+  })
   it('Lower garment optional selection', () => {
     const withLower = compilePrompt({ ...defaultCtx, lowerGarmentId: 'lounge_shorts' })
     expect(withLower.result.sections.some(s=>s.id.startsWith('lower_'))).toBe(true)
