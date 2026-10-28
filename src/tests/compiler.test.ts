@@ -284,6 +284,35 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     const result=compilePrompt({...defaultCtx,promptTarget:'chatgpt',hairstyleMode:'preserve'})
     expect(result.result.promptText).not.toContain('ChatGPT hairstyle priority:')
   })
+  it.each(bedroomShots)('Camera physics follows $id capture mode', shot => {
+    const lighting=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
+    const compiled=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:true})
+    expect(compiled.validation.isValid).toBe(true)
+    const physics=compiled.result.sections.filter(s=>s.id==='camera_physics')
+    expect(physics).toHaveLength(1)
+    const content=physics[0].content
+    if (shot.mode==='mirror') {
+      expect(content).toContain('MIRROR CAPTURE:')
+      expect(content).toContain('iPhone 15 Pro Max Black Titanium')
+      expect(content).not.toContain('FRONT SELFIE CAPTURE:')
+    } else if (shot.mode==='timer') {
+      expect(content).toContain('TIMER CAPTURE:')
+      expect(content).toContain('Neither hand holds')
+    } else if (shot.mode==='rear') {
+      expect(content).toContain('REAR CAMERA CAPTURE:')
+      expect(content).not.toContain('FRONT SELFIE CAPTURE:')
+    } else {
+      expect(content).toContain('FRONT SELFIE CAPTURE:')
+      expect(content).toContain('40–60 cm')
+    }
+    expect(content).toContain('No beauty smoothing')
+    expect(content).toContain('physically credible camera-to-subject distance')
+  })
+  it('Unselected shot uses ordinary front selfie camera profile', () => {
+    const compiled=compilePrompt(defaultCtx)
+    expect(compiled.validation.isValid).toBe(true)
+    expect(compiled.result.sections.find(s=>s.id==='camera_physics')?.content).toContain('FRONT SELFIE CAPTURE:')
+  })
   it('Lower garment optional selection', () => {
     const withLower = compilePrompt({ ...defaultCtx, lowerGarmentId: 'lounge_shorts' })
     expect(withLower.result.sections.some(s=>s.id.startsWith('lower_'))).toBe(true)
