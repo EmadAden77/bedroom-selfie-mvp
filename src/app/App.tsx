@@ -5,6 +5,7 @@ import { ReferenceImageSection } from '../features/reference-image/ReferenceImag
 import { HairSelector } from '../features/subject-options/HairSelector'
 import { ExpressionSelector } from '../features/subject-options/ExpressionSelector'
 import { ClothingSelector } from '../features/clothing-options/ClothingSelector'
+import { getShotPosture } from '../data/bedroom-shots'
 import { BedroomShotsSelector } from '../features/bedroom-shots/BedroomShotsSelector'
 import { LightGeometrySelector } from '../features/night-lighting/LightGeometrySelector'
 import { NightLightingSelector } from '../features/night-lighting/NightLightingSelector'
@@ -70,8 +71,8 @@ export const App: React.FC = () => {
       <ExpressionSelector selectedId={ctx.expressionVariantId} onSelect={(id) => handleContextChange({ expressionVariantId: id })} />
       <ClothingSelector ctx={ctxWithImage} onChange={handleContextChange} />
       <NightLightingSelector selectedId={ctx.nightLightingId || 'phone_screen_only'} windowUncovered={!!ctx.windowUncovered} onSelect={id=>handleContextChange({ nightLightingId:id })} onWindowChange={open=>handleContextChange({ windowUncovered:open })}/>
-      <LightGeometrySelector poseId={ctx.poseId || 'seated_bed'} faceDirectionId={ctx.faceDirectionId || 'toward_camera'} lampSideId={ctx.lampSideId || 'left'} onChange={handleContextChange}/>
-      <BedroomShotsSelector value={ctx.bedroomShotId || ''} onChange={id=>handleContextChange({bedroomShotId:id, ...(id==='mirror_rear_flash'?{nightLightingId:'rear_flash'}:{})})}/>
+      <LightGeometrySelector poseId={ctx.poseId || 'seated_bed'} faceDirectionId={ctx.faceDirectionId || 'toward_camera'} lampSideId={ctx.lampSideId || 'left'} onChange={patch=>handleContextChange({ ...patch, ...(patch.poseId ? {bedroomShotId:''} : {}) })}/>
+      <BedroomShotsSelector value={ctx.bedroomShotId || ''} onChange={id=>handleContextChange({bedroomShotId:id, ...(getShotPosture(id)?{poseId:getShotPosture(id)}:{}), ...(id==='mirror_rear_flash'?{nightLightingId:'rear_flash'}:{})})}/>
       <PromptPreview result={result} validation={validation} onCopy={handleCopy} onReset={handleReset} />
       <footer style={{fontSize:'10px', color:'var(--muted)', textAlign:'center', padding:'20px 0', borderTop:'1px solid var(--border)', marginTop:'20px'}} className="ltr">
         <div>PHYSICAL CLOTHING SYSTEM = APPROVED AND FROZEN</div>
