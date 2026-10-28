@@ -9,7 +9,7 @@ export const bedroomShots:BedroomShot[]=[
 {id:"reading_book",label:"قراءة كتاب",description:"Back against headboard, book in free hand, glance briefly toward front camera.",category:0,mode:'front'},
 {id:"cross_legged_timer",label:"التربع على السرير",description:"Cross-legged mid-bed, smartphone on a stable support using timer; this is not a hand-held selfie.",category:0,mode:'timer'},
 {id:"stretch_yawn",label:"تمطّي عفوي",description:"One arm reaches up in a light stretch while the other holds phone; no third hand.",category:0,mode:'front'},
-{id:"pillow_stack",label:"الاتكاء على الوسائد",description:"Semi-reclined against stacked pillows; shoulder and head compression matches support.",category:0,mode:'front'},
+{id:"pillow_stack",label:"الاتكاء على الوسائد",description:"Semi-reclined on the single 160 by 200 cm queen mattress against two existing sleeping pillows supported by the left-wall dark tufted headboard. Pelvis and lower back rest on mattress; upper back and shoulders press into pillows, which compress at real contact points. Maintain one coherent bed frame, credible mattress thickness, aligned mattress edges and realistic duvet folds; phone remains at arm reach.",category:0,mode:'front'},
 {id:"feet_in_frame",label:"الساقان في الكادر",description:"Sitting with legs extended along mattress, phone angled down within plausible arm reach.",category:0,mode:'front'},
 {id:"ceiling_gaze",label:"النظر للسقف",description:"Supine with eyes toward ceiling, phone held obliquely above face.",category:0,mode:'front'},
 {id:"blanket_cocoon",label:"الالتفاف بالبطانية",description:"Blanket wrapped around body, face visible, camera arm emerges through plausible gap.",category:0,mode:'front'},
