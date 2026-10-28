@@ -308,6 +308,37 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(content).toContain('No beauty smoothing')
     expect(content).toContain('physically credible camera-to-subject distance')
   })
+  it.each(bedroomShots.filter(s => s.mode === 'mirror'))('Mirror $id has no front-camera face direction', shot => {
+    const lighting = shot.id === 'mirror_rear_flash' ? 'rear_flash' : 'ceiling_neutral'
+    const compiled = compilePrompt({...defaultCtx, bedroomShotId:shot.id, nightLightingId:lighting, faceDirectionId:'toward_camera'})
+    expect(compiled.validation.isValid).toBe(true)
+    const geometry = compiled.result.sections.find(s => s.id === 'light_pose_geometry')?.content || ''
+    expect(geometry).toContain('wardrobe mirror')
+    expect(geometry).not.toMatch(/held front camera|front-facing camera|FRONT SELFIE CAPTURE:/i)
+    if (shot.id === 'mirror_phone_gaze') {
+      expect(geometry).toContain('handset screen')
+    } else {
+      expect(geometry).toContain('reflected rear-camera lens')
+    }
+    expect(compiled.result.promptText).not.toMatch(/Face oriented toward the held front camera|FRONT SELFIE CAPTURE:|Subject holds front-facing smartphone/)
+  })
+  it('Front selfie preserves its own camera-facing text', () => {
+    const compiled=compilePrompt({...defaultCtx,bedroomShotId:'edge_one_knee_raised',nightLightingId:'ceiling_neutral'})
+    expect(compiled.validation.isValid).toBe(true)
+    expect(compiled.result.sections.find(s=>s.id==='light_pose_geometry')?.content).toContain('Face oriented toward the held front camera.')
+  })
+  it('Final realism rejects any front-camera instructions leaked into a mirror prompt', async () => {
+    const {validateFinalRealism}=await import('../compiler/final-realism')
+    const ctx={...defaultCtx,bedroomShotId:'mirror_wardrobe',nightLightingId:'ceiling_neutral'}
+    const compiled=compilePrompt(ctx)
+    expect(compiled.validation.isValid).toBe(true)
+    const sections=compiled.result.sections.map(s=>s.id==='light_pose_geometry'
+      ? {...s,content:s.content+' Face oriented toward the held front camera.'}
+      : s)
+    const audited=validateFinalRealism(ctx,sections)
+    expect(audited.isValid).toBe(false)
+    expect(audited.errors).toContain('Final realism: front selfie camera instruction leaked into mirror capture')
+  })
   it('Unselected shot uses ordinary front selfie camera profile', () => {
     const compiled=compilePrompt(defaultCtx)
     expect(compiled.validation.isValid).toBe(true)
