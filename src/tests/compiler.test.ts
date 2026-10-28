@@ -397,6 +397,31 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(compiled.validation.isValid).toBe(true)
     expect(compiled.result.errors).toEqual([])
   })
+  it('Identity fidelity stays fixed while hairstyle changes',()=>{
+    const applied=compilePrompt({...defaultCtx,hairstyleMode:'apply',hairVariantId:'neatly_combed',hairDirection:'forward',promptTarget:'chatgpt'})
+    const preserved=compilePrompt({...defaultCtx,hairstyleMode:'preserve',hairVariantId:'neatly_combed',promptTarget:'chatgpt'})
+    expect(applied.validation.isValid).toBe(true)
+    expect(preserved.validation.isValid).toBe(true)
+    expect(applied.result.sections.filter(s=>s.id==='identity_fidelity')).toHaveLength(1)
+    expect(applied.result.promptText).toContain('selected styling may move existing strands')
+    expect(applied.result.promptText).toContain('original hairline contour')
+    expect(applied.result.promptText).toContain('ChatGPT reference priority:')
+    expect(preserved.result.promptText).toContain('Keep the reference hairstyle')
+    expect(preserved.result.promptText).not.toContain('selected styling may move existing strands')
+  })
+  it.each(['gemini','chatgpt'] as const)('Identity fidelity protects room versus subject references in %s',target=>{
+    const result=compilePrompt({...defaultCtx,promptTarget:target,roomReferencePresent:true})
+    expect(result.validation.isValid).toBe(true)
+    expect(result.result.promptText).toContain('room reference is authoritative for surroundings')
+    expect(result.result.promptText).toContain('IDENTITY FIDELITY ENGINE:')
+  })
+  it.each(bedroomShots)('Identity fidelity present for shot $id',shot=>{
+    const light=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
+    const result=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:light,windowUncovered:true})
+    expect(result.validation.isValid).toBe(true)
+    expect(result.result.errors).toEqual([])
+    expect(result.result.sections.filter(s=>s.id==='identity_fidelity')).toHaveLength(1)
+  })
   it('Lower garment optional selection', () => {
     const withLower = compilePrompt({ ...defaultCtx, lowerGarmentId: 'lounge_shorts' })
     expect(withLower.result.sections.some(s=>s.id.startsWith('lower_'))).toBe(true)
