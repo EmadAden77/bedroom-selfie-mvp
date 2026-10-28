@@ -8,6 +8,7 @@ import { expressionVariants } from '../data/expressions'
 import { renderBodyPosePhysics } from '../data/body-pose-physics'
 import { renderCameraPhysics } from '../data/camera-physics'
 import { renderBedroomEnvironment } from '../data/bedroom-environment'
+import { renderBackgroundContinuity } from '../data/background-continuity'
 import { renderLightGeometry } from '../data/light-geometry'
 import { bedroomShots,renderBedroomShot } from '../data/bedroom-shots'
 import { nightLightingPresets } from '../data/night-lighting'
@@ -99,6 +100,7 @@ export function renderSections(ctx: CompilationContext): PromptSection[] {
   if (lighting) sections.push({ id: `night_lighting_${lighting.id}`, content: 'Night bedroom lighting: ' + lighting.renderableFragment })
 
   sections.push({ id: 'bedroom_environment_lock', content: renderBedroomEnvironment(ctx) })
+  sections.push({ id: 'background_continuity', content: renderBackgroundContinuity(ctx) })
   sections.push({ id: 'light_pose_geometry', content: renderLightGeometry(ctx) })
   sections.push({ id: 'body_pose_physics', content: renderBodyPosePhysics(ctx) })
   sections.push({ id: 'camera_physics', content: renderCameraPhysics(ctx) })
