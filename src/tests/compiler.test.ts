@@ -258,6 +258,32 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(validation.isValid).toBe(true)
     expect(result.promptText).not.toContain('iPhone 15 Pro Max')
   })
+  it('Bedroom geometry is fixed across all 60 shots', () => {
+    for (const shot of bedroomShots) {
+      const lighting=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='silhouette'||shot.id==='half_light'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
+      const compiled=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:true})
+      expect(compiled.validation.isValid).toBe(true)
+      expect(compiled.result.sections.filter(s=>s.id==='bedroom_environment_lock')).toHaveLength(1)
+      expect(compiled.result.promptText).toContain('queen bed approximately 160 by 200 cm against the LEFT wall')
+      expect(compiled.result.promptText).toContain('RIGHT wall: sliding-door wardrobe')
+    }
+  })
+  it('Gemini and ChatGPT use shared geometry but separate hairstyle-specific directions', () => {
+    const base={...defaultCtx,hairVariantId:'neatly_combed',hairstyleMode:'apply' as const,bedroomShotId:'supine_high_phone'}
+    const gemini=compilePrompt({...base,promptTarget:'gemini'})
+    const chatgpt=compilePrompt({...base,promptTarget:'chatgpt'})
+    expect(gemini.validation.isValid).toBe(true)
+    expect(chatgpt.validation.isValid).toBe(true)
+    expect(gemini.result.promptText).not.toContain('ChatGPT hairstyle priority:')
+    expect(chatgpt.result.promptText).toContain('ChatGPT hairstyle priority:')
+    expect(chatgpt.result.promptText).toContain('Lying on the back')
+    expect(gemini.result.promptText).toContain('Lying on the back')
+    expect(chatgpt.result.promptText).toContain('queen bed approximately 160 by 200 cm')
+  })
+  it('ChatGPT does not force hairstyle changes in preserve mode', () => {
+    const result=compilePrompt({...defaultCtx,promptTarget:'chatgpt',hairstyleMode:'preserve'})
+    expect(result.result.promptText).not.toContain('ChatGPT hairstyle priority:')
+  })
   it('Lower garment optional selection', () => {
     const withLower = compilePrompt({ ...defaultCtx, lowerGarmentId: 'lounge_shorts' })
     expect(withLower.result.sections.some(s=>s.id.startsWith('lower_'))).toBe(true)
