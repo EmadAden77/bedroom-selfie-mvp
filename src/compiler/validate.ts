@@ -1,6 +1,7 @@
 
 import { CompilationContext, ValidationResult } from '../domain/types'
 import { hairVariants } from '../data/hair'
+import { realismPresets } from '../data/realism-intensity'
 import { hairDirections,hairVolumes,hairTextures } from '../data/hair-advanced'
 import { expressionVariants, deferredCompositeStates } from '../data/expressions'
 import { gazeChoices, microChoices } from '../data/gaze-micro'
@@ -13,6 +14,7 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
   const errors: string[] = []
   const warnings: string[] = []
 
+  if (ctx.realismIntensity && !realismPresets.some(p=>p.id===ctx.realismIntensity)) errors.push('Invalid realism intensity')
   if (ctx.hairstyleMode && !['preserve','apply'].includes(ctx.hairstyleMode)) errors.push('Invalid hairstyle mode')
   if (ctx.hairDirection && !hairDirections.some(x=>x.id===ctx.hairDirection)) errors.push('Invalid hair direction')
   if (ctx.hairVolume && !hairVolumes.some(x=>x.id===ctx.hairVolume)) errors.push('Invalid hair volume')
