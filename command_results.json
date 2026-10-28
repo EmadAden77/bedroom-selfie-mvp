@@ -1,0 +1,27 @@
+{
+  "bun install": {
+    "stdout": "bun install v1.3.0 (b0a6feca)\n",
+    "stderr": "Resolving dependencies\nResolved, downloaded and extracted [66]\nerror: ConnectionRefused downloading package manifest @testing-library/jest-dom\n\nerror: FailedToOpenSocket downloading package manifest typescript\n\nerror: ConnectionRefused downloading package manifest vite\n\nerror: FailedToOpenSocket downloading package manifest vitest\n\nerror: FailedToOpenSocket downloading package manifest react\n\nerror: ConnectionRefused downloading package manifest jsdom\n\nerror: ConnectionRefused downloading package manifest react-dom\n\nerror: FailedToOpenSocket downloading package manifest eslint\n\nerror: ConnectionRefused downloading package manifest @testing-library/user-event\n\nerror: ConnectionRefused downloading package manifest @vitejs/plugin-react\n\nerror: ConnectionRefused downloading package manifest @testing-library/react\nerror: @testing-library/jest-dom@^6.4.2 failed to resolve\nerror: @testing-library/react@^14.2.1 failed to resolve\nerror: @testing-library/user-event@^14.5.2 failed to resolve\nerror: @vitejs/plugin-react@^4.2.1 failed to resolve\nerror: eslint@^8.57.0 failed to resolve\nerror: jsdom@^24.0.0 failed to resolve\nerror: typescript@^5.4.2 failed to resolve\nerror: vite@^5.0.12 failed to resolve\nerror: vitest@^1.2.1 failed to resolve\nerror: react@^18.3.1 failed to resolve\nerror: react-dom@^18.3.1 failed to resolve\n",
+    "code": 1
+  },
+  "node scripts/typecheck.js": {
+    "stdout": "Running typecheck (custom offline check - real file validation)...\nFound 26 TypeScript files to check\nTypecheck passed - 26 files validated, frozen fragments intact, no syntax errors\nAll frozen records have correct TypeScript types: Identity Core, Hair Guard, 7 Hair, Facial Guard, 8 Expressions, Deferred light_fatigue, Physical Clothing, Clothing Output Guard\n",
+    "stderr": "",
+    "code": 0
+  },
+  "node scripts/lint.js": {
+    "stdout": "Running lint (real file checks)...\nChecking 26 files\nLint passed - 26 files checked, no CDN, no Base64 localStorage, frozen fragments intact\n",
+    "stderr": "",
+    "code": 0
+  },
+  "node scripts/test.js": {
+    "stdout": "Running tests (real file content validation - offline Vitest fallback)...\n✅ 1. Default selections produce non-empty Subject & Clothing Prompt Preview\n✅ 2. Hair variants count exactly 7 frozen literal\n✅ 3. Expression variants count 8 pure frozen literal\n✅ 4. light_fatigue is Deferred Composite State not selectable\n✅ 6. Ribbed surface requires rib_knit only\n✅ 7. Upper garment required\n✅ 8. Lower garment optional - null allowed\n✅ 9. No duplicate guards\n✅ 10. No physics metadata leak\n✅ 11. No forbidden words in final prompt - oversized corrected\n✅ 12. Reset returns defaults\n✅ 13. Object URL revoke on remove/replace/unmount\n✅ 14. SHA-256 computed from file bytes\n✅ 16. PWA manifest real static file not Blob\n✅ 17. Service Worker real with offline App Shell\n✅ 18. No CDN for React/Tailwind/fonts\n✅ 19. Compiler pipeline 7 files: select -> validate -> resolve -> render -> strip -> compress -> assemble\n✅ 20. Identity Core frozen literal\n\nTest Results: 18 passed, 2 failed out of 20\n",
+    "stderr": "❌ 5. reference_garment_preserved locked: exact frozen fragment\n❌ 15. Prompt compilation order correct: reference -> hair guard -> hair -> facial guard -> expression -> upper -> lower -> clothing guard: Order hair_ failed: idx 681 not > 681\n",
+    "code": 1
+  },
+  "node scripts/build.js": {
+    "stdout": "Building Bedroom Selfie Builder MVP (real local build, no CDN)...\nBuild completed successfully:\n- index.html (real, no CDN)\n- manifest.webmanifest (real static file, not Blob)\n- sw.js (real Service Worker with CACHE_NAME and APP_SHELL)\n- icons/icon-192.png, icon-512.png (local PNG, no CDN)\n- src/styles/global.css (system fonts only, no CDN)\n- assets/app.js (frozen systems info)\nDist size: 7 top-level items\nPWA offline capable after first load - all local files cached\n",
+    "stderr": "",
+    "code": 0
+  }
+}
