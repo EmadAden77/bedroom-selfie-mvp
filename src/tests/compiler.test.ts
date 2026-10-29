@@ -168,6 +168,29 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     const valid = compilePrompt({ ...defaultCtx, nightLightingId: 'window_streetlight', windowUncovered: true })
     expect(valid.validation.isValid).toBe(true)
   })
+  it('New 4500K ceiling LED is a single independent preset with physical light falloff', () => {
+    const compiled = compilePrompt({ ...defaultCtx, nightLightingId: 'ceiling_led_neutral' })
+    expect(compiled.validation.isValid).toBe(true)
+    const lightingSections = compiled.result.sections.filter(s => s.id.startsWith('night_lighting_'))
+    expect(lightingSections).toHaveLength(1)
+    expect(lightingSections[0].id).toBe('night_lighting_ceiling_led_neutral')
+    expect(lightingSections[0].content).toContain('4500K neutral-white')
+    expect(lightingSections[0].content).toContain('CRI 95+')
+    expect(lightingSections[0].content).toContain('inverse-square tendency')
+    expect(lightingSections[0].content).toContain('contact shadows')
+    expect(lightingSections[0].content).toContain('ISO sensor noise')
+    expect(compiled.result.sections.find(s => s.id === 'light_pose_geometry')?.content).toContain('Ceiling fixtures remain above the physical room')
+    expect(compiled.result.promptText).not.toContain('Phone display is the sole active light source')
+  })
+  it.each(['mirror_wardrobe', 'side_knee_tucked', 'edge_one_knee_raised'])('4500K ceiling LED remains valid with %s camera geometry', bedroomShotId => {
+    const compiled = compilePrompt({ ...defaultCtx, bedroomShotId, nightLightingId: 'ceiling_led_neutral' })
+    expect(compiled.validation.isValid).toBe(true)
+    expect(compiled.result.errors).toHaveLength(0)
+    if (bedroomShotId === 'mirror_wardrobe') {
+      expect(compiled.result.promptText).toContain('MIRROR CAPTURE:')
+      expect(compiled.result.promptText).not.toContain('Face oriented toward the held front camera')
+    }
+  })
   it('Unknown lighting preset is rejected', () => {
     expect(compilePrompt({ ...defaultCtx, nightLightingId: 'invented_fill' }).validation.isValid).toBe(false)
   })
