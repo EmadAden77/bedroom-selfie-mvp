@@ -1,97 +1,97 @@
-import React, {useEffect, useRef, useState} from 'react'
-import type {CompilationContext, CompilationResult, ValidationResult} from '../../domain/types'
-import {bedroomShots, getShotPosture} from '../../data/bedroom-shots'
+import React,{useEffect,useRef,useState} from 'react'
+import type {CompilationContext,CompilationResult,ValidationResult} from '../../domain/types'
+import {bedroomShots,getShotPosture} from '../../data/bedroom-shots'
 
-type Props = {
-  ctx: CompilationContext
-  result: CompilationResult
-  validation: ValidationResult
-}
-type ApiResult = {enhancedPrompt?:string; selectedHintIds?:string[]; model?:string; error?:string; errorCode?:string}
+type Props={ctx:CompilationContext;result:CompilationResult;validation:ValidationResult;onReset:()=>void}
+type MainReply={prompt?:string;source?:string;model?:string;error?:string;errorCode?:string}
 
-export const AiPromptEnhancer:React.FC<Props> = ({ctx,result,validation})=>{
-  const [accessToken,setAccessToken]=useState('')
-  const [isBusy,setIsBusy]=useState(false)
-  const [enhanced,setEnhanced]=useState('')
+export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset})=>{
+  const [generated,setGenerated]=useState('')
+  const [engine,setEngine]=useState<'gemini'|'local'|''>('')
   const [error,setError]=useState('')
-  const [model,setModel]=useState('')
+  const [loading,setLoading]=useState(false)
   const [copied,setCopied]=useState(false)
-  const abortRef=useRef<AbortController|null>(null)
+  const requestRef=useRef<AbortController|null>(null)
   const prompt=result.promptText
-  const canGenerate=validation.isValid && result.errors.length===0 && prompt.length>100
+  const ready=validation.isValid&&result.errors.length===0&&prompt.length>=100
 
   useEffect(()=>{
-    abortRef.current?.abort()
-    setEnhanced('')
-    setError('')
-    setModel('')
-    setCopied(false)
-    setIsBusy(false)
+    requestRef.current?.abort()
+    setGenerated('');setEngine('');setError('');setLoading(false);setCopied(false)
   },[prompt])
+  useEffect(()=>()=>requestRef.current?.abort(),[])
 
-  useEffect(()=>()=>abortRef.current?.abort(),[])
-
-  async function enhance(){
-    if(!canGenerate)return
-    if(!accessToken.trim()){setError('أدخل رمز الوصول السري الذي ستضبطه في Vercel.');return}
-    abortRef.current?.abort()
-    const controller=new AbortController()
-    abortRef.current=controller
-    setIsBusy(true);setError('');setEnhanced('');setCopied(false)
+  async function generate(){
+    if(!ready)return
+    requestRef.current?.abort()
+    const ctrl=new AbortController()
+    requestRef.current=ctrl
+    setLoading(true);setError('');setCopied(false);setGenerated('');setEngine('')
     const shot=bedroomShots.find(s=>s.id===ctx.bedroomShotId)
-    try {
-      const response=await fetch('/api/generate-prompt',{
+    try{
+      const response=await fetch('/api/generate-main-prompt',{
         method:'POST',
-        headers:{'Content-Type':'application/json','x-prompt-engine-access':accessToken.trim()},
+        headers:{'content-type':'application/json'},
+        signal:ctrl.signal,
         body:JSON.stringify({
-          prompt,
+          basePrompt:prompt,
           mode:shot?.mode||'front',
+          shotId:shot?.id||'',
           posture:shot?getShotPosture(shot.id)||'seated_bed':ctx.poseId||'seated_bed',
-          lighting:ctx.nightLightingId||'phone_screen_only'
-        }),
-        signal:controller.signal
+          lighting:ctx.nightLightingId||'phone_screen_only',
+          target:ctx.promptTarget||'gemini'
+        })
       })
-      const contentType=response.headers.get('content-type')||''
-      if(!contentType.toLowerCase().includes('application/json')){
-        throw new Error(response.status>=500
-          ? 'تعطلت خدمة التحسين على الخادم. البرومبت الأصلي محفوظ؛ حاول مجددًا بعد تحديث التطبيق.'
-          : 'الخادم أعاد استجابة غير متوقعة. حدّث الصفحة وحاول مجددًا.')
-      }
-      let data:ApiResult
-      try {data=await response.json() as ApiResult}
-      catch {throw new Error('تعذر قراءة رد الخادم. حدّث الصفحة وحاول مرة أخرى.')}
-      if(!response.ok||typeof data.enhancedPrompt!=='string')throw new Error((data.error||'تعذر تحسين البرومبت.') + (data.errorCode?' ('+data.errorCode+')':''))
-      if(!data.enhancedPrompt.startsWith(prompt.trim()))throw new Error('تم رفض رد لا يحافظ على البرومبت الأصلي.')
-      if(!controller.signal.aborted){setEnhanced(data.enhancedPrompt);setModel(data.model||'Gemini')}
+      if(!(response.headers.get('content-type')||'').includes('application/json'))
+        throw Error('خدمة Gemini أعادت ردًا غير متوقع. جرّب مجددًا أو استخدم النسخة المحلية.')
+      let payload:MainReply
+      try{payload=await response.json() as MainReply}
+      catch{throw Error('تعذر قراءة رد Gemini.')}
+      if(!response.ok||typeof payload.prompt!=='string'||payload.prompt.length<100)
+        throw Error((payload.error||'تعذر توليد البرومبت عبر Gemini.')+(payload.errorCode?' ('+payload.errorCode+')':''))
+      if(!payload.prompt.includes(prompt.trim()))
+        throw Error('رفض التطبيق نتيجة لم تحافظ على قواعد الهوية والغرفة الأصلية.')
+      if(!ctrl.signal.aborted){setGenerated(payload.prompt);setEngine('gemini')}
     }catch(err){
-      if(!controller.signal.aborted)setError(err instanceof Error?err.message:'تعذر الاتصال.')
+      if(!ctrl.signal.aborted)setError(err instanceof Error?err.message:'تعذر الاتصال بـGemini.')
     }finally{
-      if(!controller.signal.aborted)setIsBusy(false)
+      if(!ctrl.signal.aborted)setLoading(false)
     }
   }
 
-  async function copyEnhanced(){
-    if(!enhanced)return
-    try{await navigator.clipboard.writeText(enhanced);setCopied(true)}
-    catch{setError('تعذر النسخ. يمكنك تحديد النص ونسخه يدويًا.')}
+  async function copy(){
+    if(!generated)return
+    try{await navigator.clipboard.writeText(generated);setCopied(true)}
+    catch{setError('تعذر النسخ؛ يمكنك تحديد النص ونسخه يدويًا.')}
   }
 
-  return <section className="card" aria-label="تحسين البرومبت باستخدام Gemini">
-    <h3 style={{fontSize:'14px',fontWeight:700,margin:'0 0 8px'}}>✨ تحسين البرومبت باستخدام Gemini (اختياري)</h3>
-    <p style={{fontSize:'11px',color:'var(--muted)',lineHeight:1.7}}>
-      يولّد التطبيق البرومبت الأصلي محليًا. عند الضغط على «تحسين»، يرسل التطبيق إلى Google نوع التصوير والوضعية والإضاءة فقط لاختيار إضافات تصوير معتمدة. يظل نص البرومبت الأصلي في خادم التطبيق ولا تُرسل صور الوجه أو الغرفة أو تفاصيل الهوية إلى Google.
+  function useLocal(){
+    requestRef.current?.abort()
+    if(!ready)return
+    setGenerated(prompt);setEngine('local');setError('');setLoading(false);setCopied(false)
+  }
+
+  return <section className="card" aria-label="المحرك الرئيسي لتوليد البرومبت">
+    <div style={{fontSize:'16px',fontWeight:750,marginBottom:'10px'}}>✨ Gemini — محرك توليد البرومبت الرئيسي</div>
+    <p style={{fontSize:'12px',color:'var(--muted)',lineHeight:1.8,margin:'0 0 12px'}}>
+      اختر إعداداتك ثم اضغط «توليد البرومبت». يكتب Gemini وصف اللقطة والتصوير، ويحافظ التطبيق على تعليمات الهوية والفيزياء والغرفة الأصلية. لا توجد كلمة مرور أو تسجيل دخول.
     </p>
-    <label style={{display:'block',fontSize:'11px',margin:'10px 0 5px'}} htmlFor="gemini-access">رمز الوصول الخاص بك (ليس مفتاح Google)</label>
-    <input id="gemini-access" type="password" autoComplete="off" value={accessToken}
-      onChange={e=>setAccessToken(e.target.value)} placeholder="أدخل رمز الوصول المحفوظ في Vercel"
-      style={{width:'100%',padding:'10px',border:'1px solid var(--border)',borderRadius:'10px',background:'var(--bg)',color:'var(--text)',boxSizing:'border-box'}}/>
-    <p style={{fontSize:'10px',color:'var(--muted)',margin:'6px 0 12px'}}>تتطلب الميزة ضبط GEMINI_API_KEY و PROMPT_ENGINE_ACCESS_TOKEN في إعدادات Vercel. لا يُحفظ الرمز على الجهاز.</p>
-    <button className="btn" type="button" disabled={!canGenerate||isBusy} onClick={enhance}>{isBusy?'جاري التحسين…':'تحسين بالذكاء الاصطناعي'}</button>
-    {error&&<p role="alert" style={{fontSize:'11px',color:'#b91c1c',marginTop:'10px'}}>{error}</p>}
-    {enhanced&&<>
-      <p style={{fontSize:'11px',marginTop:'12px'}}>✓ تحسينات معتمدة من {model}. بقيت جميع قيود البرومبت الأصلي دون تغيير.</p>
-      <div className="ltr preview-box" style={{maxHeight:'300px',overflowY:'auto'}}>{enhanced}</div>
-      <button type="button" className="btn btn-secondary" onClick={copyEnhanced} style={{marginTop:'8px'}}>{copied?'✓ تم نسخ البرومبت المحسّن':'نسخ البرومبت المحسّن'}</button>
-    </>}
+    <p style={{fontSize:'10px',color:'var(--muted)',lineHeight:1.7,margin:'0 0 14px'}}>
+      تُرسل اختياراتك والنص المرجعي للبرومبت إلى Google لتوليد الوصف؛ لا تُرسل ملفات صور الوجه أو الغرفة. رابط التطبيق عام، وقد يستعمل زواره حصة Gemini.
+    </p>
+    {(validation.errors.length>0||result.errors.length>0)&&<div role="alert" style={{fontSize:'12px',color:'#b91c1c',marginBottom:'10px'}}>{[...new Set([...validation.errors,...result.errors])].join(' — ')}</div>}
+    <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+      <button type="button" className="btn" disabled={!ready||loading} onClick={generate}>{loading?'Gemini يولّد البرومبت…':engine==='gemini'?'إعادة التوليد بواسطة Gemini':'توليد البرومبت بواسطة Gemini'}</button>
+      <button type="button" className="btn btn-secondary" disabled={!ready} onClick={useLocal}>النسخة المحلية الاحتياطية</button>
+    </div>
+    {error&&<div role="alert" style={{marginTop:'12px',fontSize:'12px',color:'#b91c1c'}}>{error}</div>}
+    {generated&&<div style={{marginTop:'16px'}}>
+      <p style={{fontSize:'12px',fontWeight:600,margin:'0 0 8px'}}>{engine==='gemini'?'✓ برومبت Gemini النهائي':'✓ البرومبت المحلي الاحتياطي'}</p>
+      <div dir="ltr" className="preview-box" style={{textAlign:'left',whiteSpace:'pre-wrap',overflowWrap:'anywhere',maxHeight:'520px',overflowY:'auto'}}>{generated}</div>
+      <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'10px'}}>
+        <button type="button" className="btn" onClick={copy}>{copied?'✓ تم النسخ':'نسخ البرومبت النهائي'}</button>
+        <button type="button" className="btn btn-secondary" onClick={onReset}>إعادة تعيين الخيارات</button>
+      </div>
+    </div>}
   </section>
 }
