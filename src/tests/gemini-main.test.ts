@@ -1,6 +1,6 @@
 // @vitest-environment node
 import {afterEach,describe,it,expect,vi} from 'vitest'
-import handler,{assembleMainPrompt,MAIN_PROMPT_SCHEMA,MAIN_SYSTEM_INSTRUCTION,validateMainConsistency} from '../../api/generate-main-prompt'
+import handler,{assembleMainPrompt,MAIN_PROMPT_SCHEMA,MAIN_SYSTEM_INSTRUCTION,IMAGE_TARGET_GUIDANCE,compactGeneratedSections,validateMainConsistency} from '../../api/generate-main-prompt'
 
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals()})
 const prompt='Reference identity anchored to reference image: preserve same person, no identity drift. BEDROOM ENVIRONMENT LOCK: Maintain one room and natural physics. '+('Keep camera, lighting, clothing and human geometry fixed. '.repeat(9))
@@ -45,7 +45,8 @@ describe('Gemini as main passwordless prompt writer',()=>{
   const upstream=JSON.parse(sent) as {generationConfig:{responseFormat:{text:{mimeType:string;schema:unknown}}};systemInstruction:{parts:Array<{text:string}>}}
   expect(upstream.generationConfig.responseFormat.text.mimeType).toBe('APPLICATION_JSON')
   expect(upstream.generationConfig.responseFormat.text.schema).toEqual(MAIN_PROMPT_SCHEMA)
-  expect(upstream.systemInstruction.parts[0].text).toBe(MAIN_SYSTEM_INSTRUCTION)
+  expect(upstream.systemInstruction.parts[0].text).toContain(MAIN_SYSTEM_INSTRUCTION)
+  expect(upstream.systemInstruction.parts[0].text).toContain(IMAGE_TARGET_GUIDANCE.gemini)
   expect(Object.keys(upstream)).not.toContain('negative_prompt')
   expect(Object.keys(upstream.generationConfig)).not.toContain('negative_prompt')
   expect(sent).not.toContain('data:image')
@@ -104,6 +105,63 @@ describe('Gemini as main passwordless prompt writer',()=>{
   const r=await handler.fetch(post())
   expect(r.status).toBe(422)
   expect((await r.json() as {errorCode:string}).errorCode).toBe('GEMINI_VALIDATION')
+ })
+
+ it('accepts each image-generator target and transmits the correct style instruction to Gemini',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','dummy-test-key')
+  for(const target of ['gemini','chatgpt','flux','midjourney'] as const){
+   let outbound=''
+   vi.stubGlobal('fetch',vi.fn(async(_url:string,opts:{body:string})=>{
+     outbound=opts.body
+     return new Response(JSON.stringify({candidates:[{content:{parts:[{text:modelResponse}]}}]}),{status:200})
+   }))
+   const response=await handler.fetch(post({...payload,target}))
+   expect(response.status).toBe(200)
+   const result=await response.json() as {prompt:string}
+   expect(result.prompt).toContain(prompt.trim())
+   const modelInput=JSON.parse(outbound) as {systemInstruction:{parts:Array<{text:string}>};contents:Array<{parts:Array<{text:string}>}>}
+   expect(modelInput.systemInstruction.parts[0].text).toContain(IMAGE_TARGET_GUIDANCE[target])
+   expect(modelInput.contents[0].parts[0].text).toContain('"target":"'+target+'"')
+  }
+ })
+ it('rejects unknown image model targets without calling Google',async()=>{
+   vi.stubEnv('GEMINI_API_KEY','dummy-test-key')
+   const outbound=vi.fn()
+   vi.stubGlobal('fetch',outbound)
+   const response=await handler.fetch(post({...payload,target:'unknown-provider'}))
+   expect(response.status).toBe(400)
+   expect(outbound).not.toHaveBeenCalled()
+ })
+ it('does not invent Midjourney aspect ratio, weights or version flags',()=>{
+   const result=JSON.parse(modelResponse)
+   result.camera+=' --ar 9:16'
+   expect(()=>validateMainConsistency(result,prompt,{mode:'mirror',lighting:'ceiling_neutral'})).toThrow('unrequested_model_parameters')
+   result.camera='The actual phone camera creates one mirror reflection in the real sliding wardrobe, with ordinary framing.'
+   result.naturalism+=' --stylize 100'
+   expect(()=>validateMainConsistency(result,prompt,{mode:'mirror',lighting:'ceiling_neutral'})).toThrow('unrequested_model_parameters')
+ })
+ it('deduplicates only AI prose without altering authoritative local identity and room rules',()=>{
+   const result=JSON.parse(modelResponse)
+   result.scene+=' '+result.scene
+   result.naturalism+=' '+result.scene
+   const final=assembleMainPrompt(JSON.stringify(result),prompt,{mode:'mirror',lighting:'ceiling_neutral'})
+   expect(final.split(result.scene.replace(/([.!?])\s+/g,'$1 '))[0]).toBeDefined()
+   expect(final).toContain(prompt.trim())
+   // The original identical sentence should appear once in the Gemini-authored part.
+   const authored=final.split('MANDATORY REFERENCE IDENTITY')[0]
+   expect(authored.split('A person stands diagonally beside the real mirrored wardrobe').length-1).toBe(1)
+   expect(authored).not.toContain('8K masterpiece')
+ })
+ it('keeps all three meaningful model-authored sections after compacting repeated prose',()=>{
+   const repeated='An everyday unposed shot shows a real person within the unchanged bedroom.'
+   const normalized=compactGeneratedSections({
+      scene:repeated+' '+repeated,
+      camera:repeated+' A real smartphone records the selected viewpoint at ordinary reach.',
+      naturalism:'Authentic smartphone grain and practical lighting match the visible exposure.'
+   })
+   expect(normalized.scene).toBe(repeated)
+   expect(normalized.camera).not.toContain(repeated)
+   expect(normalized.naturalism).toContain('practical lighting')
  })
 
 })
