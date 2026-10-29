@@ -71,6 +71,8 @@ const fail=(code:string,error:string,status=502)=>reply({errorCode:code,error},s
 export const sanitizeMainSections=(value:unknown):ModelOutput=>{
  if(typeof value!=='object'||value===null)throw Error('model_output')
  const obj=value as ModelOutput
+ const keys=Object.keys(obj).sort()
+ if(keys.join(',')!=='camera,naturalism,scene')throw Error('unexpected_schema_fields')
  for(const key of ['scene','camera','naturalism'] as const){
   const s=obj[key]
   if(typeof s!=='string'||s.trim().length<28||s.length>2400)throw Error('model_output')
