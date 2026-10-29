@@ -84,8 +84,11 @@ export const buildCorrectedPhotoPrompt=(original:string,audit:Audit):string=>{
  if(!failures.length)return original.trim()
  // Do not replace or summarize original identity and room constraints.
  const adjustments=failures.map((f,i)=>{
-  // Model-suggested detail is subordinate to the locked correction for that category.
-  return (i+1)+'. '+defaultCorrections[f.criterion]+(f.repairEn?' Targeted visual correction: '+f.repairEn:'')
+  // For identity, hair, room, lighting and skin, enforce the vetted reference-preservation
+  // correction only. The model may describe deviations but cannot rewrite anatomy or topology.
+  const allowDetail=['pose','hands','mirror','clothing','camera'].includes(f.criterion) &&
+   !/\\b(add|replace|new|different|second|extra|beautify|reshape|modify identity|widen shoulders|studio|softbox|change face|change hairline)\\b/i.test(f.repairEn)
+  return (i+1)+'. '+defaultCorrections[f.criterion]+(allowDetail&&f.repairEn?' Targeted visual correction: '+f.repairEn:'')
  })
  return original.trim()+'\n\nPHOTO RESULT REPAIR — targeted deviations only. The original identity reference and bedroom reference remain authoritative; retain all other selected scene properties:\n'+adjustments.join('\n')+
  '\nFINAL SAFETY LOCK: Keep the same individual, apparent age, face proportions, hairline and density, selected clothes, room architecture, camera geometry and physically real light sources. Only correct the listed failures; do not invent new props, rearrange the room or beautify the skin.'
@@ -153,6 +156,13 @@ export default {
    let audit:Audit
    try{audit=parseAudit(txt,!!subjectReference,!!roomReference)}
    catch{return error('AUDIT_FORMAT','تعذر تفسير تقرير Gemini؛ لم يتغير البرومبت الأصلي.',422)}
+   if(captureMode!=='mirror'){
+    audit.findings=audit.findings.map(f=>f.criterion==='mirror'?{
+     ...f,status:'uncertain' as const,confidence:'low' as const,
+     evidenceAr:'لم يتم اختيار لقطة سيلفي مرآة؛ لا تُطبق هندسة انعكاس المرآة على هذه الوضعية.',
+     repairEn:''
+    }:f)
+   }
    const correctedPrompt=buildCorrectedPhotoPrompt(originalPrompt,audit)
    return json({audit,correctedPrompt,failed: audit.findings.filter(f=>f.status==='fail').length,model})
   }catch(err){
