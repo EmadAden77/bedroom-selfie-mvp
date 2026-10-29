@@ -6,7 +6,7 @@
 export type CaptureMode = 'front' | 'mirror' | 'rear' | 'timer'
 
 export const PROMPT_HINTS = {
-  quiet_framing: 'Use a naturally imperfect crop with a slight off-center shift. Never extend the real field of view to reveal additional room furniture.',
+  quiet_framing: 'Preserve the chosen crop and camera viewpoint with ordinary handheld framing imprecision, without forced symmetry. Never extend the real field of view to reveal additional room furniture.',
   consistent_sensor: 'Apply modest phone sensor texture, local sharpness and compression consistently across the person and the room, without separately retouching the face.',
   real_cloth: 'Keep micro-folds and textile tension tied to actual shoulder, elbow, waist and fabric-contact forces; preserve the chosen garment design.',
   natural_expression: 'Retain minor everyday facial-muscle asymmetry and ordinary eye focus without changing reference anatomy, age, expression selection or facial features.',
