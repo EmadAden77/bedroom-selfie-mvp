@@ -50,7 +50,15 @@ export const AiPromptEnhancer:React.FC<Props> = ({ctx,result,validation})=>{
         }),
         signal:controller.signal
       })
-      const data=await response.json() as ApiResult
+      const contentType=response.headers.get('content-type')||''
+      if(!contentType.toLowerCase().includes('application/json')){
+        throw new Error(response.status>=500
+          ? 'تعطلت خدمة التحسين على الخادم. البرومبت الأصلي محفوظ؛ حاول مجددًا بعد تحديث التطبيق.'
+          : 'الخادم أعاد استجابة غير متوقعة. حدّث الصفحة وحاول مجددًا.')
+      }
+      let data:ApiResult
+      try {data=await response.json() as ApiResult}
+      catch {throw new Error('تعذر قراءة رد الخادم. حدّث الصفحة وحاول مرة أخرى.')}
       if(!response.ok||typeof data.enhancedPrompt!=='string')throw new Error(data.error||'تعذر تحسين البرومبت.')
       if(!data.enhancedPrompt.startsWith(prompt.trim()))throw new Error('تم رفض رد لا يحافظ على البرومبت الأصلي.')
       if(!controller.signal.aborted){setEnhanced(data.enhancedPrompt);setModel(data.model||'Gemini')}
