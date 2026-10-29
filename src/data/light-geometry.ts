@@ -50,7 +50,7 @@ export function renderLightGeometry(ctx: CompilationContext): string {
       : face.text
   const usesLamp = lighting === 'bedside_warm' || lighting === 'lamp_and_screen'
   const usesPhone = lighting === 'phone_screen_only' || lighting === 'lamp_and_screen' || lighting === 'ceiling_and_screen'
-  const usesCeiling = lighting === 'ceiling_dim' || lighting === 'ceiling_neutral' || lighting === 'ceiling_and_screen'
+  const usesCeiling = lighting === 'ceiling_dim' || lighting === 'ceiling_neutral' || lighting === 'ceiling_led_neutral' || lighting === 'ceiling_and_screen'
   const pieces = [
     'Selfie pose geometry: ' + pose.text,
     'Face direction: ' + faceDescription,
