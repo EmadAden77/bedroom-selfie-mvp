@@ -46,7 +46,8 @@ describe('Gemini as main passwordless prompt writer',()=>{
   expect(upstream.generationConfig.responseFormat.text.mimeType).toBe('APPLICATION_JSON')
   expect(upstream.generationConfig.responseFormat.text.schema).toEqual(MAIN_PROMPT_SCHEMA)
   expect(upstream.systemInstruction.parts[0].text).toBe(MAIN_SYSTEM_INSTRUCTION)
-  expect(sent).not.toContain('negative_prompt')
+  expect(Object.keys(upstream)).not.toContain('negative_prompt')
+  expect(Object.keys(upstream.generationConfig)).not.toContain('negative_prompt')
   expect(sent).not.toContain('data:image')
  })
  it('rejects malformed Gemini text rather than publishing altered identity',()=>{
