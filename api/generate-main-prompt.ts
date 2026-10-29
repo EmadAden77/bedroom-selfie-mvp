@@ -166,7 +166,7 @@ export default {
    const raw=await response.json() as {candidates?:Array<{content?:{parts?:Array<{text?:string}>}}>}
    const modelText=raw.candidates?.[0]?.content?.parts?.map(x=>x.text||'').join('')||''
    let prompt:string
-   try{prompt=assembleMainPrompt(modelText,basePrompt,{mode,lighting})}
+   try{prompt=assembleMainPrompt(modelText,basePrompt,{mode:String(mode),lighting:String(lighting)})}
    catch{return fail('GEMINI_VALIDATION','رفض فحص التوافق وصفًا يخالف إعدادات الهوية أو الغرفة أو الفيزياء أو مخطط JSON. يمكنك إعادة التوليد أو استخدام النسخة المحلية.',422)}
    return reply({prompt,source:'gemini',model})
   }catch(error){
