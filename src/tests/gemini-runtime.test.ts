@@ -22,8 +22,9 @@ describe('Production Vercel Gemini function regression',()=>{
     vi.stubEnv('PROMPT_ENGINE_ACCESS_TOKEN','')
     const response=await geminiHandler.fetch(new Request('https://bedroom-selfie-mvp.vercel.app/api/generate-prompt',{method:'POST'}))
     expect(response.status).toBe(503)
-    const payload=await response.json() as {error:string}
-    expect(payload.error).toContain('GEMINI_API_KEY')
+    const payload=await response.json() as {error:string;errorCode:string}
+    expect(payload.errorCode).toBe('GEMINI_NOT_CONFIGURED')
+    expect(payload.error).not.toContain('test-key-not-real')
   })
   it('rejects wrong access codes as JSON before calling the model',async ()=>{
     vi.stubEnv('GEMINI_API_KEY','test-key-not-real')
