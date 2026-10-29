@@ -35,12 +35,12 @@ export function renderLightGeometry(ctx: CompilationContext): string {
   // Capture mode owns camera-facing directions. A mirror never inherits a front-selfie instruction.
   const faceDescription = reflected
     ? shot?.id === 'mirror_phone_gaze'
-      ? 'Head remains oriented toward the real wardrobe mirror; the eyes glance down at the actual handset display facing the subject, not a reflected display. The rear camera still points at the mirror.'
+      ? 'Head remains oriented toward the real wardrobe mirror; the eyes glance down at the actual handset display facing the subject (the handset screen facing the subject, not a reflected display). The rear camera still points at the mirror.'
       : shot?.id === 'mirror_mist'
-        ? 'Head turns comfortably back over the near shoulder toward the reflected face while the torso remains partly turned away from the wardrobe mirror.'
+        ? 'Head turns comfortably back over the near shoulder toward the reflected rear-camera lens in the wardrobe mirror while the torso remains partly turned away.'
         : shot?.id === 'mirror_half_face'
-          ? 'Head faces the existing wardrobe mirror near its physical edge; the missing half of the reflection is outside the glass boundary.'
-          : 'Head faces the reflected subject view in the existing wardrobe mirror; eye direction remains compatible with the selected pose and the physically held rear camera.'
+          ? 'Head faces the reflected rear-camera lens near the physical edge of the existing wardrobe mirror; the missing half of the reflection is outside the glass boundary.'
+          : 'Head faces the reflected rear-camera lens in the existing wardrobe mirror; eye direction remains compatible with the selected pose and the physically held rear camera.'
     : face.id === 'toward_camera'
       ? stationary
         ? 'Face oriented toward the camera lens on its fixed timer support.'
