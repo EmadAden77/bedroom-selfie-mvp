@@ -33,16 +33,20 @@ export function renderLightGeometry(ctx: CompilationContext): string {
   const reflected = shot?.mode === 'mirror'
   const rear = shot?.mode === 'rear'
   // Capture mode owns camera-facing directions. A mirror never inherits a front-selfie instruction.
-  const faceDescription = shot?.id === 'mirror_phone_gaze'
-    ? 'Face and eyes directed toward the handset screen as seen in the wardrobe mirror; the rear camera records the reflection.'
+  const faceDescription = reflected
+    ? shot?.id === 'mirror_phone_gaze'
+      ? 'Head remains oriented toward the real wardrobe mirror; the eyes glance down at the actual handset display facing the subject, not a reflected display. The rear camera still points at the mirror.'
+      : shot?.id === 'mirror_mist'
+        ? 'Head turns comfortably back over the near shoulder toward the reflected face while the torso remains partly turned away from the wardrobe mirror.'
+        : shot?.id === 'mirror_half_face'
+          ? 'Head faces the existing wardrobe mirror near its physical edge; the missing half of the reflection is outside the glass boundary.'
+          : 'Head faces the reflected subject view in the existing wardrobe mirror; eye direction remains compatible with the selected pose and the physically held rear camera.'
     : face.id === 'toward_camera'
-      ? reflected
-        ? 'Face oriented toward the reflected rear-camera lens in the existing wardrobe mirror.'
-        : stationary
-          ? 'Face oriented toward the camera lens on its fixed timer support.'
-          : rear
-            ? 'Face oriented toward the hand-held rear-camera lens.'
-            : face.text
+      ? stationary
+        ? 'Face oriented toward the camera lens on its fixed timer support.'
+        : rear
+          ? 'Face oriented toward the hand-held rear-camera lens.'
+          : face.text
       : face.text
   const usesLamp = lighting === 'bedside_warm' || lighting === 'lamp_and_screen'
   const usesPhone = lighting === 'phone_screen_only' || lighting === 'lamp_and_screen' || lighting === 'ceiling_and_screen'
