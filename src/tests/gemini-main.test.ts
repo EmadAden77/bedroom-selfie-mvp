@@ -39,7 +39,7 @@ describe('Gemini as main passwordless prompt writer',()=>{
   const body=await result.json() as {prompt:string;source:string}
   expect(body.source).toBe('gemini')
   expect(body.prompt).toContain('GEMINI-GENERATED PRIMARY IMAGE PROMPT')
-  expect(body.prompt).toContain(prompt)
+  expect(body.prompt).toContain(prompt.trim())
   expect(body.prompt).toContain('stands diagonally')
   expect(sent).toContain('mirror_45')
   expect(sent).not.toContain('data:image')
