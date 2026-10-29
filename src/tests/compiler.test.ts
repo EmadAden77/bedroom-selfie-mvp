@@ -191,6 +191,54 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
       expect(compiled.result.promptText).not.toContain('Face oriented toward the held front camera')
     }
   })
+  const additionalWhiteLedModes = [
+    { id: 'ceiling_led_soft_diffused', anchor: 'DIFFUSED OVERHEAD', geometry: 'Multiple installed downlights' },
+    { id: 'ceiling_led_bed_side', anchor: 'BED-SIDE CEILING', geometry: 'LEFT-wall bed' },
+    { id: 'ceiling_led_wardrobe_side', anchor: 'WARDROBE-SIDE CEILING', geometry: 'RIGHT-wall wardrobe' },
+    { id: 'ceiling_led_single_downlight', anchor: 'SINGLE CEILING DOWNLIGHT', geometry: 'single installed central ceiling spot' }
+  ] as const
+
+  it('Four additional white LED presets are independently selectable and retain the existing 4500K option', async () => {
+    const { nightLightingPresets } = await import('../data/night-lighting')
+    const ids = nightLightingPresets.map(p => p.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(ids).toContain('ceiling_led_neutral')
+    for (const mode of additionalWhiteLedModes) expect(ids).toContain(mode.id)
+    expect(ids.filter(id => additionalWhiteLedModes.some(m => m.id === id))).toHaveLength(4)
+  })
+
+  it.each(additionalWhiteLedModes)('White LED $id selects one real light setup without additional sources', mode => {
+    const compiled = compilePrompt({ ...defaultCtx, nightLightingId: mode.id })
+    expect(compiled.validation.isValid).toBe(true)
+    expect(compiled.result.errors).toHaveLength(0)
+    const selectedLighting = compiled.result.sections.filter(s => s.id.startsWith('night_lighting_'))
+    expect(selectedLighting).toHaveLength(1)
+    expect(selectedLighting[0].id).toBe('night_lighting_' + mode.id)
+    expect(selectedLighting[0].content).toContain(mode.anchor)
+    expect(selectedLighting[0].content).toContain('4500K')
+    expect(selectedLighting[0].content).not.toContain('phone display is the sole active light source')
+    const geometry = compiled.result.sections.find(s => s.id === 'light_pose_geometry')?.content || ''
+    expect(geometry).toContain('Ceiling fixtures remain above the physical room')
+    expect(geometry).toContain(mode.geometry)
+    expect(geometry).not.toContain('Phone display faces the subject near the camera optical axis')
+  })
+
+  it.each(additionalWhiteLedModes)('White LED $id maintains camera and pose geometry across shots', mode => {
+    for (const bedroomShotId of ['mirror_wardrobe','side_knee_tucked','edge_one_knee_raised','phone_on_floor']) {
+      const compiled = compilePrompt({ ...defaultCtx, bedroomShotId, nightLightingId: mode.id })
+      expect(compiled.validation.isValid).toBe(true)
+      expect(compiled.result.errors).toHaveLength(0)
+      expect(compiled.result.sections.filter(s => s.id.startsWith('night_lighting_'))).toHaveLength(1)
+      if (bedroomShotId === 'mirror_wardrobe') {
+        expect(compiled.result.promptText).toContain('MIRROR CAPTURE:')
+        expect(compiled.result.promptText).not.toContain('Face oriented toward the held front camera')
+      }
+      if (bedroomShotId === 'phone_on_floor') {
+        expect(compiled.result.promptText).toContain('TIMER CAPTURE:')
+      }
+    }
+  })
+
   it('Unknown lighting preset is rejected', () => {
     expect(compilePrompt({ ...defaultCtx, nightLightingId: 'invented_fill' }).validation.isValid).toBe(false)
   })
