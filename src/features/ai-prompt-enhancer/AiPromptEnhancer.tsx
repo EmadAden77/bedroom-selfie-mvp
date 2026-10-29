@@ -14,12 +14,15 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
   const requestRef=useRef<AbortController|null>(null)
   const prompt=result.promptText
   const ready=validation.isValid&&result.errors.length===0&&prompt.length>=100
+  const targetLabels={gemini:'Gemini / Imagen',chatgpt:'ChatGPT / GPT Image',flux:'FLUX',midjourney:'Midjourney'} as const
+  const selectedTarget=targetLabels[ctx.promptTarget||'gemini']
+
 
   useEffect(()=>{
     requestRef.current?.abort()
     setGenerated('');setEngine('');setError('');setLoading(false);setCopied(false)
     onPromptReady('')
-  },[prompt,onPromptReady])
+  },[prompt,ctx.promptTarget,onPromptReady])
   useEffect(()=>()=>requestRef.current?.abort(),[])
 
   async function generate(){
@@ -75,7 +78,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
   return <section className="card" aria-label="المحرك الرئيسي لتوليد البرومبت">
     <div style={{fontSize:'16px',fontWeight:750,marginBottom:'10px'}}>✨ Gemini — محرك توليد البرومبت الرئيسي</div>
     <p style={{fontSize:'12px',color:'var(--muted)',lineHeight:1.8,margin:'0 0 12px'}}>
-      اختر إعداداتك ثم اضغط «توليد البرومبت». يكتب Gemini وصف اللقطة والتصوير، ويحافظ التطبيق على تعليمات الهوية والفيزياء والغرفة الأصلية. لا توجد كلمة مرور أو تسجيل دخول.
+      اختر إعداداتك ثم اضغط «توليد البرومبت». Gemini يكتب برومبت مخصصًا لـ <strong>{selectedTarget}</strong>، مع الحفاظ على قواعد الهوية والفيزياء والغرفة الأصلية. لا توجد كلمة مرور أو تسجيل دخول.
     </p>
     <p style={{fontSize:'10px',color:'var(--muted)',lineHeight:1.7,margin:'0 0 14px'}}>
       تُرسل اختياراتك والنص المرجعي للبرومبت إلى Google لتوليد الوصف؛ لا تُرسل ملفات صور الوجه أو الغرفة. رابط التطبيق عام، وقد يستعمل زواره حصة Gemini.
@@ -87,7 +90,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
     </div>
     {error&&<div role="alert" style={{marginTop:'12px',fontSize:'12px',color:'#b91c1c'}}>{error}</div>}
     {generated&&<div style={{marginTop:'16px'}}>
-      <p style={{fontSize:'12px',fontWeight:600,margin:'0 0 8px'}}>{engine==='gemini'?'✓ برومبت Gemini النهائي':'✓ البرومبت المحلي الاحتياطي'}</p>
+      <p style={{fontSize:'12px',fontWeight:600,margin:'0 0 8px'}}>{engine==='gemini'?'✓ برومبت Gemini مخصص لـ '+selectedTarget:'✓ البرومبت المحلي الاحتياطي'}</p>
       <div dir="ltr" className="preview-box" style={{textAlign:'left',whiteSpace:'pre-wrap',overflowWrap:'anywhere',maxHeight:'520px',overflowY:'auto'}}>{generated}</div>
       <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'10px'}}>
         <button type="button" className="btn" onClick={copy}>{copied?'✓ تم النسخ':'نسخ البرومبت النهائي'}</button>
