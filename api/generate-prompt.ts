@@ -62,7 +62,7 @@ export function buildEnhancedPrompt(basePrompt: string, selected: readonly Promp
 }
 
 
-type RequestBody = { prompt?: unknown; mode?: unknown; posture?: unknown }
+type RequestBody = { prompt?: unknown; mode?: unknown; posture?: unknown; lighting?: unknown }
 
 const json = (payload: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(payload), {
@@ -76,15 +76,28 @@ const secretMatches = (provided: string, expected: string): boolean => {
   return timingSafeEqual(a, b)
 }
 
+// Server logs contain only categorized errors. Never log prompts, access tokens,
+// provider keys, request bodies, headers or provider error response contents.
+const safeFailure = (code: string, message: string, status = 502) =>
+  json({ error: message, errorCode: code }, status)
+
+const providerStatus = (status: number): Response => {
+  if (status === 429) return safeFailure('GEMINI_QUOTA', 'وصلت خدمة Gemini إلى حد الاستخدام. تحقق من حصة Google AI Studio ثم أعد المحاولة.', 429)
+  if (status === 401 || status === 403) return safeFailure('GEMINI_ACCESS', 'رفضت Google مفتاح API أو صلاحيات المشروع. راجع Google AI Studio دون مشاركة المفتاح.', 502)
+  if (status === 404) return safeFailure('GEMINI_MODEL', 'النموذج غير متاح في مشروع Google المتصل. تحقق من النماذج المسموحة للمفتاح.', 502)
+  if (status === 400) return safeFailure('GEMINI_REQUEST', 'لم تقبل Google إعدادات الطلب. راجع إعدادات النموذج.', 502)
+  if (status >= 500) return safeFailure('GEMINI_UPSTREAM', 'خدمة Google غير متاحة مؤقتًا. البرومبت المحلي يعمل دون اتصال.', 502)
+  return safeFailure('GEMINI_PROVIDER', 'تعذر تنفيذ طلب Gemini. راجع إعدادات مشروع Google.', 502)
+}
+
 export default {
   async fetch(request: Request): Promise<Response> {
     if (request.method !== 'POST') return json({ error: 'POST only' }, 405)
 
-    // No user photos, image URL, browser-stored API key or reference hash is sent.
     const apiKey = process.env.GEMINI_API_KEY
     const accessToken = process.env.PROMPT_ENGINE_ACCESS_TOKEN
     if (!apiKey || !accessToken) {
-      return json({ error: 'ميزة Gemini غير مفعّلة. أضف GEMINI_API_KEY و PROMPT_ENGINE_ACCESS_TOKEN إلى إعدادات Vercel.' }, 503)
+      return safeFailure('GEMINI_NOT_CONFIGURED', 'ميزة Gemini غير مفعلة؛ تحقق من متغيرات Vercel ثم أعد النشر.', 503)
     }
     const origin = request.headers.get('origin')
     if (origin && origin !== new URL(request.url).origin) return json({ error: 'Request origin rejected' }, 403)
@@ -93,65 +106,77 @@ export default {
 
     const size = Number(request.headers.get('content-length') || '0')
     if (size > 45000) return json({ error: 'حجم البرومبت أكبر من الحد المسموح.' }, 413)
-
     let body: RequestBody
     try { body = await request.json() as RequestBody }
     catch { return json({ error: 'بيانات الطلب غير صالحة.' }, 400) }
 
-    const prompt = body.prompt
-    const mode = body.mode
-    const posture = body.posture
+    const { prompt, mode, posture, lighting } = body
     if (typeof prompt !== 'string' || prompt.trim().length < 100 || prompt.length > 35000 ||
       !['front','mirror','rear','timer'].includes(String(mode)) ||
-      typeof posture !== 'string' || posture.length > 50) {
+      typeof posture !== 'string' || posture.length > 50 ||
+      (lighting !== undefined && (typeof lighting !== 'string' || !/^[a-z0-9_]{1,60}$/.test(lighting)))) {
       return json({ error: 'يرجى توليد برومبت صحيح من التطبيق أولًا.' }, 400)
     }
+
     const eligible = eligibleHintIds(mode as CaptureMode, posture)
-    const model = process.env.GEMINI_MODEL || 'gemini-3.8-flash'
-    if (!/^[a-zA-Z0-9._-]{3,80}$/.test(model)) return json({ error: 'إعداد اسم نموذج Gemini غير صحيح.' }, 503)
+    // This is a short classification task, not image generation or deep reasoning.
+    // Owners can override the model using GEMINI_MODEL in Vercel.
+    const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite'
+    if (!/^[a-zA-Z0-9._-]{3,80}$/.test(model)) return safeFailure('GEMINI_MODEL_CONFIG', 'اسم نموذج Gemini غير صحيح.', 503)
 
     try {
+      // Send only selected scene categories and the safe hint catalog to Google.
+      // Never forward complete identity, bedroom reference or person prompts.
       const selectionRequest = {
         systemInstruction: {
-          parts: [{ text: 'You are the bounded photographic naturalness adviser for Bedroom Selfie MVP. Do not rewrite the original image prompt. Do not output image prompts, prose, identity attributes, objects, lighting sources, room changes, brand alterations or new camera positions. Choose exactly 2 or 3 approved hint IDs from the provided catalog that best complement the existing prompt, and return only valid JSON in the form {"ids":["id1","id2"]}. Select mirror_optics only for mirror capture, timer_stability only for timer capture, bed_pressure only with real bed contact. Preserve the entire input prompt as authoritative.' }]
+          parts: [{ text: 'You are a constrained photography hint selector for a private bedroom selfie app. Do not invent scenes, people, lighting or accessories. Choose 2 or 3 unique IDs from the allowedHints keys that are best aligned with the capture mode, posture and selected lighting. Return valid JSON only: {"ids":["id1","id2"]}. All immutable identity, room and camera rules remain governed by the local prompt.' }]
         },
         contents: [{
           role: 'user',
           parts: [{ text: JSON.stringify({
-            mode, posture,
-            allowedHints: Object.fromEntries(eligible.map(id=>[id,PROMPT_HINTS[id]])),
-            localPrompt: prompt
+            captureMode: mode, anatomicalPosture: posture, selectedLighting: lighting || 'not_specified',
+            allowedHints: Object.fromEntries(eligible.map(id => [id, PROMPT_HINTS[id]]))
           }) }]
         }],
-        generationConfig: { temperature: 0.15, maxOutputTokens: 180, responseMimeType: 'application/json' }
+        generationConfig: { maxOutputTokens: 512, responseMimeType: 'application/json' }
       }
 
       const response = await fetch(
         'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent',
-        { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-          body: JSON.stringify(selectionRequest), signal: AbortSignal.timeout(25000) }
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          body: JSON.stringify(selectionRequest),
+          signal: AbortSignal.timeout(20000)
+        }
       )
       if (!response.ok) {
-        // Never forward raw provider errors, which can contain sensitive provider details.
-        const reason = response.status === 429
-          ? 'تجاوزت حصة Gemini المسموحة حاليًا.'
-          : [401,403].includes(response.status)
-          ? 'رفضت Google مفتاح Gemini أو صلاحيات المشروع. راجع إعدادات Google AI Studio.'
-          : response.status === 404
-          ? 'نموذج Gemini المحدد غير متاح لهذا المفتاح. تحقق من اسم النموذج.'
-          : response.status === 400
-          ? 'رفضت Google إعدادات الطلب. راجع إعدادات النموذج.'
-          : 'تعذر الحصول على نتيجة من Gemini. تحقق من اتصال الخدمة.'
-        return json({ error: reason }, 502)
+        console.warn('[Gemini selector] upstream HTTP status:', response.status)
+        return providerStatus(response.status)
       }
-      const output = await response.json() as { candidates?: Array<{ content?: {parts?: Array<{text?: string}>} }> }
-      const modelText = output.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('') || ''
-      const ids = parseHintSelection(modelText, eligible)
+      let output: { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }
+      try { output = await response.json() as typeof output }
+      catch {
+        console.warn('[Gemini selector] provider JSON response invalid')
+        return safeFailure('GEMINI_BAD_RESPONSE', 'أعادت Google استجابة غير قابلة للقراءة. حاول مجددًا.')
+      }
+      const modelText = output.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || ''
+      let ids: PromptHintId[]
+      try { ids = parseHintSelection(modelText, eligible) }
+      catch {
+        console.warn('[Gemini selector] model output did not match allowed hint selection')
+        return safeFailure('GEMINI_INVALID_SELECTION', 'رد Gemini لم يجتز فحص قواعد التطبيق. لم يتغير البرومبت الأصلي.', 422)
+      }
       return json({ enhancedPrompt: buildEnhancedPrompt(prompt, ids), selectedHintIds: ids, model })
     } catch (error) {
-      const message = error instanceof Error ? error.message : ''
-      if (/invalid|selected no safe|structured/.test(message)) return json({ error: 'رد Gemini لم يجتز فحص التوافق مع قواعد التطبيق. البرومبت الأصلي لم يتغير.' }, 422)
-      return json({ error: 'تعذر الاتصال بـGemini. يبقى البرومبت المحلي متاحًا للاستخدام.' }, 502)
+      const err = error as Error & { cause?: { code?: string } }
+      const timeout = err?.name === 'TimeoutError' || err?.name === 'AbortError'
+      const causeCode = typeof err?.cause?.code === 'string' ? err.cause.code : 'UNSPECIFIED'
+      // Only safe diagnostic classification is logged. No request payloads or secrets.
+      console.error('[Gemini selector] outbound failure:', timeout ? 'TIMEOUT' : 'NETWORK', String(causeCode).slice(0,48))
+      return timeout
+        ? safeFailure('GEMINI_TIMEOUT', 'انتهت مهلة اتصال Google. حاول مرة أخرى؛ البرومبت المحلي ما زال متاحًا.', 504)
+        : safeFailure('GEMINI_NETWORK', 'فشل الاتصال الخارجي بخدمة Google من الخادم. البرومبت المحلي لم يتأثر.', 502)
     }
   }
 }
