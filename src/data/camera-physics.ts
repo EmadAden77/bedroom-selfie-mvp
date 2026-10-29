@@ -9,7 +9,7 @@ export function renderCameraPhysics(ctx: CompilationContext): string {
   if (mode === 'mirror') return [
     base,
     'MIRROR CAPTURE: Rear-facing handset visible in the existing wardrobe mirror. The displayed camera viewpoint and reflected phone position follow real equal-angle reflection geometry.',
-    'The iPhone 15 Pro Max Black Titanium appearance remains governed by the mirror handset lock. A real gripping hand holds the device at reachable chest-to-face height, with correct finger contacts.',
+    'The iPhone 15 Pro Max Black Titanium appearance remains governed by the mirror handset lock. A real gripping hand holds the device at the selected waist-to-eye height within normal shoulder and wrist reach, with correct finger contacts. The screen faces the subject and rear camera lenses face the mirror.',
     'Reflected distances, mirror perspective and occlusion are physically consistent. Room lighting determines noise, shadow and flash reflection. No additional selfie camera viewpoint.'
   ].join(' ')
   if (mode === 'timer') return [
