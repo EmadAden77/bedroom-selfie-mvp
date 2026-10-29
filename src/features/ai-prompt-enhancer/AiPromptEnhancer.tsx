@@ -14,7 +14,9 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
   const [copied,setCopied]=useState(false)
   const requestRef=useRef<AbortController|null>(null)
   const prompt=result.promptText
-  const ready=validation.isValid&&result.errors.length===0&&prompt.length>=100
+  const sceneBrief=buildCreativeSceneBrief(ctx)
+  const ready=sceneBrief.trim().length>=50
+  const fallbackReady=validation.isValid&&result.errors.length===0&&prompt.length>=100
   const targetLabels={gemini:'Gemini / Imagen',chatgpt:'ChatGPT / GPT Image',flux:'FLUX',midjourney:'Midjourney'} as const
   const selectedTarget=targetLabels[ctx.promptTarget||'gemini']
 
@@ -39,7 +41,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
         headers:{'content-type':'application/json'},
         signal:ctrl.signal,
         body:JSON.stringify({
-          sceneBrief:buildCreativeSceneBrief(ctx),
+          sceneBrief,
           mode:shot?.mode||'front',
           shotId:shot?.id||'',
           posture:shot?getShotPosture(shot.id)||'seated_bed':ctx.poseId||'seated_bed',
@@ -70,7 +72,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
 
   function useLocal(){
     requestRef.current?.abort()
-    if(!ready)return
+    if(!fallbackReady)return
     setGenerated(prompt);setEngine('local');setError('');setLoading(false);setCopied(false);onPromptReady(prompt)
   }
 
@@ -82,10 +84,10 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
     <p style={{fontSize:'10px',color:'var(--muted)',lineHeight:1.7,margin:'0 0 14px'}}>
       تُرسل إلى Google اختيارات مشهد مختصرة فقط؛ لا يُرسل البرومبت المحلي الطويل أو ملفات صور الوجه والغرفة. يمكنك دائمًا استخدام النسخة المحلية الاحتياطية المستقلة. رابط التطبيق عام وقد يستهلك زواره حصة Gemini.
     </p>
-    {(validation.errors.length>0||result.errors.length>0)&&<div role="alert" style={{fontSize:'12px',color:'#b91c1c',marginBottom:'10px'}}>{[...new Set([...validation.errors,...result.errors])].join(' — ')}</div>}
+    {(validation.errors.length>0||result.errors.length>0)&&<div style={{fontSize:'11px',color:'var(--muted)',marginBottom:'10px'}}>ملاحظة: بعض الخيارات لا تصلح لمحرك النسخة المحلية الاحتياطية فقط؛ لا تمنع Gemini من تأليف برومبت فيزيائي واقعي.</div>}
     <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
       <button type="button" className="btn" disabled={!ready||loading} onClick={generate}>{loading?'Gemini يولّد البرومبت…':engine==='gemini'?'إعادة التوليد بواسطة Gemini':'توليد البرومبت بواسطة Gemini'}</button>
-      <button type="button" className="btn btn-secondary" disabled={!ready} onClick={useLocal}>النسخة المحلية الاحتياطية</button>
+      <button type="button" className="btn btn-secondary" disabled={!fallbackReady} onClick={useLocal}>النسخة المحلية الاحتياطية</button>
     </div>
     {error&&<div role="alert" style={{marginTop:'12px',fontSize:'12px',color:'#b91c1c'}}>{error}</div>}
     {generated&&<div style={{marginTop:'16px'}}>
