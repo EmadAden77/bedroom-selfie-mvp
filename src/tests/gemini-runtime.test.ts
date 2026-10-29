@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import geminiHandler, { PROMPT_HINTS as serverCatalog, eligibleHintIds as serverEligible } from '../../api/generate-prompt'
 import { PROMPT_HINTS as clientCatalog, eligibleHintIds as clientEligible } from '../engine/ai-prompt-guard'
 
-afterEach(()=>vi.unstubAllEnvs())
+afterEach(()=>{ vi.unstubAllEnvs() })
 
 describe('Production Vercel Gemini function regression',()=>{
   it('has no runtime dependency on src/engine and keeps the approved catalog identical',()=>{
