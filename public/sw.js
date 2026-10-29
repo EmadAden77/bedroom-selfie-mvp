@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'bedroom-selfie-builder-v1'
+const CACHE_NAME = 'bedroom-selfie-builder-gemini-main-v2'
 const APP_SHELL = [
   '/',
   '/index.html',

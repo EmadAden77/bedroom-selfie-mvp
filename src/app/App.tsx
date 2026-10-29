@@ -10,9 +10,7 @@ import { bedroomShots, getShotPosture } from '../data/bedroom-shots'
 import { BedroomShotsSelector } from '../features/bedroom-shots/BedroomShotsSelector'
 import { LightGeometrySelector } from '../features/night-lighting/LightGeometrySelector'
 import { NightLightingSelector } from '../features/night-lighting/NightLightingSelector'
-import { PromptPreview } from '../features/prompt-preview/PromptPreview'
 import { AiPromptEnhancer } from '../features/ai-prompt-enhancer/AiPromptEnhancer'
-import { PromptComparison } from '../features/prompt-comparison/PromptComparison'
 import { RealismIntensitySelector } from '../features/realism-intensity/RealismIntensitySelector'
 import { PhotoResultAudit } from '../features/photo-result-audit/PhotoResultAudit'
 import { useReferenceImage } from '../hooks/useReferenceImage'
@@ -56,7 +54,7 @@ export const App: React.FC = () => {
     ...ctx,
     referenceImagePresent: !!meta,
     roomReferencePresent: !!room.meta
-  }), [ctx, meta])
+  }), [ctx, meta, room.meta])
 
   const { validation, result } = useMemo(() => {
     return compilePrompt(ctxWithImage)
@@ -65,14 +63,6 @@ export const App: React.FC = () => {
   const handleContextChange = useCallback((patch: Partial<CompilationContext>) => {
     setCtx(prev => ({ ...prev, ...patch }))
   }, [])
-
-  const handleCopy = useCallback(() => {
-    const text = result.promptText
-    if (!validation.isValid || result.errors.length > 0) return
-    navigator.clipboard.writeText(text).then(() => {
-      alert('تم نسخ Subject & Clothing Prompt Preview. تنبيه: هذا ليس Final Prompt - الأنظمة التالية لم تبن بعد.')
-    })
-  }, [result.promptText, result.errors.length, validation.isValid])
 
   const handleReset = useCallback(() => {
     setCtx(defaultContext)
@@ -115,14 +105,12 @@ export const App: React.FC = () => {
         </div>
       </div>
       <RealismIntensitySelector value={ctx.realismIntensity || 'natural'} onChange={value=>handleContextChange({realismIntensity:value})}/>
-      <PromptPreview result={result} validation={validation} onCopy={handleCopy} onReset={handleReset} />
-      <AiPromptEnhancer ctx={ctxWithImage} result={result} validation={validation} />
-      <PromptComparison ctx={ctxWithImage} />
+      <AiPromptEnhancer ctx={ctxWithImage} result={result} validation={validation} onReset={handleReset} />
       <PhotoResultAudit ctx={ctxWithImage} />
       <footer style={{fontSize:'10px', color:'var(--muted)', textAlign:'center', padding:'20px 0', borderTop:'1px solid var(--border)', marginTop:'20px'}} className="ltr">
         <div>PHYSICAL CLOTHING SYSTEM = APPROVED AND FROZEN</div>
-        <div>Pending: Body profile, Pose mechanics, Selfie geometry, Bedroom environment, Camera pipeline, Final realism validation</div>
-        <div>Local-first: references stay on device - optional AI sends text prompt only to a protected Vercel Function - SHA-256 from bytes - PWA offline base engine</div>
+        <div>Gemini main writer + guarded offline fallback; body, pose, mirror, bedroom and exposure rules validated locally</div>
+        <div>Gemini writes primary image text without a login; local physics and identity are mandatory locks. Uploaded photos stay on device. Text specifications are sent to Google. Offline fallback available.</div>
       </footer>
     </div>
   )
