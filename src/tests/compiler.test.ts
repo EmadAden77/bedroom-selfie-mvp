@@ -21,6 +21,14 @@ const defaultCtx: CompilationContext = {
 }
 
 describe('Bedroom Selfie Builder - Frozen Systems', () => {
+  it('supports four image prompt targets while preserving the canonical identity and room locks',()=>{
+    for(const promptTarget of ['gemini','chatgpt','flux','midjourney'] as const){
+      const compiled=compilePrompt({...defaultCtx,promptTarget})
+      expect(compiled.validation.isValid).toBe(true)
+      expect(compiled.result.promptText).toContain('Reference identity anchored to reference image')
+    }
+  })
+
   it('Default selections produce non-empty Subject & Clothing Prompt Preview', () => {
     const { result } = compilePrompt(defaultCtx)
     expect(result.promptText.length).toBeGreaterThan(50)
