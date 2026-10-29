@@ -33,8 +33,8 @@ describe('Gemini image auditing and targeted repair',()=>{
  it('builds correction by appending to original unchanged and touching only failures',()=>{
   const parsed=parseAudit(JSON.stringify(fakeResponse),true,true)
   const repaired=buildCorrectedPhotoPrompt(originalPrompt,parsed)
-  expect(repaired.startsWith(originalPrompt)).toBe(true)
-  expect(repaired).toContain('existing sliding wardrobe')
+  expect(repaired.startsWith(originalPrompt.trim())).toBe(true)
+  expect(repaired).toContain('actual sliding wardrobe mirror')
   expect(repaired).not.toContain('new person')
   expect(repaired).toContain('Only correct the listed failures')
  })
@@ -51,7 +51,7 @@ describe('Gemini image auditing and targeted repair',()=>{
   expect(sentParts.filter((x:Record<string,unknown>)=>'inline_data' in x)).toHaveLength(1)
   expect(JSON.stringify(sentParts)).not.toContain('test-no-real-secret')
   const result=await response.json() as {correctedPrompt:string;audit:{findings:Array<{criterion:string;status:string}>}}
-  expect(result.correctedPrompt).toContain(originalPrompt)
+  expect(result.correctedPrompt).toContain(originalPrompt.trim())
   expect(result.audit.findings.find(x=>x.criterion==='identity')?.status).toBe('uncertain')
  })
  it('compares identity only when user consented to send a subject reference',async()=>{
