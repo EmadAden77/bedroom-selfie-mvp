@@ -87,7 +87,7 @@ export const buildCorrectedPhotoPrompt=(original:string,audit:Audit):string=>{
   // For identity, hair, room, lighting and skin, enforce the vetted reference-preservation
   // correction only. The model may describe deviations but cannot rewrite anatomy or topology.
   const allowDetail=['pose','hands','mirror','clothing','camera'].includes(f.criterion) &&
-   !/\\b(add|replace|new|different|second|extra|beautify|reshape|modify identity|widen shoulders|studio|softbox|change face|change hairline)\\b/i.test(f.repairEn)
+   !/\b(add|replace|new|different|second|extra|beautify|reshape|modify identity|widen shoulders|studio|softbox|change face|change hairline)\b/i.test(f.repairEn)
   return (i+1)+'. '+defaultCorrections[f.criterion]+(allowDetail&&f.repairEn?' Targeted visual correction: '+f.repairEn:'')
  })
  return original.trim()+'\n\nPHOTO RESULT REPAIR — targeted deviations only. The original identity reference and bedroom reference remain authoritative; retain all other selected scene properties:\n'+adjustments.join('\n')+
