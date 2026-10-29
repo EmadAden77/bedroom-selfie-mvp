@@ -11,6 +11,7 @@ import { BedroomShotsSelector } from '../features/bedroom-shots/BedroomShotsSele
 import { LightGeometrySelector } from '../features/night-lighting/LightGeometrySelector'
 import { NightLightingSelector } from '../features/night-lighting/NightLightingSelector'
 import { PromptPreview } from '../features/prompt-preview/PromptPreview'
+import { AiPromptEnhancer } from '../features/ai-prompt-enhancer/AiPromptEnhancer'
 import { PromptComparison } from '../features/prompt-comparison/PromptComparison'
 import { RealismIntensitySelector } from '../features/realism-intensity/RealismIntensitySelector'
 import { PhotoResultAudit } from '../features/photo-result-audit/PhotoResultAudit'
@@ -115,12 +116,13 @@ export const App: React.FC = () => {
       </div>
       <RealismIntensitySelector value={ctx.realismIntensity || 'natural'} onChange={value=>handleContextChange({realismIntensity:value})}/>
       <PromptPreview result={result} validation={validation} onCopy={handleCopy} onReset={handleReset} />
+      <AiPromptEnhancer ctx={ctxWithImage} result={result} validation={validation} />
       <PromptComparison ctx={ctxWithImage} />
       <PhotoResultAudit ctx={ctxWithImage} />
       <footer style={{fontSize:'10px', color:'var(--muted)', textAlign:'center', padding:'20px 0', borderTop:'1px solid var(--border)', marginTop:'20px'}} className="ltr">
         <div>PHYSICAL CLOTHING SYSTEM = APPROVED AND FROZEN</div>
         <div>Pending: Body profile, Pose mechanics, Selfie geometry, Bedroom environment, Camera pipeline, Final realism validation</div>
-        <div>Local-First - No Backend - No External Uploads - SHA-256 from bytes - Object URL with revoke on remove/replace/unmount - PWA Offline</div>
+        <div>Local-first: references stay on device - optional AI sends text prompt only to a protected Vercel Function - SHA-256 from bytes - PWA offline base engine</div>
       </footer>
     </div>
   )
