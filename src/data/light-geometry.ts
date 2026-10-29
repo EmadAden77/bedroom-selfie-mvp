@@ -50,7 +50,14 @@ export function renderLightGeometry(ctx: CompilationContext): string {
       : face.text
   const usesLamp = lighting === 'bedside_warm' || lighting === 'lamp_and_screen'
   const usesPhone = lighting === 'phone_screen_only' || lighting === 'lamp_and_screen' || lighting === 'ceiling_and_screen'
-  const usesCeiling = lighting === 'ceiling_dim' || lighting === 'ceiling_neutral' || lighting === 'ceiling_led_neutral' || lighting === 'ceiling_and_screen'
+  const usesCeiling = lighting === 'ceiling_dim' || lighting === 'ceiling_neutral' || lighting.startsWith('ceiling_led_') || lighting === 'ceiling_and_screen'
+  // LED modes share the physical room ceiling, but differ by which existing fixtures are active.
+  const ledPlacement: Record<string,string> = {
+    ceiling_led_soft_diffused: 'LED ceiling placement: Multiple installed downlights are active at modest power. Their overlapping overhead pools remain anchored as the camera moves; no uniform facial fill.',
+    ceiling_led_bed_side: 'LED ceiling placement: Only installed downlights closest to the LEFT-wall bed are active. Brightness decreases toward the RIGHT wall; shadows follow real light paths independently of camera angle.',
+    ceiling_led_wardrobe_side: 'LED ceiling placement: Only installed downlights closest to the RIGHT-wall wardrobe are active. The mirror reflects those lights through physical equal-angle ray paths; shadows remain weaker on the far LEFT side.',
+    ceiling_led_single_downlight: 'LED ceiling placement: Only a single installed central ceiling spot is active. Its limited beam spread and distance create a local bright area with dimmer room edges.'
+  }
   const pieces = [
     'Selfie pose geometry: ' + pose.text,
     'Face direction: ' + faceDescription,
@@ -59,6 +66,7 @@ export function renderLightGeometry(ctx: CompilationContext): string {
   if (usesLamp) pieces.push('Bedside lamp fixed ' + side.text + ' on the nightstand. Recompute cheek, nose, pillow and neck shadows from this source and the actual head tilt; do not force the same bright cheek across poses.')
   if (usesPhone && !rear && !reflected && !stationary) pieces.push('Phone display faces the subject near the camera optical axis. Illumination tracks phone-to-face distance and angle; the camera sensor does not emit light. Face-to-neck falloff remains natural.')
   if (usesCeiling) pieces.push('Ceiling fixtures remain above the physical room even when the head is horizontal; their projection onto face and bedding changes with posture.')
+  if (ledPlacement[lighting]) pieces.push(ledPlacement[lighting])
   if (lighting === 'hallway_spill') pieces.push('Doorway spill is fixed at the real door; turning away reduces direct facial illumination. No light reaches surfaces blocked by walls.')
   if (lighting === 'window_streetlight') pieces.push('External streetlight passes only through an uncovered window; curtain, wall and bed occlusion determine the visible spill.')
   if (lighting === 'laptop_screen_only') pieces.push('An open laptop must be positioned in front of the subject within viewing distance and aimed toward the face; face rotation and the laptop-screen normal determine exposure.')
