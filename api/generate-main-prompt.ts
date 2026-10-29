@@ -34,6 +34,21 @@ export const assembleMainPrompt=(modelText:string,immutablePrompt:string):string
   'FINAL CONSISTENCY: If any descriptive phrase above conflicts with a reference feature, selected garment, bedroom object, mirror ray, light source or body pose, the mandatory locks control. Keep the existing identity unchanged.'
  ].join('\n\n')
 }
+// Best-effort per-instance burst ceiling (not a distributed quota or identity check).
+// For robust cross-region enforcement, configure Vercel Firewall rate limiting.
+const burstWindows=new Map<string,{count:number;endsAt:number}>()
+const burstAllowed=(request:Request,now=Date.now()):boolean=>{
+ const ip=(request.headers.get('x-forwarded-for')||request.headers.get('x-real-ip')||'anonymous').split(',')[0].trim().slice(0,80)
+ const existing=burstWindows.get(ip)
+ if(!existing||existing.endsAt<=now){
+  if(burstWindows.size>2000){for(const [k,v] of burstWindows){if(v.endsAt<=now)burstWindows.delete(k)}}
+  burstWindows.set(ip,{count:1,endsAt:now+60000})
+  return true
+ }
+ if(existing.count>=6)return false
+ existing.count+=1
+ return true
+}
 const allowed=(value:unknown)=>typeof value==='string'&&value.length<=90&&/^[a-zA-Z0-9_-]*$/.test(value)
 export default {
  async fetch(request:Request):Promise<Response>{
@@ -59,6 +74,7 @@ export default {
    !/BEDROOM ENVIRONMENT LOCK|bedroom environment/i.test(basePrompt)){
     return fail('INVALID_SELECTION','الخيارات غير صالحة. اختر وضعية وملابس صحيحة أولًا.',400)
    }
+  if(!burstAllowed(request))return fail('GEMINI_RATE_LIMIT','طلبات كثيرة من نفس الشبكة. حاول مرة أخرى بعد دقيقة، أو استخدم البرومبت المحلي.',429)
   const model=process.env.GEMINI_MAIN_MODEL||'gemini-3.5-flash-lite'
   if(!/^[a-zA-Z0-9._-]{3,80}$/.test(model))return fail('MODEL_CONFIG','اسم النموذج غير صالح.',503)
   try{
