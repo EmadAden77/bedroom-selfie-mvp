@@ -6,7 +6,7 @@ import { ReferenceImageSection } from '../features/reference-image/ReferenceImag
 import { HairSelector } from '../features/subject-options/HairSelector'
 import { ExpressionSelector } from '../features/subject-options/ExpressionSelector'
 import { ClothingSelector } from '../features/clothing-options/ClothingSelector'
-import { getShotPosture } from '../data/bedroom-shots'
+import { bedroomShots, getShotPosture } from '../data/bedroom-shots'
 import { BedroomShotsSelector } from '../features/bedroom-shots/BedroomShotsSelector'
 import { LightGeometrySelector } from '../features/night-lighting/LightGeometrySelector'
 import { NightLightingSelector } from '../features/night-lighting/NightLightingSelector'
@@ -89,7 +89,16 @@ export const App: React.FC = () => {
       <ClothingSelector ctx={ctxWithImage} onChange={handleContextChange} />
       <NightLightingSelector selectedId={ctx.nightLightingId || 'phone_screen_only'} windowUncovered={!!ctx.windowUncovered} onSelect={id=>handleContextChange({ nightLightingId:id })} onWindowChange={open=>handleContextChange({ windowUncovered:open })}/>
       <LightGeometrySelector poseId={ctx.poseId || 'seated_bed'} faceDirectionId={ctx.faceDirectionId || 'toward_camera'} lampSideId={ctx.lampSideId || 'left'} onChange={patch=>handleContextChange({ ...patch, ...(patch.poseId ? {bedroomShotId:''} : {}) })}/>
-      <BedroomShotsSelector value={ctx.bedroomShotId || ''} onChange={id=>handleContextChange({bedroomShotId:id, ...(getShotPosture(id)?{poseId:getShotPosture(id)}:{}), ...(id==='mirror_rear_flash'?{nightLightingId:'rear_flash'}:{})})}/>
+      <BedroomShotsSelector value={ctx.bedroomShotId || ''} onChange={id=>{
+        const selectedShot=bedroomShots.find(s=>s.id===id)
+        const currentLighting=ctx.nightLightingId || 'phone_screen_only'
+        const nextLighting=id==='mirror_rear_flash' ? 'rear_flash'
+          : selectedShot?.mode==='mirror' && ['phone_screen_only','rear_flash'].includes(currentLighting) ? 'ceiling_neutral'
+          : id && currentLighting==='rear_flash' ? 'ceiling_neutral'
+          : currentLighting
+        handleContextChange({bedroomShotId:id,...(getShotPosture(id)?{poseId:getShotPosture(id)}:{}),nightLightingId:nextLighting,
+          ...(selectedShot?.mode==='mirror' ? {faceDirectionId:'toward_camera'} : {})})
+      }}/>
       <div className="card">
         <div style={{fontWeight:600,fontSize:'14px',marginBottom:'10px'}}>مولّد الصور المستهدف</div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}}>
