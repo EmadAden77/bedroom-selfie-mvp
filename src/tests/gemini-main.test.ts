@@ -7,7 +7,7 @@ const prompt='Reference identity anchored to reference image: preserve same pers
 const endpoint='https://bedroom-selfie-mvp.vercel.app/api/generate-main-prompt'
 const payload={basePrompt:prompt,mode:'mirror',posture:'standing',shotId:'mirror_45',lighting:'ceiling_neutral',target:'gemini'}
 const post=(data:unknown=payload,headers:Record<string,string>={})=>new Request(endpoint,{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(data)})
-const modelResponse=JSON.stringify({scene:'A person stands diagonally beside the real mirrored wardrobe, holding their actual smartphone steadily and naturally, while weight rests on the rear leg.',camera:'The phone rear camera records the correct reflection with physically consistent glass rays and the true hand supporting its weight.',naturalism:'Ordinary room ceiling illumination casts believable shadows; restrained phone noise and modest imperfect framing preserve a candid daily feeling.'})
+const modelResponse=JSON.stringify({scene:'A person stands diagonally beside the real mirrored wardrobe, holding their actual smartphone steadily and naturally, while weight rests on the rear leg.',camera:'The phone rear camera records the correct reflection in the real sliding wardrobe mirror with physically consistent glass rays and the true hand supporting its weight.',naturalism:'Ordinary room ceiling illumination casts believable shadows; restrained phone noise and modest imperfect framing preserve a candid daily feeling.'})
 
 describe('Gemini as main passwordless prompt writer',()=>{
  it('does not require a password for the main endpoint',async()=>{
