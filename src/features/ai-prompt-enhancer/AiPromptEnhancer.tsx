@@ -2,10 +2,10 @@ import React,{useEffect,useRef,useState} from 'react'
 import type {CompilationContext,CompilationResult,ValidationResult} from '../../domain/types'
 import {bedroomShots,getShotPosture} from '../../data/bedroom-shots'
 
-type Props={ctx:CompilationContext;result:CompilationResult;validation:ValidationResult;onReset:()=>void}
+type Props={ctx:CompilationContext;result:CompilationResult;validation:ValidationResult;onReset:()=>void;onPromptReady:(prompt:string)=>void}
 type MainReply={prompt?:string;source?:string;model?:string;error?:string;errorCode?:string}
 
-export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset})=>{
+export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,onPromptReady})=>{
   const [generated,setGenerated]=useState('')
   const [engine,setEngine]=useState<'gemini'|'local'|''>('')
   const [error,setError]=useState('')
@@ -18,7 +18,8 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset})=
   useEffect(()=>{
     requestRef.current?.abort()
     setGenerated('');setEngine('');setError('');setLoading(false);setCopied(false)
-  },[prompt])
+    onPromptReady('')
+  },[prompt,onPromptReady])
   useEffect(()=>()=>requestRef.current?.abort(),[])
 
   async function generate(){
@@ -51,7 +52,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset})=
         throw Error((payload.error||'تعذر توليد البرومبت عبر Gemini.')+(payload.errorCode?' ('+payload.errorCode+')':''))
       if(!payload.prompt.includes(prompt.trim()))
         throw Error('رفض التطبيق نتيجة لم تحافظ على قواعد الهوية والغرفة الأصلية.')
-      if(!ctrl.signal.aborted){setGenerated(payload.prompt);setEngine('gemini')}
+      if(!ctrl.signal.aborted){setGenerated(payload.prompt);setEngine('gemini');onPromptReady(payload.prompt)}
     }catch(err){
       if(!ctrl.signal.aborted)setError(err instanceof Error?err.message:'تعذر الاتصال بـGemini.')
     }finally{
@@ -68,7 +69,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset})=
   function useLocal(){
     requestRef.current?.abort()
     if(!ready)return
-    setGenerated(prompt);setEngine('local');setError('');setLoading(false);setCopied(false)
+    setGenerated(prompt);setEngine('local');setError('');setLoading(false);setCopied(false);onPromptReady(prompt)
   }
 
   return <section className="card" aria-label="المحرك الرئيسي لتوليد البرومبت">

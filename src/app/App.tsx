@@ -48,6 +48,7 @@ const defaultContext: CompilationContext = {
 export const App: React.FC = () => {
   const { meta, error: imageError, loading: imageLoading, handleFile, removeImage } = useReferenceImage()
   const [ctx, setCtx] = useState<CompilationContext>(defaultContext)
+  const [activeGeneratedPrompt, setActiveGeneratedPrompt] = useState('')
   const room = useReferenceImage()
 
   const ctxWithImage = useMemo(() => ({
@@ -66,6 +67,7 @@ export const App: React.FC = () => {
 
   const handleReset = useCallback(() => {
     setCtx(defaultContext)
+    setActiveGeneratedPrompt('')
     removeImage()
     room.removeImage()
   }, [removeImage, room.removeImage])
@@ -105,12 +107,12 @@ export const App: React.FC = () => {
         </div>
       </div>
       <RealismIntensitySelector value={ctx.realismIntensity || 'natural'} onChange={value=>handleContextChange({realismIntensity:value})}/>
-      <AiPromptEnhancer ctx={ctxWithImage} result={result} validation={validation} onReset={handleReset} />
-      <PhotoResultAudit ctx={ctxWithImage} />
+      <AiPromptEnhancer ctx={ctxWithImage} result={result} validation={validation} onReset={handleReset} onPromptReady={setActiveGeneratedPrompt} />
+      <PhotoResultAudit ctx={ctxWithImage} originalPrompt={activeGeneratedPrompt || result.promptText} subjectReferenceUrl={meta?.objectUrl} roomReferenceUrl={room.meta?.objectUrl} />
       <footer style={{fontSize:'10px', color:'var(--muted)', textAlign:'center', padding:'20px 0', borderTop:'1px solid var(--border)', marginTop:'20px'}} className="ltr">
         <div>PHYSICAL CLOTHING SYSTEM = APPROVED AND FROZEN</div>
         <div>Gemini main writer + guarded offline fallback; body, pose, mirror, bedroom and exposure rules validated locally</div>
-        <div>Gemini writes primary image text without a login; local physics and identity are mandatory locks. Uploaded photos stay on device. Text specifications are sent to Google. Offline fallback available.</div>
+        <div>Gemini generates prompts; selected text specifications are sent to Google. Photo result audit sends images only with explicit opt-in. Immutable physics/identity locks and offline fallback remain.</div>
       </footer>
     </div>
   )

@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { AiPhotoAudit } from './AiPhotoAudit'
 import { makeAuditCorrection } from './correction'
 import type { CompilationContext } from '../../domain/types'
 import { formatAuditFeedback, getAuditCriteria, summarizeAudit, type AuditRatings, type AuditStatus } from './audit'
 
-type Props = { ctx: CompilationContext }
-export const PhotoResultAudit: React.FC<Props> = ({ ctx }) => {
+type Props = { ctx: CompilationContext; originalPrompt: string; subjectReferenceUrl?: string; roomReferenceUrl?: string }
+export const PhotoResultAudit: React.FC<Props> = ({ ctx, originalPrompt, subjectReferenceUrl, roomReferenceUrl }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [ratings, setRatings] = useState<AuditRatings>({})
   const [notes, setNotes] = useState('')
@@ -42,9 +43,9 @@ export const PhotoResultAudit: React.FC<Props> = ({ ctx }) => {
   }
   return (
     <section className="card" aria-label="مراجعة الصورة الناتجة">
-      <div style={{fontSize:'14px',fontWeight:600,marginBottom:'8px'}}>٧. Photo Result Audit — مراجعة الصورة الناتجة</div>
+      <div style={{fontSize:'14px',fontWeight:600,marginBottom:'8px'}}>٨. Photo Result Audit — مراجعة الصورة الناتجة</div>
       <div style={{fontSize:'12px',color:'var(--muted)',marginBottom:'10px'}}>
-        ارفع الصورة الناتجة من Gemini أو ChatGPT، ثم قيّم البنود بنفسك. هذا فحص يدوي محلي وليس تحليلًا آليًا للصورة. لا تُرفع الصورة إلى خادم.
+        ارفع الصورة الناتجة. تستطيع تحليلها عبر Gemini بعد موافقة صريحة، أو مراجعتها يدويًا محليًا دون إرسالها.
       </div>
       <label style={{fontSize:'12px',display:'block',marginBottom:'8px'}}>
         الصورة الناتجة (JPG / PNG / WebP)
@@ -56,6 +57,8 @@ export const PhotoResultAudit: React.FC<Props> = ({ ctx }) => {
           <div><button type="button" className="btn btn-secondary" onClick={()=>{setImageUrl(null);setRatings({});setNotes('')}}>إزالة الصورة</button></div>
         </div>
       )}
+      {imageUrl && <AiPhotoAudit imageUrl={imageUrl} ctx={ctx} originalPrompt={originalPrompt} subjectReferenceUrl={subjectReferenceUrl} roomReferenceUrl={roomReferenceUrl}/>}
+      <div style={{fontSize:'12px',fontWeight:700,marginTop:'16px',marginBottom:'5px'}}>التقييم اليدوي المحلي (بدون رفع الصورة)</div>
       {criteria.map(item=>(
         <div key={item.id} style={{borderTop:'1px solid var(--border)',padding:'10px 0'}}>
           <div style={{fontWeight:600,fontSize:'12px'}}>{item.label}</div>
