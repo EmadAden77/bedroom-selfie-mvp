@@ -16,21 +16,21 @@ export const bedroomShots:BedroomShot[]=[
 {id:"bed_edge",label:"حافة السرير",description:"Seated at mattress edge leaning slightly forward, one elbow on knee and camera arm free.",category:0,mode:'front'},
 {id:"upside_bed_edge",label:"الرأس قرب حافة السرير",description:"Supine near mattress edge with head slightly tilted beyond pillow support; neck remains comfortably supported.",category:0,mode:'front'},
 {id:"cheek_pillow",label:"الخد على الوسادة",description:"Side of face compressed naturally against pillow; selfie phone in reachable free hand.",category:0,mode:'front'},
-{id:"mirror_floor",label:"الجلوس أمام مرآة",description:"Sitting on floor facing existing wardrobe mirror; phone and reflection obey mirror geometry.",category:1,mode:'mirror',requires:'mirror'},
-{id:"mirror_face_phone",label:"الهاتف أمام الوجه بالمرآة",description:"Phone partly obscures face in mirror reflection, no contradictory fully visible face.",category:1,mode:'mirror',requires:'mirror'},
-{id:"mirror_double",label:"انعكاس مرآتين",description:"Hand mirror and existing wardrobe mirror form consistent multiple reflections, no duplicate person.",category:1,mode:'mirror',requires:'mirror'},
-{id:"mirror_dresser",label:"مرآة التسريحة",description:"Seated at dresser only if a mirror physically exists; otherwise use wardrobe mirrored door.",category:1,mode:'mirror',requires:'mirror'},
-{id:"mirror_45",label:"الوقوف بزاوية",description:"Standing turned about 45 degrees to existing mirror, one leg comfortably forward.",category:1,mode:'mirror',requires:'mirror'},
-{id:"mirror_rear_flash",label:"فلاش خلفي في المرآة",description:"Rear camera and actual flash pointed into mirror; bright specular flash reflection at correct reflected angle.",category:1,mode:'mirror',requires:'mirror'},
-{id:"mirror_close",label:"قريب من المرآة",description:"Face and phone close to real mirror, correct reflected distance and camera occlusion.",category:1,mode:'mirror',requires:'mirror'},
-{id:"mirror_phone_gaze",label:"النظر للهاتف بالمرآة",description:"Look at phone screen reflected in real mirror rather than camera lens.",category:1,mode:'mirror',requires:'mirror'},
-{id:"mirror_jacket",label:"تعديل الملابس بالمرآة",description:"One hand adjusts shirt collar while other holds phone toward wardrobe mirror.",category:1,mode:'mirror',requires:'mirror'},
-{id:"mirror_wardrobe",label:"مرآة باب الدولاب",description:"Partially opened sliding wardrobe mirror, reflections consistent with door geometry.",category:1,mode:'mirror',requires:'mirror'},
-{id:"mirror_bed_reflection",label:"انعكاس السرير",description:"Lying on bed facing wardrobe mirror, phone held so the camera can see the reflection.",category:1,mode:'mirror',requires:'mirror'},
-{id:"mirror_writing",label:"رسم على المرآة",description:"Small erasable mark on an existing mirror, kept out of facial region.",category:1,mode:'mirror',requires:'mirror'},
-{id:"mirror_mist",label:"ضباب خفيف على المرآة",description:"Light localized condensation on mirror surface only; lens stays clean.",category:1,mode:'mirror',requires:'mirror'},
-{id:"mirror_floor_angle",label:"مرآة مائلة",description:"A real stable leaning mirror, camera aimed downward with consistent reflected horizon.",category:1,mode:'mirror',requires:'mirror'},
-{id:"mirror_half_face",label:"نصف الوجه بالمرآة",description:"Stand at mirror edge so only part of face appears in reflection.",category:1,mode:'mirror',requires:'mirror'},
+{id:"mirror_floor",label:"جلوس على السجادة أمام المرآة",description:"Sitting on the existing central rug facing the RIGHT-wall sliding wardrobe mirror. Pelvis rests on the floor, knees relaxed, one hand holds the phone at chest height toward the mirror, free palm rests on thigh. The reflected seated body is framed only within the real glass boundaries.",category:1,mode:'mirror',requires:'mirror'},
+{id:"mirror_face_phone",label:"الهاتف يغطي جزءًا من الوجه",description:"Standing facing the wardrobe mirror, phone raised beside one cheek so it naturally masks a small part of the reflected face. Keep the other eye visible. The covered facial region remains hidden behind the handset.",category:1,mode:'mirror',requires:'mirror'},
+{id:"mirror_double",label:"كتف مائل ويد في الجيب",description:"Standing three-quarter to the wardrobe mirror, one shoulder lowered slightly, feet staggered, free hand resting loosely inside the selected trousers pocket when the chosen clothing has one. Otherwise free fingers rest beside the hip. Exactly one existing mirror.",category:1,mode:'mirror',requires:'mirror'},
+{id:"mirror_dresser",label:"وقفة بجانب التسريحة",description:"Standing close to the existing dresser on the RIGHT wall while photographing through the adjacent fixed wardrobe mirror panel. Free fingertips may touch the near dresser edge without reaching through the glass. Show dresser objects only if the reflection sightline includes them.",category:1,mode:'mirror',requires:'mirror'},
+{id:"mirror_45",label:"وقوف بزاوية 45 درجة",description:"Standing approximately 45 degrees relative to the mirror normal, one foot slightly forward and pelvis naturally balanced. Head turns back toward the reflected gaze without exceeding neck range, phone hand lifted at upper-chest height.",category:1,mode:'mirror',requires:'mirror'},
+{id:"mirror_rear_flash",label:"فلاش خلفي أمام المرآة",description:"Standing at a comfortable clearance from the wardrobe mirror, rear camera pointed at the glass, real handset LED flash fires during exposure. A localized specular flash reflection may obscure part of the frame while real ceiling or ambient illumination remains subordinate.",category:1,mode:'mirror',requires:'mirror'},
+{id:"mirror_close",label:"لقطة قريبة من المرآة",description:"Standing closer to the existing mirrored wardrobe with natural personal clearance. The phone stays reachable near cheek height, reflected face and torso have correct optical distance through the mirror, with believable cropping and no oversized head.",category:1,mode:'mirror',requires:'mirror'},
+{id:"mirror_phone_gaze",label:"النظر إلى شاشة الهاتف",description:"Standing comfortably facing the wardrobe mirror. Eyes drop toward the physical handset display facing the subject, while the rear camera module points at the mirror. The display itself is not visible as a reflected front screen.",category:1,mode:'mirror',requires:'mirror'},
+{id:"mirror_jacket",label:"تعديل الياقة أو الكم",description:"Standing facing the wardrobe mirror, phone in one hand and the free hand straightening the actually selected shirt neckline, collar seam, or sleeve cuff. The fabric responds at the real grasp point; do not add a jacket or a new garment.",category:1,mode:'mirror',requires:'mirror'},
+{id:"mirror_wardrobe",label:"الوقوف بجانب باب الدولاب",description:"Standing offset beside the closed mirrored sliding wardrobe panel, body aligned in the same room. The mirror stays upright and fixed in its existing track, showing a single reflection with no transparent wardrobe interior and no duplicated doors.",category:1,mode:'mirror',requires:'mirror'},
+{id:"mirror_bed_reflection",label:"على حافة السرير أمام المرآة",description:"Seated on the edge of the existing LEFT-wall bed facing the RIGHT-wall wardrobe mirror across the real walking gap. Hips compress the mattress locally, feet rest on tile, and one hand aims the rear camera toward the mirror. The bed appears in reflection only where the optical path permits.",category:1,mode:'mirror',requires:'mirror'},
+{id:"mirror_writing",label:"تعديل الكم أمام المرآة",description:"Standing close enough to see the reflected upper body in the wardrobe mirror, phone held steadily in one hand. Free fingertips adjust the selected sleeve hem near the wrist, with plausible tension folds and no marks on the glass.",category:1,mode:'mirror',requires:'mirror'},
+{id:"mirror_mist",label:"نظرة فوق الكتف بالمرآة",description:"Standing with torso rotated modestly away from the wardrobe mirror, feet supporting weight, head looking back over the shoulder toward the reflected face within normal neck rotation. The phone-holding arm remains independently supported in the mirror view.",category:1,mode:'mirror',requires:'mirror'},
+{id:"mirror_floor_angle",label:"زاوية هاتف منخفضة بالمرآة",description:"Standing upright in front of the vertical wardrobe mirror. Hold the phone at waist height, angle its rear cameras gently upward into the same glass. The reflection shows a realistic lower viewpoint and normal limb proportions, with no leaning mirror.",category:1,mode:'mirror',requires:'mirror'},
+{id:"mirror_half_face",label:"نصف الوجه عند طرف المرآة",description:"Standing near the physical edge of the existing wardrobe mirror panel, head slightly offset. Only part of the face falls inside the reflective surface, with the remaining portion honestly outside the mirror boundary, not erased or duplicated.",category:1,mode:'mirror',requires:'mirror'},
 {id:"fingers_hair",label:"تمرير الأصابع بالشعر",description:"Free hand threads lightly through existing hair without altering density.",category:2,mode:'front'},
 {id:"touch_chin",label:"لمس الذقن",description:"Free fingertip resting lightly on chin, gentle pressure and normal hand anatomy.",category:2,mode:'front'},
 {id:"peace_wink",label:"إشارة السلام وغمزة",description:"Free hand makes peace sign near eye while one eyelid closes naturally.",category:2,mode:'front'},
@@ -93,9 +93,17 @@ export const bedroomShots:BedroomShot[]=[
 {id:"paper_reach_bed",label:"التقاط ورقة من فوق السرير",description:"Seated sideways on mattress and reaching free hand to retrieve a paper beside thigh.",category:0,mode:"front"}
 ]
 export function renderBedroomShot(shot:BedroomShot):string {
- const mode=shot.mode==='mirror'?'Existing real mirrored wardrobe door; optical reflection obeys camera, subject and glass geometry. The smartphone is present in reflection where sightlines require it.':shot.mode==='timer'?'Phone is securely placed on stable support, timer shutter; not a hand-held selfie.':shot.mode==='rear'?'Phone rear camera held by subject within realistic reach; no floating third-person point of view.':'Subject holds front-facing smartphone at plausible arm reach; the photographing hand is occupied, free hand performs the selected action.'
- const phoneLock = shot.mode === 'mirror' ? ' Mirror selfie device lock: The visible handset is an Apple iPhone 15 Pro Max in Black Titanium. Its authentic rear face has three camera lenses arranged in the correct triangular camera cluster, with the real flash and LiDAR positions, correct body dimensions and natural dark titanium finish. Preserve physically accurate reflected orientation, perspective, grip and phone-to-face occlusion. No extra lenses, model substitutions, duplicate phones, floating device, or impossible reflections.' : ''
- return 'Bedroom shot: '+shot.description.replace(/\\bor\\b/gi,'and')+' '+mode+phoneLock+' Maintain physical contacts, gravity, real source positions, consistent shadows and unaltered reference identity.'
+ const mode=shot.mode==='mirror'
+  ? 'MIRROR ROOM GEOMETRY: Use only the existing vertical mirrored sliding wardrobe panel on the RIGHT room wall, fixed in its original track. Subject and recording phone stay on the room-facing side of the glass. The single handset rear cameras aim into the mirror while its display faces the subject. Equal-angle reflection determines the camera ray, phone placement, visible subject, reflected background and edge cropping. Focus uses the full reflected optical path, not the distance to the glass. Only furniture genuinely inside that ray path may appear. One continuous recording arm and one independent free arm; no invented reflective surfaces, second recording device, third arm and displaced furniture.'
+  : shot.mode==='timer'
+  ? 'Phone is securely placed on stable support, timer shutter; not a hand-held selfie.'
+  : shot.mode==='rear'
+  ? 'Phone rear camera held by subject within realistic reach; no floating third-person point of view.'
+  : 'Subject holds front-facing smartphone at plausible arm reach; the photographing hand is occupied, free hand performs the selected action.'
+ const phoneLock=shot.mode==='mirror'
+  ? ' MIRROR HANDSET LOCK: Exactly one Apple iPhone 15 Pro Max in Black Titanium appears in the reflection. Authentic rear face with three lenses in the correct triangular arrangement, LED flash, LiDAR, normal body proportions and dark titanium finish. Real fingers and wrist support the handset. Its reflection respects left-right reversal, distance and occlusion. The phone can conceal facial features at the actual overlap; no duplicated devices, floating capture and invented camera lenses.'
+  : ''
+ return 'Bedroom shot: '+shot.description+' '+mode+phoneLock+' Preserve the reference identity, physical support, real source lighting and natural household photographic exposure.'
 }
 
 // One canonical anatomical posture per shot; never append a second competing posture.
@@ -138,9 +146,9 @@ export const shotPostures: Record<string,string> = {
   "upside_bed_edge": "supine",
   "reading_book": "reclined_pillows",
   "pillow_stack": "reclined_pillows",
-  "mirror_bed_reflection": "reclined_pillows",
+  "mirror_bed_reflection": "seated_bed",
   "mirror_floor": "seated_floor",
-  "mirror_dresser": "seated_floor",
+  "mirror_dresser": "standing",
   "hug_pillow": "seated_bed",
   "blanket_half_face": "seated_bed",
   "cross_legged_timer": "seated_bed",
