@@ -93,17 +93,21 @@ export const App: React.FC = () => {
           ...(selectedShot?.mode==='mirror' ? {faceDirectionId:'toward_camera'} : {})})
       }}/>
       <div className="card">
-        <div style={{fontWeight:600,fontSize:'14px',marginBottom:'10px'}}>مولّد الصور المستهدف</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}}>
-          <button type="button" className={`option ${(ctx.promptTarget || 'gemini') === 'gemini' ? 'selected' : ''}`}
-            aria-pressed={(ctx.promptTarget || 'gemini') === 'gemini'}
-            onClick={()=>handleContextChange({promptTarget:'gemini'})}>Gemini Prompt</button>
-          <button type="button" className={`option ${ctx.promptTarget === 'chatgpt' ? 'selected' : ''}`}
-            aria-pressed={ctx.promptTarget === 'chatgpt'}
-            onClick={()=>handleContextChange({promptTarget:'chatgpt'})}>ChatGPT Prompt</button>
+        <div style={{fontWeight:600,fontSize:'14px',marginBottom:'10px'}}>نموذج توليد الصور المستهدف</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:'8px'}}>
+          {([
+            ['gemini','Gemini / Imagen'],
+            ['chatgpt','ChatGPT / GPT Image'],
+            ['flux','FLUX'],
+            ['midjourney','Midjourney']
+          ] as const).map(([id,label])=><button key={id} type="button"
+            className={'option '+((ctx.promptTarget||'gemini')===id?'selected':'')}
+            aria-pressed={(ctx.promptTarget||'gemini')===id}
+            onClick={()=>handleContextChange({promptTarget:id})}>{label}</button>)}
         </div>
-        <div style={{fontSize:'11px',color:'var(--muted)',marginTop:'8px'}}>
-          نفس الملابس والوجه والغرفة والوضعيات. نسخة ChatGPT تعطي أولوية أوضح لتغيير التسريحة المختارة.
+        <div style={{fontSize:'11px',color:'var(--muted)',marginTop:'8px',lineHeight:1.7}}>
+          Gemini هو كاتب البرومبت في جميع الحالات. الاختيار يضبط صياغة النص للنموذج الذي ستستخدمه لتوليد الصورة، مع تثبيت ملامح الوجه وتسريحة الشعر والغرفة والضوء.
+          لا تُضاف معاملات Midjourney مثل --ar دون اختيارها بشكل صريح.
         </div>
       </div>
       <RealismIntensitySelector value={ctx.realismIntensity || 'natural'} onChange={value=>handleContextChange({realismIntensity:value})}/>

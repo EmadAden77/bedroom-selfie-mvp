@@ -8,6 +8,33 @@ type MainPayload = {basePrompt?:unknown;shotId?:unknown;mode?:unknown;posture?:u
 type ModelOutput = {scene?:unknown;camera?:unknown;naturalism?:unknown}
 type MainShotContext = {mode:string;lighting:string}
 
+export type ImagePromptTarget = 'gemini'|'chatgpt'|'flux'|'midjourney'
+export const IMAGE_TARGET_GUIDANCE:Record<ImagePromptTarget,string> = {
+  gemini:'Target: Gemini / Imagen image generation. Write natural descriptive English with one cohesive continuous scene. Lead with the real adult subject, selected posture and actual bedroom; describe camera and light naturally. Do not use model flags or keyword-only quality lists.',
+  chatgpt:'Target: ChatGPT / GPT Image generation. Write direct precise English photography instructions, visual priorities first; specify the unchanged reference person, chosen hairstyle movement, exact pose, physical camera and room. Avoid ornamental narration, fictional detail and fake lens metadata.',
+  flux:'Target: FLUX image generation. Use compact affirmative, concrete visual descriptions in a logical photographic order: reference person and selected pose, physical room placement, camera, then practical lighting and natural texture. Describe the desired outcome positively, without negative-prompt syntax, weights or quality buzzwords.',
+  midjourney:'Target: Midjourney image generation. Use compact descriptive English with clear visual subject, pose, authentic room and camera before ambiance. Keep physical constraints literal; do not invent version, aspect ratio, stylization or --no flags. Parameters belong to separate explicit user controls, not generated prose.'
+}
+
+export const compactGeneratedSections=(parts:ModelOutput):ModelOutput=>{
+  const seen=new Set<string>()
+  const compact=(value:unknown):string=>{
+    const input=String(value||'').trim().replace(/\s+/g,' ')
+    const phrases=input.split(/(?<=[.!?])\s+/)
+    const unique:string[]=[]
+    for(const sentence of phrases){
+      const normalized=sentence.trim().toLowerCase().replace(/[.!?]+$/,'').replace(/\s+/g,' ')
+      if(!normalized||seen.has(normalized))continue
+      seen.add(normalized)
+      unique.push(sentence.trim())
+      if(unique.length>=4)break
+    }
+    return unique.join(' ')
+  }
+  return {scene:compact(parts.scene),camera:compact(parts.camera),naturalism:compact(parts.naturalism)}
+}
+
+
 export const MAIN_PROMPT_SCHEMA = {
   type:'object',
   properties:{
@@ -43,6 +70,10 @@ const cameraNumbers = (text:string):string[] =>
 export const validateMainConsistency = (parts:ModelOutput, canonical:string, context:MainShotContext):void => {
   const all = [parts.scene,parts.camera,parts.naturalism].join(' ')
   const camera = String(parts.camera)
+  // Target-specific generator flags are never invented by the model.
+  if(/(?:^|\s)--(?:ar|aspect|s|stylize|no|v|version|iw|raw|quality|q)\b/i.test(all)) {
+    throw Error('unrequested_model_parameters')
+  }
   if (/\b(?:8k|masterpiece|hyperrealistic|softbox|ring light|studio fill|cinematic lighting|portrait mode blur|shallow depth of field|extra person)\b/i.test(all)) {
     throw Error('forbidden_visual_quality_or_invented_source')
   }
@@ -87,9 +118,13 @@ export const assembleMainPrompt=(modelText:string,immutablePrompt:string,context
  catch{throw Error('model_output')}
  const parts=sanitizeMainSections(data)
  if(context)validateMainConsistency(parts,immutablePrompt,context)
+ // Only compact AI-authored prose; never shorten or paraphrase the immutable
+ // local identity, wardrobe, bedding, clothing or camera constraints below.
+ const concise=compactGeneratedSections(parts)
+ if(Object.values(concise).some(text=>typeof text!=='string'||text.length<28))throw Error('overcompressed_output')
  return [
   'GEMINI-GENERATED PRIMARY IMAGE PROMPT — FINAL ENGLISH OUTPUT:',
-  parts.scene,parts.camera,parts.naturalism,
+  concise.scene,concise.camera,concise.naturalism,
   'MANDATORY REFERENCE IDENTITY, ROOM CONTINUITY, BODY, LIGHTING AND CAMERA LOCKS (authoritative over the generated scene):',
   immutablePrompt.trim(),
   'FINAL CONSISTENCY: If any descriptive phrase above conflicts with a reference feature, selected garment, bedroom object, mirror ray, light source or body pose, the mandatory locks control. Keep the existing identity unchanged.'
@@ -130,7 +165,7 @@ export default {
   if(typeof basePrompt!=='string'||basePrompt.length<100||basePrompt.length>24000||
    ![mode,posture,lighting,shotId,target].every(allowed)||
    !['front','mirror','rear','timer'].includes(String(mode))||
-   !['gemini','chatgpt'].includes(String(target))||
+   !['gemini','chatgpt','flux','midjourney'].includes(String(target))||
    !/Reference identity anchored to reference image/i.test(basePrompt)||
    !/BEDROOM ENVIRONMENT LOCK|bedroom environment/i.test(basePrompt)){
     return fail('INVALID_SELECTION','الخيارات غير صالحة. اختر وضعية وملابس صحيحة أولًا.',400)
@@ -142,7 +177,7 @@ export default {
    // The model authors primary scene/camera text; local canonical prompt is a locked,
    // exact reference contract and is never left for the LLM to paraphrase away.
    const genRequest={
-    systemInstruction:{parts:[{text:MAIN_SYSTEM_INSTRUCTION}]},
+    systemInstruction:{parts:[{text:MAIN_SYSTEM_INSTRUCTION+'\n\n'+IMAGE_TARGET_GUIDANCE[target as ImagePromptTarget]}]},
     contents:[{role:'user',parts:[{text:JSON.stringify({
       captureMode:mode,posture,shotId,lighting,target,
       canonicalRulesAndSelectedOptions:basePrompt

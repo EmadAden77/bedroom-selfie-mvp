@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'bedroom-selfie-builder-ai-photo-audit-v3'
+const CACHE_NAME = 'bedroom-selfie-builder-model-profiles-v4'
 const APP_SHELL = [
   '/',
   '/index.html',
