@@ -115,7 +115,7 @@ describe('Gemini as main passwordless prompt writer',()=>{
      outbound=opts.body
      return new Response(JSON.stringify({candidates:[{content:{parts:[{text:modelResponse}]}}]}),{status:200})
    }))
-   const response=await handler.fetch(post({...payload,target}))
+   const response=await handler.fetch(post({...payload,target},{'x-forwarded-for':'profile-test-'+target}))
    expect(response.status).toBe(200)
    const result=await response.json() as {prompt:string}
    expect(result.prompt).toContain(prompt.trim())
@@ -145,7 +145,6 @@ describe('Gemini as main passwordless prompt writer',()=>{
    result.scene+=' '+result.scene
    result.naturalism+=' '+result.scene
    const final=assembleMainPrompt(JSON.stringify(result),prompt,{mode:'mirror',lighting:'ceiling_neutral'})
-   expect(final.split(result.scene.replace(/([.!?])\s+/g,'$1 '))[0]).toBeDefined()
    expect(final).toContain(prompt.trim())
    // The original identical sentence should appear once in the Gemini-authored part.
    const authored=final.split('MANDATORY REFERENCE IDENTITY')[0]
