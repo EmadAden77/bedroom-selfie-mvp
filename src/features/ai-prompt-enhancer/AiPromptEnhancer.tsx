@@ -7,7 +7,7 @@ type Props = {
   result: CompilationResult
   validation: ValidationResult
 }
-type ApiResult = {enhancedPrompt?:string; selectedHintIds?:string[]; model?:string; error?:string}
+type ApiResult = {enhancedPrompt?:string; selectedHintIds?:string[]; model?:string; error?:string; errorCode?:string}
 
 export const AiPromptEnhancer:React.FC<Props> = ({ctx,result,validation})=>{
   const [accessToken,setAccessToken]=useState('')
@@ -46,7 +46,8 @@ export const AiPromptEnhancer:React.FC<Props> = ({ctx,result,validation})=>{
         body:JSON.stringify({
           prompt,
           mode:shot?.mode||'front',
-          posture:shot?getShotPosture(shot.id)||'seated_bed':ctx.poseId||'seated_bed'
+          posture:shot?getShotPosture(shot.id)||'seated_bed':ctx.poseId||'seated_bed',
+          lighting:ctx.nightLightingId||'phone_screen_only'
         }),
         signal:controller.signal
       })
@@ -59,7 +60,7 @@ export const AiPromptEnhancer:React.FC<Props> = ({ctx,result,validation})=>{
       let data:ApiResult
       try {data=await response.json() as ApiResult}
       catch {throw new Error('تعذر قراءة رد الخادم. حدّث الصفحة وحاول مرة أخرى.')}
-      if(!response.ok||typeof data.enhancedPrompt!=='string')throw new Error(data.error||'تعذر تحسين البرومبت.')
+      if(!response.ok||typeof data.enhancedPrompt!=='string')throw new Error((data.error||'تعذر تحسين البرومبت.') + (data.errorCode?' ('+data.errorCode+')':''))
       if(!data.enhancedPrompt.startsWith(prompt.trim()))throw new Error('تم رفض رد لا يحافظ على البرومبت الأصلي.')
       if(!controller.signal.aborted){setEnhanced(data.enhancedPrompt);setModel(data.model||'Gemini')}
     }catch(err){
@@ -78,7 +79,7 @@ export const AiPromptEnhancer:React.FC<Props> = ({ctx,result,validation})=>{
   return <section className="card" aria-label="تحسين البرومبت باستخدام Gemini">
     <h3 style={{fontSize:'14px',fontWeight:700,margin:'0 0 8px'}}>✨ تحسين البرومبت باستخدام Gemini (اختياري)</h3>
     <p style={{fontSize:'11px',color:'var(--muted)',lineHeight:1.7}}>
-      يولّد التطبيق البرومبت الأصلي محليًا. عند الضغط على «تحسين» يُرسل نص البرومبت وحده إلى Gemini ليختار تحسينات تصوير معتمدة؛ لا تُرسل صور الوجه أو الغرفة ولا يُسمح بتغيير الهوية أو الأثاث أو الإضاءة.
+      يولّد التطبيق البرومبت الأصلي محليًا. عند الضغط على «تحسين»، يرسل التطبيق إلى Google نوع التصوير والوضعية والإضاءة فقط لاختيار إضافات تصوير معتمدة. يظل نص البرومبت الأصلي في خادم التطبيق ولا تُرسل صور الوجه أو الغرفة أو تفاصيل الهوية إلى Google.
     </p>
     <label style={{display:'block',fontSize:'11px',margin:'10px 0 5px'}} htmlFor="gemini-access">رمز الوصول الخاص بك (ليس مفتاح Google)</label>
     <input id="gemini-access" type="password" autoComplete="off" value={accessToken}
