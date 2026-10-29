@@ -1,6 +1,7 @@
 import React,{useEffect,useRef,useState} from 'react'
 import type {CompilationContext,CompilationResult,ValidationResult} from '../../domain/types'
 import {bedroomShots,getShotPosture} from '../../data/bedroom-shots'
+import {buildCreativeSceneBrief} from './buildCreativeSceneBrief'
 
 type Props={ctx:CompilationContext;result:CompilationResult;validation:ValidationResult;onReset:()=>void;onPromptReady:(prompt:string)=>void}
 type MainReply={prompt?:string;source?:string;model?:string;error?:string;errorCode?:string}
@@ -13,7 +14,9 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
   const [copied,setCopied]=useState(false)
   const requestRef=useRef<AbortController|null>(null)
   const prompt=result.promptText
-  const ready=validation.isValid&&result.errors.length===0&&prompt.length>=100
+  const sceneBrief=buildCreativeSceneBrief(ctx)
+  const ready=sceneBrief.trim().length>=50
+  const fallbackReady=validation.isValid&&result.errors.length===0&&prompt.length>=100
   const targetLabels={gemini:'Gemini / Imagen',chatgpt:'ChatGPT / GPT Image',flux:'FLUX',midjourney:'Midjourney'} as const
   const selectedTarget=targetLabels[ctx.promptTarget||'gemini']
 
@@ -38,7 +41,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
         headers:{'content-type':'application/json'},
         signal:ctrl.signal,
         body:JSON.stringify({
-          basePrompt:prompt,
+          sceneBrief,
           mode:shot?.mode||'front',
           shotId:shot?.id||'',
           posture:shot?getShotPosture(shot.id)||'seated_bed':ctx.poseId||'seated_bed',
@@ -53,8 +56,6 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
       catch{throw Error('تعذر قراءة رد Gemini.')}
       if(!response.ok||typeof payload.prompt!=='string'||payload.prompt.length<100)
         throw Error((payload.error||'تعذر توليد البرومبت عبر Gemini.')+(payload.errorCode?' ('+payload.errorCode+')':''))
-      if(!payload.prompt.includes(prompt.trim()))
-        throw Error('رفض التطبيق نتيجة لم تحافظ على قواعد الهوية والغرفة الأصلية.')
       if(!ctrl.signal.aborted){setGenerated(payload.prompt);setEngine('gemini');onPromptReady(payload.prompt)}
     }catch(err){
       if(!ctrl.signal.aborted)setError(err instanceof Error?err.message:'تعذر الاتصال بـGemini.')
@@ -71,22 +72,22 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
 
   function useLocal(){
     requestRef.current?.abort()
-    if(!ready)return
+    if(!fallbackReady)return
     setGenerated(prompt);setEngine('local');setError('');setLoading(false);setCopied(false);onPromptReady(prompt)
   }
 
   return <section className="card" aria-label="المحرك الرئيسي لتوليد البرومبت">
     <div style={{fontSize:'16px',fontWeight:750,marginBottom:'10px'}}>✨ Gemini — محرك توليد البرومبت الرئيسي</div>
     <p style={{fontSize:'12px',color:'var(--muted)',lineHeight:1.8,margin:'0 0 12px'}}>
-      اختر إعداداتك ثم اضغط «توليد البرومبت». Gemini يكتب برومبت مخصصًا لـ <strong>{selectedTarget}</strong>، مع الحفاظ على قواعد الهوية والفيزياء والغرفة الأصلية. لا توجد كلمة مرور أو تسجيل دخول.
+      اختر الإعدادات ثم دع Gemini يكتب <strong>البرومبت كاملًا بحرية</strong> لـ <strong>{selectedTarget}</strong>. الشرط الأساسي: واقعية الجسم والحركة والوزن والضوء والعدسة والمرآة. لن تُلصق أي قواعد محلية إضافية بنص Gemini.
     </p>
     <p style={{fontSize:'10px',color:'var(--muted)',lineHeight:1.7,margin:'0 0 14px'}}>
-      تُرسل اختياراتك والنص المرجعي للبرومبت إلى Google لتوليد الوصف؛ لا تُرسل ملفات صور الوجه أو الغرفة. رابط التطبيق عام، وقد يستعمل زواره حصة Gemini.
+      تُرسل إلى Google اختيارات مشهد مختصرة فقط؛ لا يُرسل البرومبت المحلي الطويل أو ملفات صور الوجه والغرفة. يمكنك دائمًا استخدام النسخة المحلية الاحتياطية المستقلة. رابط التطبيق عام وقد يستهلك زواره حصة Gemini.
     </p>
-    {(validation.errors.length>0||result.errors.length>0)&&<div role="alert" style={{fontSize:'12px',color:'#b91c1c',marginBottom:'10px'}}>{[...new Set([...validation.errors,...result.errors])].join(' — ')}</div>}
+    {(validation.errors.length>0||result.errors.length>0)&&<div style={{fontSize:'11px',color:'var(--muted)',marginBottom:'10px'}}>ملاحظة: بعض الخيارات لا تصلح لمحرك النسخة المحلية الاحتياطية فقط؛ لا تمنع Gemini من تأليف برومبت فيزيائي واقعي.</div>}
     <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
       <button type="button" className="btn" disabled={!ready||loading} onClick={generate}>{loading?'Gemini يولّد البرومبت…':engine==='gemini'?'إعادة التوليد بواسطة Gemini':'توليد البرومبت بواسطة Gemini'}</button>
-      <button type="button" className="btn btn-secondary" disabled={!ready} onClick={useLocal}>النسخة المحلية الاحتياطية</button>
+      <button type="button" className="btn btn-secondary" disabled={!fallbackReady} onClick={useLocal}>النسخة المحلية الاحتياطية</button>
     </div>
     {error&&<div role="alert" style={{marginTop:'12px',fontSize:'12px',color:'#b91c1c'}}>{error}</div>}
     {generated&&<div style={{marginTop:'16px'}}>

@@ -1,166 +1,130 @@
 // @vitest-environment node
 import {afterEach,describe,it,expect,vi} from 'vitest'
-import handler,{assembleMainPrompt,MAIN_PROMPT_SCHEMA,MAIN_SYSTEM_INSTRUCTION,IMAGE_TARGET_GUIDANCE,compactGeneratedSections,validateMainConsistency} from '../../api/generate-main-prompt'
+import handler,{assembleCreativePrompt,PHYSICS_ONLY_SYSTEM,MAIN_PROMPT_SCHEMA,IMAGE_TARGET_GUIDANCE,validatePhysicalPrompt} from '../../api/generate-main-prompt'
+import {buildCreativeSceneBrief} from '../features/ai-prompt-enhancer/buildCreativeSceneBrief'
+import type {CompilationContext} from '../domain/types'
 
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals()})
-const prompt='Reference identity anchored to reference image: preserve same person, no identity drift. BEDROOM ENVIRONMENT LOCK: Maintain one room and natural physics. '+('Keep camera, lighting, clothing and human geometry fixed. '.repeat(9))
 const endpoint='https://bedroom-selfie-mvp.vercel.app/api/generate-main-prompt'
-const payload={basePrompt:prompt,mode:'mirror',posture:'standing',shotId:'mirror_45',lighting:'ceiling_neutral',target:'gemini'}
-const post=(data:unknown=payload,headers:Record<string,string>={})=>new Request(endpoint,{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(data)})
-const modelResponse=JSON.stringify({scene:'A person stands diagonally beside the real mirrored wardrobe, holding their actual smartphone steadily and naturally, while weight rests on the rear leg.',camera:'The phone rear camera records the correct reflection in the real sliding wardrobe mirror with physically consistent glass rays and the true hand supporting its weight.',naturalism:'Ordinary room ceiling illumination casts believable shadows; restrained phone noise and modest imperfect framing preserve a candid daily feeling.'})
+const sceneBrief='A candid adult mirror selfie beside a bedroom dresser. Realistic fabric and body weight. Natural, lived-in bedroom. White t-shirt and charcoal trousers. Slightly tousled hair.'
+const payload={sceneBrief,mode:'mirror',posture:'standing',shotId:'dresser_mirror',lighting:'ceiling_neutral',target:'gemini'}
+const post=(data:unknown=payload,headers:Record<string,string>={})=>
+ new Request(endpoint,{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(data)})
+const prompt='An adult stands naturally beside an ordinary dresser in a lived-in bedroom, making a candid mirror selfie with their phone facing the mirror. Their body weight rests realistically on one foot, the other leg loosely relaxed, while the shirt settles with gravity. Ceiling lighting casts everyday downward shadows across the face and clothes, and the camera records natural perspective with authentic smartphone exposure.'
+const mockModel=(p=prompt)=>new Response(JSON.stringify({candidates:[{content:{parts:[{text:JSON.stringify({prompt:p})}]}}]}),{status:200})
+const context={mode:'mirror',lighting:'ceiling_neutral'}
 
-describe('Gemini as main passwordless prompt writer',()=>{
- it('does not require a password for the main endpoint',async()=>{
-  expect((await handler.fetch(new Request(endpoint))).status).toBe(405)
+describe('Gemini creative freedom with physics-only checks',()=>{
+ it('requires no password and returns valid POST-only JSON',async()=>{
+  const result=await handler.fetch(new Request(endpoint))
+  expect(result.status).toBe(405)
   vi.stubEnv('GEMINI_API_KEY','')
-  const unavailable=await handler.fetch(post())
-  expect(unavailable.status).toBe(503)
-  expect((await unavailable.json() as {errorCode:string}).errorCode).toBe('GEMINI_NOT_CONFIGURED')
- })
- it('rejects other websites and invalid media types without a key disclosure',async()=>{
-  expect((await handler.fetch(post(payload,{origin:'https://other.example'}))).status).toBe(403)
-  const result=await handler.fetch(new Request(endpoint,{method:'POST',headers:{'content-type':'text/plain'},body:'test'}))
-  expect(result.status).toBe(415)
- })
- it('rejects unstructured or unlocked local prompts',async()=>{
-  vi.stubEnv('GEMINI_API_KEY','fake-test-key')
-  let response=await handler.fetch(post({...payload,basePrompt:'make a portrait'}))
-  expect(response.status).toBe(400)
- })
- it('has Gemini author the main narrative while preserving exact original reference locks',async()=>{
-  vi.stubEnv('GEMINI_API_KEY','fake-test-key')
-  let sent=''
-  vi.stubGlobal('fetch',vi.fn(async(_url:string,opts:{body:string})=>{
-    sent=opts.body
-    return new Response(JSON.stringify({candidates:[{content:{parts:[{text:modelResponse}]}}]}),{status:200})
-  }))
-  const result=await handler.fetch(post())
-  expect(result.status).toBe(200)
-  const body=await result.json() as {prompt:string;source:string}
-  expect(body.source).toBe('gemini')
-  expect(body.prompt).toContain('GEMINI-GENERATED PRIMARY IMAGE PROMPT')
-  expect(body.prompt).toContain(prompt.trim())
-  expect(body.prompt).toContain('stands diagonally')
-  expect(sent).toContain('mirror_45')
-  const upstream=JSON.parse(sent) as {generationConfig:{responseFormat:{text:{mimeType:string;schema:unknown}}};systemInstruction:{parts:Array<{text:string}>}}
-  expect(upstream.generationConfig.responseFormat.text.mimeType).toBe('APPLICATION_JSON')
-  expect(upstream.generationConfig.responseFormat.text.schema).toEqual(MAIN_PROMPT_SCHEMA)
-  expect(upstream.systemInstruction.parts[0].text).toContain(MAIN_SYSTEM_INSTRUCTION)
-  expect(upstream.systemInstruction.parts[0].text).toContain(IMAGE_TARGET_GUIDANCE.gemini)
-  expect(Object.keys(upstream)).not.toContain('negative_prompt')
-  expect(Object.keys(upstream.generationConfig)).not.toContain('negative_prompt')
-  expect(sent).not.toContain('data:image')
- })
- it('rejects malformed Gemini text rather than publishing altered identity',()=>{
-  expect(()=>assembleMainPrompt('not-json',prompt)).toThrow()
-  expect(()=>assembleMainPrompt(JSON.stringify({scene:'x',camera:'y',naturalism:'z'}),prompt)).toThrow()
- })
- it('reports Google quota response safely without showing secrets',async()=>{
-  vi.stubEnv('GEMINI_API_KEY','fake-test-key')
-  vi.stubGlobal('fetch',vi.fn(async()=>new Response('provider private error',{status:429})))
-  const result=await handler.fetch(post())
-  expect(result.status).toBe(429)
-  const body=await result.json() as {error:string;errorCode:string}
-  expect(body.errorCode).toBe('GEMINI_QUOTA')
-  expect(body.error).not.toContain('provider private')
- })
- it('requires strict three-field response without extra JSON keys',()=>{
-  expect(MAIN_PROMPT_SCHEMA.required).toEqual(['scene','camera','naturalism'])
-  expect(MAIN_PROMPT_SCHEMA.additionalProperties).toBe(false)
-  const invalid=JSON.stringify({...JSON.parse(modelResponse),extra:'unreviewed'})
-  expect(()=>assembleMainPrompt(invalid,prompt,{mode:'mirror',lighting:'ceiling_neutral'})).toThrow()
- })
- it('refuses invented numeric camera settings, even when JSON itself is valid',()=>{
-  const result=JSON.parse(modelResponse)
-  result.camera+=' Captured with 28mm equivalent, f/1.8 and ISO 800.'
-  expect(()=>assembleMainPrompt(JSON.stringify(result),prompt,{mode:'mirror',lighting:'ceiling_neutral'})).toThrow('invented_camera_specification')
- })
- it('accepts numeric camera settings only when the reference rules already contain them',()=>{
-  const canonical=prompt+' Authentic handset lens: 22mm equivalent, f/2.0, ISO 400.'
-  const result=JSON.parse(modelResponse)
-  result.camera+=' Real 22mm equivalent lens, f/2.0 and ISO 400 from the selected camera.'
-  const final=assembleMainPrompt(JSON.stringify(result),canonical,{mode:'mirror',lighting:'ceiling_neutral'})
-  expect(final).toContain('22mm')
-  expect(final).toContain(canonical.trim())
- })
- it('rejects invented studio sources and screen-only lighting contradictions',()=>{
-  const base=JSON.parse(modelResponse)
-  base.naturalism='A studio softbox floods the bedroom with cinematic lighting, artificially removing every shadow.'
-  expect(()=>validateMainConsistency(base,prompt,{mode:'mirror',lighting:'phone_screen_only'})).toThrow()
-  base.naturalism='The ceiling lights illuminate every corner of the room while the phone screen contributes a little rim lighting.'
-  expect(()=>validateMainConsistency(base,prompt,{mode:'mirror',lighting:'phone_screen_only'})).toThrow('screen_light_conflict')
- })
- it('rejects mirror and timer viewpoint contradictions before returning a final prompt',()=>{
-  const base=JSON.parse(modelResponse)
-  expect(()=>validateMainConsistency(base,prompt,{mode:'front',lighting:'ceiling_neutral'})).not.toThrow()
-  base.camera='The smartphone is held in a real human hand, directly facing the person for a mirror selfie.'
-  expect(()=>validateMainConsistency(base,prompt,{mode:'front',lighting:'ceiling_neutral'})).toThrow('unselected_mirror_capture')
-  base.camera='A handheld selfie phone held in hand creates the original front-facing view.'
-  expect(()=>validateMainConsistency(base,prompt,{mode:'timer',lighting:'ceiling_neutral'})).toThrow('timer_camera_conflict')
- })
- it('keeps the original prompt unchanged when model output contradicts a selected constraint',async()=>{
-  vi.stubEnv('GEMINI_API_KEY','test-only-secret')
-  const mismatch=JSON.stringify({...JSON.parse(modelResponse),camera:'A studio-quality front camera captures a mirror selfie with shallow depth of field at ISO 800.'})
-  vi.stubGlobal('fetch',vi.fn(async()=>new Response(JSON.stringify({candidates:[{content:{parts:[{text:mismatch}]}}]}),{status:200})))
   const r=await handler.fetch(post())
-  expect(r.status).toBe(422)
-  expect((await r.json() as {errorCode:string}).errorCode).toBe('GEMINI_VALIDATION')
+  expect(r.status).toBe(503)
+  expect((await r.json() as {errorCode:string}).errorCode).toBe('GEMINI_NOT_CONFIGURED')
  })
-
- it('accepts each image-generator target and transmits the correct style instruction to Gemini',async()=>{
-  vi.stubEnv('GEMINI_API_KEY','dummy-test-key')
+ it('rejects cross-site requests and unknown model targets',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','test-only')
+  expect((await handler.fetch(post(payload,{origin:'https://evil.example'}))).status).toBe(403)
+  expect((await handler.fetch(post({...payload,target:'unsupported'}))).status).toBe(400)
+ })
+ it('receives a concise brief rather than old immutable text or user photos',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','test-only')
+  let outbound:any
+  vi.stubGlobal('fetch',vi.fn(async(_u:string,o:{body:string})=>{outbound=JSON.parse(o.body);return mockModel()}))
+  const r=await handler.fetch(post(payload,{'x-forwarded-for':'creative-case-1'}))
+  expect(r.status).toBe(200)
+  const data=await r.json() as {prompt:string;source:string}
+  expect(data.prompt).toBe(prompt)
+  expect(data.source).toBe('gemini')
+  const body=JSON.stringify(outbound)
+  expect(body).toContain(sceneBrief)
+  expect(body).not.toContain('canonicalRulesAndSelectedOptions')
+  expect(body).not.toContain('MANDATORY REFERENCE IDENTITY')
+  expect(body).not.toContain('data:image')
+  expect(outbound.systemInstruction.parts[0].text).toContain(PHYSICS_ONLY_SYSTEM)
+  expect(outbound.generationConfig.responseFormat.text.schema).toEqual(MAIN_PROMPT_SCHEMA)
+  expect(outbound.generationConfig.temperature).toBeGreaterThan(0.5)
+ })
+ it('Gemini owns the entire prompt: no hidden identity/bedroom suffix, section headings or app-generated negatives',()=>{
+  const result=assembleCreativePrompt(JSON.stringify({prompt}),context)
+  expect(result).toBe(prompt)
+  expect(result).not.toContain('FINAL CONSISTENCY')
+  expect(result).not.toContain('IDENTITY FIDELITY ENGINE')
+  expect(result).not.toContain('MANDATORY REFERENCE')
+ })
+ it('accepts freely varied natural content and realistic camera processing',()=>{
+  const creative='A relaxed visitor takes a spontaneous mirror selfie in a compact bedroom, wearing simple ordinary clothing. A slight tilt and everyday clutter add personality. A real warm lamp illuminates the visible surfaces, while the rest of the room retains plausible shadow falloff. Natural glass reflection and body weight provide a convincing ordinary smartphone photograph.'
+  expect(assembleCreativePrompt(JSON.stringify({prompt:creative}),context)).toBe(creative)
+ })
+ it('rejects explicitly impossible body mechanics and light with no source',()=>{
+  const bad=prompt+' An extra arm extends out of nowhere, and a floating camera levitates beside the face.'
+  expect(()=>validatePhysicalPrompt(bad,context)).toThrow('mechanically_impossible')
+ })
+ it('checks mirror, timer and physically selected screen illumination',()=>{
+  const noMirror=prompt.replace(/mirror/gi,'glass')
+  expect(()=>validatePhysicalPrompt(noMirror,context)).toThrow('missing_mirror')
+  expect(()=>validatePhysicalPrompt(prompt+' Handheld selfie with the recording phone.',{mode:'timer',lighting:'ceiling_neutral'})).toThrow('timer_grip_conflict')
+  expect(()=>validatePhysicalPrompt(prompt+' Daylight fills the whole room.',{mode:'front',lighting:'phone_screen_only'})).toThrow('screen_light_conflict')
+ })
+ it('does not reject imaginative lighting/realistic photography for aesthetic or identity lock keywords alone',()=>{
+  const artistic=prompt+' The photographer uses a small ring light mounted on a real desk beside the phone, illuminating the scene with consistent soft shadows.'
+  expect(()=>validatePhysicalPrompt(artistic,context)).not.toThrow()
+ })
+ it('rejects JSON with model-generated extra attributes or too little content',()=>{
+  expect(MAIN_PROMPT_SCHEMA.required).toEqual(['prompt'])
+  expect(MAIN_PROMPT_SCHEMA.additionalProperties).toBe(false)
+  expect(()=>assembleCreativePrompt(JSON.stringify({prompt,extra:'local lock'}),context)).toThrow('model_schema')
+  expect(()=>assembleCreativePrompt(JSON.stringify({prompt:'short'}),context)).toThrow('prompt_length')
+  expect(()=>assembleCreativePrompt('invalid json',context)).toThrow('model_format')
+ })
+ it('each image model gets its own guidance without old mandatory instructions',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','test-only')
   for(const target of ['gemini','chatgpt','flux','midjourney'] as const){
-   let outbound=''
-   vi.stubGlobal('fetch',vi.fn(async(_url:string,opts:{body:string})=>{
-     outbound=opts.body
-     return new Response(JSON.stringify({candidates:[{content:{parts:[{text:modelResponse}]}}]}),{status:200})
-   }))
-   const response=await handler.fetch(post({...payload,target},{'x-forwarded-for':'profile-test-'+target}))
-   expect(response.status).toBe(200)
-   const result=await response.json() as {prompt:string}
-   expect(result.prompt).toContain(prompt.trim())
-   const modelInput=JSON.parse(outbound) as {systemInstruction:{parts:Array<{text:string}>};contents:Array<{parts:Array<{text:string}>}>}
-   expect(modelInput.systemInstruction.parts[0].text).toContain(IMAGE_TARGET_GUIDANCE[target])
-   expect(modelInput.contents[0].parts[0].text).toContain('"target":"'+target+'"')
+   let outbound:any
+   vi.stubGlobal('fetch',vi.fn(async(_u:string,o:{body:string})=>{outbound=JSON.parse(o.body);return mockModel()}))
+   const r=await handler.fetch(post({...payload,target},{'x-forwarded-for':'creative-'+target}))
+   expect(r.status).toBe(200)
+   expect(outbound.systemInstruction.parts[0].text).toContain(IMAGE_TARGET_GUIDANCE[target])
   }
  })
- it('rejects unknown image model targets without calling Google',async()=>{
-   vi.stubEnv('GEMINI_API_KEY','dummy-test-key')
-   const outbound=vi.fn()
-   vi.stubGlobal('fetch',outbound)
-   const response=await handler.fetch(post({...payload,target:'unknown-provider'}))
-   expect(response.status).toBe(400)
-   expect(outbound).not.toHaveBeenCalled()
+ it('handles provider quotas without leaking private details',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','test-only-secret')
+  vi.stubGlobal('fetch',vi.fn(async()=>new Response('private error',{status:429})))
+  const r=await handler.fetch(post({...payload,shotId:'quota-case'},{'x-forwarded-for':'creative-quota'}))
+  expect(r.status).toBe(429)
+  const data=await r.json() as {error:string;errorCode:string}
+  expect(data.errorCode).toBe('GEMINI_QUOTA')
+  expect(data.error).not.toContain('private')
  })
- it('does not invent Midjourney aspect ratio, weights or version flags',()=>{
-   const result=JSON.parse(modelResponse)
-   result.camera+=' --ar 9:16'
-   expect(()=>validateMainConsistency(result,prompt,{mode:'mirror',lighting:'ceiling_neutral'})).toThrow('unrequested_model_parameters')
-   result.camera='The actual phone camera creates one mirror reflection in the real sliding wardrobe, with ordinary framing.'
-   result.naturalism+=' --stylize 100'
-   expect(()=>validateMainConsistency(result,prompt,{mode:'mirror',lighting:'ceiling_neutral'})).toThrow('unrequested_model_parameters')
- })
- it('deduplicates only AI prose without altering authoritative local identity and room rules',()=>{
-   const result=JSON.parse(modelResponse)
-   result.scene+=' '+result.scene
-   result.naturalism+=' '+result.scene
-   const final=assembleMainPrompt(JSON.stringify(result),prompt,{mode:'mirror',lighting:'ceiling_neutral'})
-   expect(final).toContain(prompt.trim())
-   // The original identical sentence should appear once in the Gemini-authored part.
-   const authored=final.split('MANDATORY REFERENCE IDENTITY')[0]
-   expect(authored.split('A person stands diagonally beside the real mirrored wardrobe').length-1).toBe(1)
-   expect(authored).not.toContain('8K masterpiece')
- })
- it('keeps all three meaningful model-authored sections after compacting repeated prose',()=>{
-   const repeated='An everyday unposed shot shows a real person within the unchanged bedroom.'
-   const normalized=compactGeneratedSections({
-      scene:repeated+' '+repeated,
-      camera:repeated+' A real smartphone records the selected viewpoint at ordinary reach.',
-      naturalism:'Authentic smartphone grain and practical lighting match the visible exposure.'
-   })
-   expect(normalized.scene).toBe(repeated)
-   expect(normalized.camera).not.toContain(repeated)
-   expect(normalized.naturalism).toContain('practical lighting')
- })
+})
 
+describe('Concise creative scene selection',()=>{
+ const ctx:CompilationContext={
+  hairVariantId:'natural_slightly_tousled',
+  expressionVariantId:'neutral_relaxed',
+  upperGarmentId:'regular_crewneck_tshirt',
+  lowerGarmentId:'relaxed_sweatpants',
+  materialId:'lightweight_cotton_appearance_jersey',
+  fitId:'regular',
+  stateId:'lightly_worn',
+  color:'white',surface:'solid',
+  referenceImagePresent:true,roomReferencePresent:true,
+  bedroomShotId:'dresser_mirror',
+  nightLightingId:'ceiling_neutral',
+  realismIntensity:'natural'
+ }
+ it('uses selected clothing and hair, not the huge assembled local prompt',()=>{
+  const brief=buildCreativeSceneBrief(ctx)
+  expect(brief).toContain('slightly tousled')
+  expect(brief).toContain('white')
+  expect(brief).toContain('ceiling_neutral')
+  expect(brief).not.toContain('IDENTITY FIDELITY ENGINE')
+  expect(brief).not.toContain('BEDROOM ENVIRONMENT LOCK')
+  expect(brief.length).toBeLessThan(3000)
+ })
+ it('never implies Gemini saw a user photo',()=>{
+  const brief=buildCreativeSceneBrief(ctx)
+  expect(brief).toContain('Gemini does not receive or see it')
+ })
 })
