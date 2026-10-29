@@ -106,7 +106,7 @@ export type CompilationContext = {
   hairDirection?: 'auto' | 'back' | 'forward' | 'left' | 'right'
   hairVolume?: 'auto' | 'flat' | 'natural' | 'lifted'
   hairTexture?: 'auto' | 'tidy' | 'soft' | 'messy'
-  promptTarget?: 'gemini' | 'chatgpt'
+  promptTarget?: 'gemini' | 'chatgpt' | 'flux' | 'midjourney'
   realismIntensity?: 'natural' | 'candid' | 'raw'
   expressionVariantId: string
   gazeId?: 'auto' | 'lens' | 'screen' | 'off_left' | 'off_right' | 'down'
