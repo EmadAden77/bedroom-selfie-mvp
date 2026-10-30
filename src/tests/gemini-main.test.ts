@@ -2,6 +2,9 @@
 import {afterEach,describe,it,expect,vi} from 'vitest'
 import handler,{assembleCreativePrompt,PHYSICS_ONLY_SYSTEM,MAIN_PROMPT_SCHEMA,IMAGE_TARGET_GUIDANCE,validatePhysicalPrompt} from '../../api/generate-main-prompt'
 import {buildCreativeSceneBrief} from '../features/ai-prompt-enhancer/buildCreativeSceneBrief'
+import {buildHairCreativeBrief} from '../data/hair-creative'
+import {hairVariants} from '../data/hair'
+import {compilePrompt} from '../compiler'
 import type {CompilationContext} from '../domain/types'
 
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals()})
@@ -102,6 +105,7 @@ describe('Gemini creative freedom with physics-only checks',()=>{
 describe('Concise creative scene selection',()=>{
  const ctx:CompilationContext={
   hairVariantId:'natural_slightly_tousled',
+  hairstyleMode:'apply',
   expressionVariantId:'neutral_relaxed',
   upperGarmentId:'regular_crewneck_tshirt',
   lowerGarmentId:'relaxed_sweatpants',
@@ -121,10 +125,73 @@ describe('Concise creative scene selection',()=>{
   expect(brief).toContain('ceiling_neutral')
   expect(brief).not.toContain('IDENTITY FIDELITY ENGINE')
   expect(brief).not.toContain('BEDROOM ENVIRONMENT LOCK')
-  expect(brief.length).toBeLessThan(3000)
+  expect(brief.length).toBeLessThan(4500)
  })
  it('never implies Gemini saw a user photo',()=>{
   const brief=buildCreativeSceneBrief(ctx)
   expect(brief).toContain('Gemini does not receive or see it')
+ })
+})
+
+describe('Selected hairstyle genuinely reaches ChatGPT via Gemini',()=>{
+ const base:CompilationContext={
+  hairVariantId:'neatly_combed',hairstyleMode:'apply',promptTarget:'chatgpt',
+  hairDirection:'left',hairVolume:'lifted',hairTexture:'tidy',
+  expressionVariantId:'reference_expression_preserved',
+  upperGarmentId:'reference_garment_preserved',lowerGarmentId:null,
+  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
+  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
+  surface:'apparent knit-like surface character',referenceImagePresent:true,
+  nightLightingId:'ceiling_neutral'
+ }
+ it('puts clear apply instructions and every advanced control into the concise Gemini brief',()=>{
+  const brief=buildCreativeSceneBrief(base)
+  expect(brief).toContain('Hair styling: APPLY')
+  expect(brief).toContain('neatly combed')
+  expect(brief).toContain('subject left')
+  expect(brief).toContain('Lift the existing top strands modestly')
+  expect(brief).toContain('Align existing strands with realistic small flyaways')
+  expect(brief).toContain('reference photo fixes the PERSON, not the prior strand arrangement')
+  expect(brief).toContain('preserve the exact original hairline')
+  expect(brief).not.toContain('Hair styling: PRESERVE')
+  expect(brief.length).toBeLessThan(6500)
+ })
+ it('preserve mode ignores any dormant selected style or advanced styling controls',()=>{
+  const brief=buildCreativeSceneBrief({...base,hairstyleMode:'preserve'})
+  expect(brief).toContain('Hair styling: PRESERVE')
+  expect(brief).not.toContain('Hair styling: APPLY')
+  expect(brief).not.toContain('subject left')
+  expect(brief).not.toContain('neatly combed')
+  expect(brief).not.toContain('Lift the existing top strands modestly')
+ })
+ it('requires a non-reference hairstyle before the apply instruction activates',()=>{
+  const brief=buildHairCreativeBrief({...base,hairVariantId:'reference_natural_dry'})
+  expect(brief).toContain('PRESERVE')
+  expect(brief).not.toContain('APPLY')
+ })
+ it.each(hairVariants.filter(h=>!h.isDefault))('$id has an observable restyle without changing reference density',style=>{
+  const brief=buildHairCreativeBrief({...base,hairVariantId:style.id})
+  expect(brief).toContain(style.observableConfig)
+  expect(brief).toContain('Appearance priority:')
+  expect(brief).toContain('density map')
+  expect(brief).toContain('Move existing strands only')
+ })
+ it('the local ChatGPT fallback never contradicts a selected new hairstyle',()=>{
+  const compiled=compilePrompt(base)
+  expect(compiled.validation.isValid).toBe(true)
+  expect(compiled.result.promptText).toContain('do not revert to the reference hairstyle')
+  expect(compiled.result.promptText).toContain('ChatGPT hairstyle priority')
+  expect(compiled.result.promptText).not.toContain('Never alter facial identity, hairstyle')
+ })
+ it('the Gemini system and ChatGPT target rules explicitly prioritize visible styling',()=>{
+  expect(PHYSICS_ONLY_SYSTEM).toContain('APPLY means deliberately restyle')
+  expect(IMAGE_TARGET_GUIDANCE.chatgpt).toContain('visibly different from the reference hairstyle')
+  expect(IMAGE_TARGET_GUIDANCE.chatgpt).toContain('When PRESERVE is selected')
+ })
+ it('keeps the same optional restyling with the original geometry in a mirror selfie',()=>{
+  const brief=buildCreativeSceneBrief({...base,bedroomShotId:'mirror_wardrobe'})
+  expect(brief).toContain('Hair styling: APPLY')
+  expect(brief).toContain('Mirror scene geometry:')
+  expect(brief).toContain('RIGHT wall')
  })
 })

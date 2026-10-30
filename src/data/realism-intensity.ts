@@ -6,5 +6,9 @@ export const realismPresets = [
 ] as const
 export function renderRealismIntensity(ctx: CompilationContext): string {
  const preset=realismPresets.find(p=>p.id===(ctx.realismIntensity || 'natural')) || realismPresets[0]
- return [preset.fragment,'Realism changes only photographic processing and camera imperfections. Never alter facial identity, hairstyle, body geometry, room topology, bedding objects, light-source locations, perspective and physical contact.'].join(' ')
+ const restyled=ctx.hairstyleMode==='apply'&&ctx.hairVariantId!=='reference_natural_dry'
+ const hairRule=restyled
+  ? 'The selected restyling must remain visibly applied in the photograph; do not revert to the reference hairstyle. Preserve the actual hairline, natural fiber texture, scalp coverage and original hair density.'
+  : 'Preserve the reference hairstyle and its existing strand arrangement.'
+ return [preset.fragment,hairRule,'Realism changes only photographic processing and camera imperfections. Never alter facial identity, body geometry, room topology, bedding objects, light-source locations, perspective and physical contact.'].join(' ')
 }

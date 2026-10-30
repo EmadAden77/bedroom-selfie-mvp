@@ -10,7 +10,7 @@ type ShotContext = {mode:string;lighting:string}
 export type ImagePromptTarget = 'gemini'|'chatgpt'|'flux'|'midjourney'
 export const IMAGE_TARGET_GUIDANCE:Record<ImagePromptTarget,string>={
  gemini:'Write a natural flowing image-generation prompt for Gemini / Imagen.',
- chatgpt:'Write direct cinematic-independent, visually clear instructions for ChatGPT / GPT Image.',
+ chatgpt:'Write direct, visually clear instructions for ChatGPT / GPT Image. When Hair styling says APPLY, explicitly describe the selected new arrangement of existing strands as visibly different from the reference hairstyle, with unchanged facial identity, true hairline, natural density, length and texture. The reference determines hair identity, not the old strand layout. When PRESERVE is selected, retain the reference strand arrangement.',
  flux:'Write concrete, positive descriptive photography prose for FLUX without synthetic keyword piles.',
  midjourney:'Write coherent photographic prose for Midjourney. Do not invent command-line flags or aspect ratios.'
 }
@@ -25,6 +25,7 @@ export const PHYSICS_ONLY_SYSTEM = [
  'For a mirror selfie, the phone rear camera must face the real mirror; the screen faces the subject; the visible reflection must have valid lines of sight and no duplicated cameras or limbs.',
  'For a selected bedroom wardrobe mirror capture, preserve the same fixed RIGHT-wall sliding reflective panel, LEFT-wall bed and RIGHT-front dresser. Apply the selected free-hand gesture, phone height, distance, framing and gaze together without overriding any pose-specific hand occupancy, stance, sightline or real light source.',
  'When a MIRROR capture selects rear_flash, the recording phone\'s own rear LED points into the glass. Follow the LED-to-mirror-to-subject reflected beam, including real shadow occlusion and falloff. Localized clipping, bloom and glass marks occur only where physically plausible; a visible flash hotspot belongs near the geometrically reflected LED and rear camera module, never at an arbitrary mirror center. Do not force high ISO, an evenly lit face, an impossible hard wall shadow or fabricated skin pores.',
+ 'Hair styling has two independent modes. PRESERVE means keep the reference hairstyle and its strand arrangement. APPLY means deliberately restyle only existing strands into the user-selected visible direction, grouping and silhouette. Identity preservation locks the face, skull, hairline, temple recession, available length, density, fiber texture and color, NOT the original arrangement of strands. Do not dilute or silently discard an APPLY choice. Respect selected direction, volume and texture within the reference limits.',
  'For a timer/self-supported capture, the device needs real support rather than a hovering imaginary photographer. A handheld selfie needs a reachable arm and realistic grip.',
  'Light must have a real emitting or reflecting source. If the chosen lighting is screen-only, no ceiling/daylight/extra lamps may light the scene. Sensor noise and autoexposure may vary within physical limits.',
  'Describe visually plausible observable facts and camera processing, not fantasy physics. Be creative, specific, human and natural. Do not fabricate unsupported numerical lens specifications.',
