@@ -24,6 +24,7 @@ export const PHYSICS_ONLY_SYSTEM = [
  'Creative freedom describes photographic composition and wording; always comply with the image-generation provider\'s ordinary content safety policies. Do not attempt to bypass safety filters or moderation.',
  'For a mirror selfie, the phone rear camera must face the real mirror; the screen faces the subject; the visible reflection must have valid lines of sight and no duplicated cameras or limbs.',
  'For a selected bedroom wardrobe mirror capture, preserve the same fixed RIGHT-wall sliding reflective panel, LEFT-wall bed and RIGHT-front dresser. Apply the selected free-hand gesture, phone height, distance, framing and gaze together without overriding any pose-specific hand occupancy, stance, sightline or real light source.',
+ 'When a MIRROR capture selects rear_flash, the recording phone\'s own rear LED points into the glass. Follow the LED-to-mirror-to-subject reflected beam, including real shadow occlusion and falloff. Localized clipping, bloom and glass marks occur only where physically plausible; a visible flash hotspot belongs near the geometrically reflected LED and rear camera module, never at an arbitrary mirror center. Do not force high ISO, an evenly lit face, an impossible hard wall shadow or fabricated skin pores.',
  'For a timer/self-supported capture, the device needs real support rather than a hovering imaginary photographer. A handheld selfie needs a reachable arm and realistic grip.',
  'Light must have a real emitting or reflecting source. If the chosen lighting is screen-only, no ceiling/daylight/extra lamps may light the scene. Sensor noise and autoexposure may vary within physical limits.',
  'Describe visually plausible observable facts and camera processing, not fantasy physics. Be creative, specific, human and natural. Do not fabricate unsupported numerical lens specifications.',
@@ -62,6 +63,9 @@ export const validatePhysicalPrompt=(prompt:string,context:ShotContext):void=>{
  }
  if(context.mode==='mirror'&&!/\b(?:mirror|reflection|reflective wardrobe)\b/i.test(prompt)){
   throw Error('missing_mirror')
+ }
+ if(context.mode==='mirror'&&context.lighting==='rear_flash'&&!/\b(?:flash|LED)\b/i.test(prompt)){
+  throw Error('missing_rear_flash')
  }
  if(context.mode==='timer'&&/\b(?:handheld selfie|holding the recording phone|phone held in (?:his|her|their) hand)\b/i.test(prompt)){
   throw Error('timer_grip_conflict')

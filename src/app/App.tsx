@@ -9,6 +9,7 @@ import { ClothingSelector } from '../features/clothing-options/ClothingSelector'
 import { bedroomShots, getShotPosture } from '../data/bedroom-shots'
 import { BedroomShotsSelector } from '../features/bedroom-shots/BedroomShotsSelector'
 import { MirrorSelfieSelector } from '../features/mirror-selfie/MirrorSelfieSelector'
+import { nextMirrorLighting } from '../data/mirror-flash-physics'
 import { LightGeometrySelector } from '../features/night-lighting/LightGeometrySelector'
 import { NightLightingSelector } from '../features/night-lighting/NightLightingSelector'
 import { AiPromptEnhancer } from '../features/ai-prompt-enhancer/AiPromptEnhancer'
@@ -95,8 +96,7 @@ export const App: React.FC = () => {
       }}/>
       <MirrorSelfieSelector ctx={ctxWithImage} onChange={handleContextChange} onShotChange={id=>{
         const currentLighting=ctx.nightLightingId || 'phone_screen_only'
-        const nextLighting=id==='mirror_rear_flash'?'rear_flash'
-          : ['phone_screen_only','rear_flash'].includes(currentLighting)?'ceiling_neutral':currentLighting
+        const nextLighting=nextMirrorLighting(id,currentLighting)
         handleContextChange({
           bedroomShotId:id,
           poseId:getShotPosture(id)||'standing',

@@ -41,6 +41,16 @@ export const MirrorSelfieSelector:React.FC<Props>=({ctx,onShotChange,onChange})=
   </p>
   {!active&&<button type="button" className="btn" onClick={()=>onShotChange('mirror_wardrobe')} style={{marginBottom:12}}>تفعيل تصوير المرآة</button>}
   {active&&<div style={{fontSize:12,fontWeight:650,marginBottom:12}}>✓ وضع المرآة نشط — انعكاس حقيقي وهندسة غرفة ثابتة</div>}
+  {active&&<div style={{border:'1px solid var(--border)',borderRadius:12,padding:12,marginBottom:16}}>
+   <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>⚡ فلاش المرآة الفيزيائي</div>
+   <p style={{fontSize:11,color:'var(--muted)',lineHeight:1.8,margin:'0 0 9px'}}>يعمل مع جميع وضعيات المرآة: ضوء الفلاش يرتد من الزجاج إلى الشخص، والوهج والظلال والنويز تتبع مسار الضوء والتعريض الحقيقي.</p>
+   <div className="grid">
+    <button type="button" className={'option '+(ctx.nightLightingId!=='rear_flash'?'selected':'')} aria-pressed={ctx.nightLightingId!=='rear_flash'} disabled={shotId==='mirror_rear_flash'} onClick={()=>onChange({nightLightingId:'ceiling_neutral'})}>بدون فلاش · إضاءة منزلية</button>
+    <button type="button" className={'option '+(ctx.nightLightingId==='rear_flash'?'selected':'')} aria-pressed={ctx.nightLightingId==='rear_flash'} onClick={()=>onChange({nightLightingId:'rear_flash'})}>⚡ فلاش الكاميرا الخلفية</button>
+   </div>
+   {shotId==='mirror_rear_flash'&&<p style={{fontSize:11,color:'var(--muted)',margin:'8px 0 0'}}>هذه الوضعية مخصصة للفلاش؛ اختر وضعية مرآة أخرى لإيقافه.</p>}
+   {ctx.nightLightingId==='rear_flash'&&<p style={{fontSize:11,color:'var(--muted)',margin:'8px 0 0'}}>✓ محاكاة انعكاس LED، موقع الوهج، سقوط الضوء، ظلال الأثاث، عيوب الزجاج ومعالجة مستشعر الهاتف، في Gemini والنسخة المحلية.</p>}
+  </div>}
   {([{title:'الوقوف وزوايا الجسم',items:standing},{title:'الجلوس أمام المرآة',items:seated}]).map(group=>
    <div key={group.title} style={{marginBottom:16}}>
     <div style={{fontWeight:650,fontSize:13,marginBottom:8}}>{group.title}</div>
