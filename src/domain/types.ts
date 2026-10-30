@@ -126,6 +126,11 @@ export type CompilationContext = {
   faceDirectionId?: string
   lampSideId?: string
   bedroomShotId?: string
+  mirrorMovementId?: string
+  mirrorPhoneHeightId?: string
+  mirrorDistanceId?: string
+  mirrorFramingId?: string
+  mirrorGazeId?: string
   lowerMaterialId?: string
   lowerFitId?: string
   lowerStateId?: string
