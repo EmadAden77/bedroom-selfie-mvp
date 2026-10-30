@@ -8,6 +8,7 @@ import { expressionVariants } from '../data/expressions'
 import { renderGazeMicro } from '../data/gaze-micro'
 import { renderBodyPosePhysics } from '../data/body-pose-physics'
 import { renderPoseInteraction } from '../data/pose-interaction'
+import { renderMirrorComposition } from '../data/mirror-controls'
 import { renderCameraPhysics } from '../data/camera-physics'
 import { renderRealismIntensity } from '../data/realism-intensity'
 import { renderBedroomEnvironment } from '../data/bedroom-environment'
@@ -110,6 +111,8 @@ export function renderSections(ctx: CompilationContext): PromptSection[] {
   sections.push({ id: 'body_pose_physics', content: renderBodyPosePhysics(ctx) })
   const interaction=renderPoseInteraction(ctx)
   if(interaction) sections.push({id:'pose_interaction',content:interaction})
+  const mirrorComposition=renderMirrorComposition(ctx)
+  if(mirrorComposition) sections.push({id:'mirror_composition',content:mirrorComposition})
   sections.push({ id: 'camera_physics', content: renderCameraPhysics(ctx) })
   sections.push({ id: 'realism_intensity', content: renderRealismIntensity(ctx) })
 

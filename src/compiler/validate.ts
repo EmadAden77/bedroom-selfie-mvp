@@ -7,6 +7,7 @@ import { expressionVariants, deferredCompositeStates } from '../data/expressions
 import { gazeChoices, microChoices } from '../data/gaze-micro'
 import { poseOptions, faceOptions, lampSideOptions } from '../data/light-geometry'
 import { bedroomShots } from '../data/bedroom-shots'
+import { validateMirrorControls } from '../data/mirror-controls'
 import { nightLightingPresets } from '../data/night-lighting'
 import { garmentRecords, garmentStates, fitProfiles } from '../data/clothing'
 
@@ -132,5 +133,6 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
     if (shot?.mode==='mirror' && ctx.nightLightingId==='phone_screen_only') warnings.push('Mirror selfie may be severely underexposed with phone screen only')
   }
 
+  errors.push(...validateMirrorControls(ctx))
   return { isValid: errors.length === 0, errors, warnings }
 }

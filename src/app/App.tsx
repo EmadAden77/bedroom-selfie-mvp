@@ -8,6 +8,7 @@ import { ExpressionSelector } from '../features/subject-options/ExpressionSelect
 import { ClothingSelector } from '../features/clothing-options/ClothingSelector'
 import { bedroomShots, getShotPosture } from '../data/bedroom-shots'
 import { BedroomShotsSelector } from '../features/bedroom-shots/BedroomShotsSelector'
+import { MirrorSelfieSelector } from '../features/mirror-selfie/MirrorSelfieSelector'
 import { LightGeometrySelector } from '../features/night-lighting/LightGeometrySelector'
 import { NightLightingSelector } from '../features/night-lighting/NightLightingSelector'
 import { AiPromptEnhancer } from '../features/ai-prompt-enhancer/AiPromptEnhancer'
@@ -91,6 +92,19 @@ export const App: React.FC = () => {
           : currentLighting
         handleContextChange({bedroomShotId:id,...(getShotPosture(id)?{poseId:getShotPosture(id)}:{}),nightLightingId:nextLighting,
           ...(selectedShot?.mode==='mirror' ? {faceDirectionId:'toward_camera'} : {})})
+      }}/>
+      <MirrorSelfieSelector ctx={ctxWithImage} onChange={handleContextChange} onShotChange={id=>{
+        const currentLighting=ctx.nightLightingId || 'phone_screen_only'
+        const nextLighting=id==='mirror_rear_flash'?'rear_flash'
+          : ['phone_screen_only','rear_flash'].includes(currentLighting)?'ceiling_neutral':currentLighting
+        handleContextChange({
+          bedroomShotId:id,
+          poseId:getShotPosture(id)||'standing',
+          faceDirectionId:'toward_camera',
+          nightLightingId:nextLighting,
+          mirrorMovementId:'relaxed',mirrorPhoneHeightId:'shot',
+          mirrorDistanceId:'shot',mirrorFramingId:'shot',mirrorGazeId:'shot'
+        })
       }}/>
       <div className="card">
         <div style={{fontWeight:600,fontSize:'14px',marginBottom:'10px'}}>نموذج توليد الصور المستهدف</div>
