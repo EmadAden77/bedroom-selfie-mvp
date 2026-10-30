@@ -15,13 +15,13 @@ export function nextMirrorLighting(shotId:string,currentLighting:string):string{
 export function renderMirrorFlashPhysics(ctx:CompilationContext):string{
  if(!isMirrorFlash(ctx))return ''
  return [
-  'MIRROR FLASH OPTICS: The one actual rear LED fires during the rear-camera exposure, aimed toward the existing RIGHT-wall wardrobe mirror, never outward from the screen.',
-  'Illuminate the subject and room only along unobstructed LED-to-glass-to-subject reflected rays, observing equal incidence and reflection angles, finite glass edges, phone occlusion and distance falloff from the virtual reflected source behind the mirror. Do not assume the face is evenly or directly flash-lit.',
-  'The LED has a fixed offset from the actual rear camera module. Any bright specular flash reflection, localized clipped white highlight, bloom or optical ghost must align with that real LED reflection and camera sightline, not an arbitrary hotspot in the center of the glass. Flare is conditional on aim and sensor exposure, not a mandatory opaque disk.',
-  'Cast a sharp shadow only where the reflected flash reaches a real nearby wall, bed or furniture surface and the subject or phone actually occludes the reflected light. Keep dark corners underexposed without fictional studio fill.',
-  'Preserve the reference skin without invented pores, blemishes or plastic smoothing. Restrained skin shine follows illuminated surface normals. Subtle existing mirror smudges or dust show only where real specular illumination reveals them.',
-  'Smartphone rear-camera image processing has finite dynamic range, possible localized highlight clipping, realistic white balance, restrained JPEG sharpening and shadow noise scaled to actual exposure; flash need not force high ISO. Mild wide-angle perspective follows camera optics rather than an invented exact focal length.',
-  'No extra light emitter, invented lens flare, overexposed entire face, fixed central blast, artificial noise overlay, duplicate handset or floating camera.'
+  'MIRROR FLASH OPTICS: The one actual rear LED fires during the rear-camera exposure, aimed toward the fixed RIGHT-wall wardrobe mirror. The screen never emits this flash.',
+  'Follow an unobstructed LED-to-glass-to-subject path: equal incidence and reflection angles, actual glass boundaries, phone occlusion, and distance falloff from the virtual LED image behind the mirror. Do not assume the subject receives uniform frontal flash illumination.',
+  'The LED reflection has a fixed position beside the actual reflected rear camera module. Clipped highlights, bloom, and lens ghosts appear only if the optical aim plus camera exposure permit them. Never insert a compulsory central white flare.',
+  'Cast a sharp shadow only where reflected flash reaches an existing receiving surface (wall, bedding, furniture) and a physically present object blocks that ray. Keep distant room corners underexposed without studio fill.',
+  'Preserve natural reference skin texture and realistic surface shine; do not invent pores, blemishes, makeup and smoothing effects. Faint existing glass dust and smudges emerge only when the flash genuinely reveals them.',
+  'The smartphone rear camera records finite dynamic range, local clipping, white-balance variation, restrained JPEG sharpening, and exposure-dependent shadow grain; flash need not force high ISO. Maintain plausible wide-angle optics without inventing a numerical focal length.',
+  'No extra LED source, fixed central hotspot, fabricated shadows, exaggerated noise overlay, duplicated phone, floating camera and studio lighting.'
  ].join(' ')
 }
 
