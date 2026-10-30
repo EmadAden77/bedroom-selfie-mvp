@@ -11,6 +11,7 @@ import {nightLightingPresets} from '../../data/night-lighting'
 import {bedroomShots,getShotPosture} from '../../data/bedroom-shots'
 import {realismPresets} from '../../data/realism-intensity'
 import {buildMirrorGeminiBrief} from '../../data/mirror-controls'
+import {buildMirrorFlashGeminiBrief} from '../../data/mirror-flash-physics'
 
 const selected=<T extends {id:string}>(items:readonly T[],id:string|undefined)=>items.find(x=>x.id===id)
 const plain=(id:string|undefined)=>id?.replace(/_/g,' ')||''
@@ -61,6 +62,7 @@ export function buildCreativeSceneBrief(ctx:CompilationContext):string{
   'Subject image reference: '+(ctx.referenceImagePresent?'provided separately to the final image generator; Gemini does not receive or see it':'not supplied')+'.',
   'Bedroom image reference: '+(ctx.roomReferencePresent?'provided separately to the final image generator; Gemini does not receive or see it':'not supplied')+'.',
   ...(shot?.mode==='mirror'?[buildMirrorGeminiBrief(ctx)]:[]),
+  ...(shot?.mode==='mirror'&&ctx.nightLightingId==='rear_flash'?[buildMirrorFlashGeminiBrief(ctx)]:[]),
   'Treat these selections as scene guidance, not as literal wording or an instruction to append legacy locks. Freely invent believable everyday photographic details while staying within real physics.'
  ]
  return details.join('\n')
