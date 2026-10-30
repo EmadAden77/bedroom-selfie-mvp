@@ -4,7 +4,7 @@
  * No private reference image files are transferred by this helper.
  */
 import type {CompilationContext} from '../../domain/types'
-import {hairVariants} from '../../data/hair'
+import {buildHairCreativeBrief} from '../../data/hair-creative'
 import {expressionVariants} from '../../data/expressions'
 import {garmentRecords,materialProfiles,fitProfiles,garmentStates} from '../../data/clothing'
 import {nightLightingPresets} from '../../data/night-lighting'
@@ -18,7 +18,6 @@ const plain=(id:string|undefined)=>id?.replace(/_/g,' ')||''
 
 export function buildCreativeSceneBrief(ctx:CompilationContext):string{
  const shot=selected(bedroomShots,ctx.bedroomShotId)
- const hair=selected(hairVariants,ctx.hairVariantId)
  const face=selected(expressionVariants,ctx.expressionVariantId)
  const upper=selected(garmentRecords,ctx.upperGarmentId)
  const lower=selected(garmentRecords,ctx.lowerGarmentId||undefined)
@@ -43,9 +42,7 @@ export function buildCreativeSceneBrief(ctx:CompilationContext):string{
   'Scene choice: '+(shot?.description||plain(ctx.poseId)||'a plausible natural bedroom pose')+'.',
   'Body posture: '+plain(shot?getShotPosture(shot.id):ctx.poseId)+'.',
   'Expression: '+(face?.observableFacialConfiguration||'natural relaxed expression')+'.',
-  'Hair: '+(hair?.observableConfig||'real hair texture')+
-    '; style '+plain(ctx.hairstyleMode)+'; direction '+plain(ctx.hairDirection)+
-    '; volume '+plain(ctx.hairVolume)+'; strand texture '+plain(ctx.hairTexture)+'.',
+  buildHairCreativeBrief(ctx),
   'Upper clothing: '+upperDescription+
     '; '+(material?.englishName||'')+'; '+(fit?.englishName||'')+
     '; '+(garmentState?.englishName?.replace(/_/g,' ')||'')+
