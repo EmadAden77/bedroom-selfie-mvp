@@ -16,6 +16,7 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
   const warnings: string[] = []
 
   if (ctx.realismIntensity && !realismPresets.some(p=>p.id===ctx.realismIntensity)) errors.push('Invalid realism intensity')
+  if (ctx.bedroomClutterId && !['reference','lived_in_messy'].includes(ctx.bedroomClutterId)) errors.push('Invalid bedroom clutter appearance')
   if (ctx.promptTarget && !['gemini','chatgpt','flux','midjourney'].includes(ctx.promptTarget)) errors.push('Invalid image prompt target')
   if (ctx.hairstyleMode && !['preserve','apply'].includes(ctx.hairstyleMode)) errors.push('Invalid hairstyle mode')
   if (ctx.hairDirection && !hairDirections.some(x=>x.id===ctx.hairDirection)) errors.push('Invalid hair direction')

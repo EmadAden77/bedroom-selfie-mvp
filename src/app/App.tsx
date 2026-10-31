@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useMemo } from 'react'
 import { Header } from '../components/Header'
 import { RoomReferenceSection } from '../features/reference-room/RoomReferenceSection'
+import { BedroomClutterSelector } from '../features/room-clutter/BedroomClutterSelector'
 import { ReferenceImageSection } from '../features/reference-image/ReferenceImageSection'
 import { HairSelector } from '../features/subject-options/HairSelector'
 import { ExpressionSelector } from '../features/subject-options/ExpressionSelector'
@@ -39,6 +40,7 @@ const defaultContext: CompilationContext = {
   surface: 'apparent knit-like surface character',
   referenceImagePresent: false,
   roomReferencePresent: false,
+  bedroomClutterId: 'reference',
   nightLightingId: 'phone_screen_only',
   windowUncovered: false,
   poseId: 'seated_bed',
@@ -79,6 +81,7 @@ export const App: React.FC = () => {
       <Header />
       <ReferenceImageSection meta={meta} error={imageError} loading={imageLoading} onFile={handleFile} onRemove={removeImage} />
       <RoomReferenceSection meta={room.meta} loading={room.loading} error={room.error} onFile={room.handleFile} onRemove={room.removeImage} />
+      <BedroomClutterSelector value={ctx.bedroomClutterId} roomReferencePresent={!!room.meta} onChange={bedroomClutterId=>handleContextChange({bedroomClutterId})} />
       <HairSelector direction={ctx.hairDirection || 'auto'} volume={ctx.hairVolume || 'auto'} texture={ctx.hairTexture || 'auto'} onAdvancedChange={handleContextChange} selectedId={ctx.hairVariantId} mode={ctx.hairstyleMode || 'preserve'} onModeChange={mode=>handleContextChange({hairstyleMode:mode})} onSelect={(id) => handleContextChange({ hairVariantId: id, hairstyleMode: id==='reference_natural_dry'?'preserve':'apply' })} />
       <ExpressionSelector selectedId={ctx.expressionVariantId} gaze={ctx.gazeId || 'auto'} micro={ctx.microExpressionId || 'none'} onAdvancedChange={handleContextChange} onSelect={(id) => handleContextChange({ expressionVariantId: id })} />
       <ClothingSelector ctx={ctxWithImage} onChange={handleContextChange} />

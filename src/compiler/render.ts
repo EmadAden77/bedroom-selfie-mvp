@@ -14,6 +14,7 @@ import { renderCameraPhysics } from '../data/camera-physics'
 import { renderRealismIntensity } from '../data/realism-intensity'
 import { renderBedroomEnvironment } from '../data/bedroom-environment'
 import { renderBackgroundContinuity } from '../data/background-continuity'
+import { renderBedroomClutter } from '../data/bedroom-clutter'
 import { renderLightGeometry } from '../data/light-geometry'
 import { bedroomShots,renderBedroomShot } from '../data/bedroom-shots'
 import { nightLightingPresets } from '../data/night-lighting'
@@ -108,6 +109,8 @@ export function renderSections(ctx: CompilationContext): PromptSection[] {
 
   sections.push({ id: 'bedroom_environment_lock', content: renderBedroomEnvironment(ctx) })
   sections.push({ id: 'background_continuity', content: renderBackgroundContinuity(ctx) })
+  const clutter=renderBedroomClutter(ctx)
+  if(clutter)sections.push({id:'lived_in_bedroom_clutter',content:clutter})
   sections.push({ id: 'light_pose_geometry', content: renderLightGeometry(ctx) })
   sections.push({ id: 'body_pose_physics', content: renderBodyPosePhysics(ctx) })
   const interaction=renderPoseInteraction(ctx)

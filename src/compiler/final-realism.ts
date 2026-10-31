@@ -1,6 +1,7 @@
 import type { CompilationContext, PromptSection, ValidationResult } from '../domain/types'
 import { bedroomShots, getShotPosture } from '../data/bedroom-shots'
 import { isMirrorFlash } from '../data/mirror-flash-physics'
+import { isLivedInClutter } from '../data/bedroom-clutter'
 
 /** Final deterministic consistency gate. Only proven contradictions block export. */
 export function validateFinalRealism(ctx: CompilationContext, sections: PromptSection[]): ValidationResult {
@@ -32,6 +33,8 @@ export function validateFinalRealism(ctx: CompilationContext, sections: PromptSe
     if (!camera.includes('REAR CAMERA CAPTURE:')) errors.push('Final realism: rear capture camera mismatch')
   } else if (!camera.includes('FRONT SELFIE CAPTURE:')) errors.push('Final realism: front camera profile missing')
   if (!room.includes('exactly one bedside nightstand') || !room.includes('sliding-door wardrobe')) errors.push('Final realism: fixed bedroom topology missing')
+  if(isLivedInClutter(ctx)&&!byId.get('lived_in_bedroom_clutter')?.includes('LIVED-IN BEDROOM CLUTTER:'))errors.push('Final realism: selected lived-in clutter instructions missing')
+  if(!isLivedInClutter(ctx)&&byId.has('lived_in_bedroom_clutter'))errors.push('Final realism: unselected clutter leaked into prompt')
   if (light === 'phone_screen_only' && !byId.get('night_lighting_phone_screen_only')?.includes('sole active light source')) errors.push('Final realism: phone-only lighting contradicts source')
   if (light === 'window_streetlight' && !ctx.windowUncovered) errors.push('Final realism: external streetlight blocked by closed curtains')
   if (shot?.id === 'mirror_rear_flash' && light !== 'rear_flash') errors.push('Final realism: mirror flash requires rear LED source')
