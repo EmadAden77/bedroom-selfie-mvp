@@ -11,6 +11,7 @@ import { bedroomShots, getShotPosture } from '../data/bedroom-shots'
 import { BedroomShotsSelector } from '../features/bedroom-shots/BedroomShotsSelector'
 import { MirrorSelfieSelector } from '../features/mirror-selfie/MirrorSelfieSelector'
 import { nextMirrorLighting } from '../data/mirror-flash-physics'
+import { nextLaptopLighting } from '../data/laptop-selfie-physics'
 import { LightGeometrySelector } from '../features/night-lighting/LightGeometrySelector'
 import { NightLightingSelector } from '../features/night-lighting/NightLightingSelector'
 import { AiPromptEnhancer } from '../features/ai-prompt-enhancer/AiPromptEnhancer'
@@ -94,12 +95,12 @@ export const App: React.FC = () => {
           : selectedShot?.mode==='mirror' && ['phone_screen_only','rear_flash'].includes(currentLighting) ? 'ceiling_neutral'
           : id && currentLighting==='rear_flash' ? 'ceiling_neutral'
           : currentLighting
-        handleContextChange({bedroomShotId:id,...(getShotPosture(id)?{poseId:getShotPosture(id)}:{}),nightLightingId:nextLighting,
+        handleContextChange({bedroomShotId:id,...(getShotPosture(id)?{poseId:getShotPosture(id)}:{}),nightLightingId:nextLaptopLighting(id,nextLighting),
           ...(selectedShot?.mode==='mirror' ? {faceDirectionId:'toward_camera'} : {})})
       }}/>
       <MirrorSelfieSelector ctx={ctxWithImage} onChange={handleContextChange} onShotChange={id=>{
         const currentLighting=ctx.nightLightingId || 'phone_screen_only'
-        const nextLighting=nextMirrorLighting(id,currentLighting)
+        const nextLighting=nextLaptopLighting(id,nextMirrorLighting(id,currentLighting))
         handleContextChange({
           bedroomShotId:id,
           poseId:getShotPosture(id)||'standing',

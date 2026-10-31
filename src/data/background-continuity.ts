@@ -1,6 +1,7 @@
 import type { CompilationContext } from '../domain/types'
 import { bedroomShots, getShotPosture } from './bedroom-shots'
 import { isLivedInClutter } from './bedroom-clutter'
+import { isLaptopSelfieShot } from './laptop-selfie-physics'
 
 /** Persistent small-object anchors, with physically motivated contact changes. */
 export function renderBackgroundContinuity(ctx: CompilationContext): string {
@@ -10,6 +11,7 @@ export function renderBackgroundContinuity(ctx: CompilationContext): string {
   return [
     'BACKGROUND CONTINUITY: Keep the same actual bedroom belongings from one photograph to the next, at fixed physical anchors.',
     'One dark tufted headboard, one mattress, one fitted sheet, one rumpled duvet, and two ordinary sleeping pillows. These remain the same items with consistent fabric color, thickness, seam structure and wear.',
+    ...(isLaptopSelfieShot(ctx.bedroomShotId)?['LAPTOP CONTINUITY: The same single ordinary laptop is in use in this chosen scene. Its base rests on the described actual support, with a real screen hinge and keyboard. Existing nightstand, dresser, bedding and room objects retain their fixed identities; the laptop does not replace the dresser book, introduce a new desk, and multiply into copies.']:[]),
     'The sole nightstand keeps the same mug, headphones and charging cable. The right-side dresser retains the open book and folded garment. The chair retains its draped garment; the bag and shoes remain near storage.',
     isLivedInClutter(ctx)
       ? 'LIVED-IN CONTINUITY: Retain the original recurring items and their furniture anchors. The chosen small loose floor items, water glass, receipts and gravity-creased bedding stay consistent across views. No extra pillows, nightstands, duplicated mugs, floating sheets and relocated furniture.'

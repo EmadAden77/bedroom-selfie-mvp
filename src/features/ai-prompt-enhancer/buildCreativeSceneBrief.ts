@@ -13,7 +13,9 @@ import {realismPresets} from '../../data/realism-intensity'
 import {buildMirrorGeminiBrief} from '../../data/mirror-controls'
 import {buildMirrorFlashGeminiBrief} from '../../data/mirror-flash-physics'
 import {buildBedroomClutterGeminiBrief} from '../../data/bedroom-clutter'
+import {buildLaptopGeminiBrief} from '../../data/laptop-selfie-physics'
 
+const isSelectedLaptop=(id:string)=>id.startsWith('laptop_')&&id!=='laptop_reflection'
 const selected=<T extends {id:string}>(items:readonly T[],id:string|undefined)=>items.find(x=>x.id===id)
 const plain=(id:string|undefined)=>id?.replace(/_/g,' ')||''
 
@@ -58,6 +60,7 @@ export function buildCreativeSceneBrief(ctx:CompilationContext):string{
     '; subtle expression '+plain(ctx.microExpressionId)+'.',
   'Photographic mood '+(mood?.id||'natural')+'.',
   ...(ctx.bedroomClutterId==='lived_in_messy'?[buildBedroomClutterGeminiBrief(ctx)]:[]),
+  ...(shot&&isSelectedLaptop(shot.id)?[buildLaptopGeminiBrief(ctx)]:[]),
   'Subject image reference: '+(ctx.referenceImagePresent?'provided separately to the final image generator; Gemini does not receive or see it':'not supplied')+'.',
   'Bedroom image reference: '+(ctx.roomReferencePresent?'provided separately to the final image generator; Gemini does not receive or see it':'not supplied')+'.',
   ...(shot?.mode==='mirror'?[buildMirrorGeminiBrief(ctx)]:[]),

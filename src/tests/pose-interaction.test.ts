@@ -4,12 +4,12 @@ import {poseInteractionRules} from '../data/pose-interaction'
 import {compilePrompt} from '../compiler'
 import type {CompilationContext} from '../domain/types'
 const ctx:CompilationContext={hairVariantId:'reference_natural_dry',expressionVariantId:'reference_expression_preserved',upperGarmentId:'reference_garment_preserved',lowerGarmentId:null,materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',surface:'apparent knit-like surface character',referenceImagePresent:false}
-describe('30 new bedroom poses',()=>{
- it('extends exactly sixty shots with thirty unique real interactions',()=>{
-  expect(bedroomShots).toHaveLength(90)
-  expect(new Set(bedroomShots.map(s=>s.id)).size).toBe(90)
-  expect(Object.keys(poseInteractionRules)).toHaveLength(30)
-  expect(new Set(Object.values(poseInteractionRules)).size).toBe(30)
+describe('Physical bedroom pose interactions',()=>{
+ it('preserves previous poses and includes new laptop interactions',()=>{
+  expect(bedroomShots).toHaveLength(98)
+  expect(new Set(bedroomShots.map(s=>s.id)).size).toBe(98)
+  expect(Object.keys(poseInteractionRules)).toHaveLength(38)
+  expect(new Set(Object.values(poseInteractionRules)).size).toBe(38)
  })
  it.each(bedroomShots.filter(s=>s.id in poseInteractionRules))('Interaction $id has posture and valid compiled prompt',s=>{
    expect(getShotPosture(s.id)).toBeDefined()

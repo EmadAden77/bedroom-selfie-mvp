@@ -17,7 +17,7 @@ const base:CompilationContext={
 }
 describe('Independent mirror photography with Gemini and physical geometry',()=>{
  it('preserves all 15 canonical mirror poses and all original bedroom shots',()=>{
-  expect(bedroomShots).toHaveLength(90)
+  expect(bedroomShots).toHaveLength(98)
   expect(bedroomShots.filter(s=>s.mode==='mirror')).toHaveLength(15)
   expect(mirrorMovements.length).toBeGreaterThanOrEqual(10)
   expect(mirrorDistances.length).toBe(4)

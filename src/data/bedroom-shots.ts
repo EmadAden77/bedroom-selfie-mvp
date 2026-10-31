@@ -1,5 +1,5 @@
-export type BedroomShot={id:string;label:string;description:string;category:0|1|2|3; mode:'front'|'mirror'|'rear'|'timer'; requires?:'mirror'|'openCurtains'|'sideLight'}
-export const shotCategories=["السرير والوسائد","سيلفي المرآة","اليدين والتعابير","زوايا التصوير"] as const
+export type BedroomShot={id:string;label:string;description:string;category:0|1|2|3|4; mode:'front'|'mirror'|'rear'|'timer'; requires?:'mirror'|'openCurtains'|'sideLight'}
+export const shotCategories=["السرير والوسائد","سيلفي المرآة","اليدين والتعابير","زوايا التصوير","السيلفي مع اللابتوب 💻"] as const
 export const bedroomShots:BedroomShot[]=[
 {id:"belly_elbows",label:"على البطن مع الكوعين",description:"Prone on mattress, elbows supporting upper torso; phone in one reachable hand, no impossible double hand support.",category:0,mode:'front'},
 {id:"hug_pillow",label:"احتضان الوسادة",description:"Seated on bed holding pillow to chest with free arm; phone in other hand.",category:0,mode:'front'},
@@ -73,12 +73,12 @@ export const bedroomShots:BedroomShot[]=[
 {id:"reclined_slide_down",label:"اتكاء منخفض والظهر على الوسائد",description:"Semi reclined low on stacked pillows with pelvis slightly toward foot of bed, hands relaxed; phone in right hand.",category:0,mode:"front"},
 {id:"side_head_at_pillow_corner",label:"على الجانب والرأس عند زاوية الوسادة",description:"Side lying left with head resting near outer pillow corner; cheek and pillow visibly compress.",category:0,mode:"front"},
 {id:"prone_one_knee_bent",label:"على البطن مع ركبة مثنية",description:"Prone with torso supported by mattress, one knee bent upward comfortably; free forearm stays near pillow.",category:0,mode:"front"},
-{id:"laptop_cross_legs_trackpad",label:"متربع واليد على لوحة اللمس",description:"Cross legged on bed with open laptop on thighs; free hand touches trackpad while camera hand takes selfie.",category:2,mode:"front"},
-{id:"laptop_edge_typing_timer",label:"الكتابة على اللابتوب بحافة السرير",description:"Seated at bed edge typing with both hands on laptop balanced on lap; phone on fixed timer support.",category:2,mode:"timer"},
-{id:"laptop_recline_chest",label:"نصف مستلق واللابتوب أمام الصدر",description:"Semi reclined on pillows, open laptop rests on thighs with screen facing head; free hand touches keyboard.",category:2,mode:"front"},
-{id:"laptop_side_floor",label:"على الجانب واللابتوب بجوار السرير",description:"Side lying right on mattress, laptop open on stable bedside floor at safe reach, free hand touches trackpad.",category:2,mode:"front"},
-{id:"laptop_notebook_compare",label:"مقارنة دفتر مع شاشة اللابتوب",description:"Seated on bed with laptop on thighs and notebook beside leg; free hand points at notebook.",category:2,mode:"front"},
-{id:"laptop_tilt_screen",label:"تعديل زاوية شاشة اللابتوب",description:"Seated on bed with laptop supported on knees; free hand carefully changes screen hinge angle.",category:2,mode:"front"},
+{id:"laptop_cross_legs_trackpad",label:"متربع واليد على لوحة اللمس",description:"Cross legged on bed with open laptop on thighs; free hand touches trackpad while camera hand takes selfie.",category:4,mode:"front"},
+{id:"laptop_edge_typing_timer",label:"الكتابة على اللابتوب بحافة السرير",description:"Seated at bed edge, feet grounded on tile, laptop base flat across supported thighs. Both hands type naturally; the recording smartphone sits securely on the existing dresser beside the book with a clear camera view, shooting by timer. Neither hand holds the phone.",category:4,mode:"timer"},
+{id:"laptop_recline_chest",label:"نصف مستلق واللابتوب أمام الصدر",description:"Semi reclined on pillows, open laptop rests on thighs with screen facing head; free hand touches keyboard.",category:4,mode:"front"},
+{id:"laptop_side_floor",label:"على الجانب واللابتوب بجوار السرير",description:"Side lying on right side of the bed, laptop open on a flat clear section of mattress ahead of bent knees; its base stays fully supported and reachable. Left hand holds phone within reach while right forearm reaches forward untrapped to the trackpad.",category:4,mode:"front"},
+{id:"laptop_notebook_compare",label:"مقارنة دفتر مع شاشة اللابتوب",description:"Seated on bed with laptop on thighs and notebook beside leg; free hand points at notebook.",category:4,mode:"front"},
+{id:"laptop_tilt_screen",label:"تعديل زاوية شاشة اللابتوب",description:"Seated on bed with laptop supported on knees; free hand carefully changes screen hinge angle.",category:4,mode:"front"},
 {id:"floor_back_bed_knees",label:"الأرض والظهر للسرير والركبتان مثنيتان",description:"Seated on rug back braced against bed frame, both knees bent and feet grounded, camera in one hand.",category:3,mode:"front"},
 {id:"floor_one_leg_extended",label:"الأرض وساق ممدودة",description:"Seated on floor beside bed with one knee bent and other leg extended; free palm on floor for balance.",category:3,mode:"front"},
 {id:"floor_cross_leg_rug",label:"متربع على السجادة",description:"Cross legged on central rug with straight relaxed torso, phone at eye level, no contact with mattress.",category:3,mode:"front"},
@@ -90,7 +90,15 @@ export const bedroomShots:BedroomShot[]=[
 {id:"pillow_adjust_behind_back",label:"تعديل الوسادة خلف الظهر",description:"Semi reclined while free hand pulls pillow behind lower back; photographing hand stays forward.",category:0,mode:"front"},
 {id:"duvet_draw_below_knees",label:"سحب البطانية تحت الركبتين",description:"Seated with legs on bed, free hand draws duvet below knees while photographing hand stays clear.",category:0,mode:"front"},
 {id:"wake_ankle_stretch",label:"شد القدم بعد النوم",description:"Seated at bed edge one leg extended forward with ankle gently flexed and hand balancing on mattress.",category:0,mode:"front"},
-{id:"paper_reach_bed",label:"التقاط ورقة من فوق السرير",description:"Seated sideways on mattress and reaching free hand to retrieve a paper beside thigh.",category:0,mode:"front"}
+{id:"paper_reach_bed",label:"التقاط ورقة من فوق السرير",description:"Seated sideways on mattress and reaching free hand to retrieve a paper beside thigh.",category:0,mode:"front"},
+{id:"laptop_edge_trackpad",label:"حافة السرير ولمس لوحة اللابتوب",description:"Sitting near the bed edge with both feet resting on actual tile; the laptop base rests fully across both thighs, hinged screen upright facing the subject. One hand holds the front-camera phone slightly above eye level and the free index finger navigates the trackpad. Elbows and hips stay naturally balanced.",category:4,mode:"front"},
+{id:"laptop_edge_screen_glance",label:"التفاتة طبيعية نحو شاشة اللابتوب",description:"Seated at the bed edge with a real open laptop on the thighs and feet supporting relaxed legs on tile. The phone hand holds the front camera slightly to the side of the face while the eyes briefly glance down to the laptop display. The neck tilts mildly, leaving a real three-quarter facial view rather than an impossible view of both screens.",category:4,mode:"front"},
+{id:"laptop_rug_cross_legged",label:"متربع على السجادة واللابتوب أمامي",description:"Seated cross-legged on the existing central rug, phone held in one hand. The real laptop base sits entirely on a flat unobstructed section of floor immediately in front of the knees with its screen facing the seated user. Free hand reaches the keyboard at a comfortable downward angle, with no floating laptop and no invented desk.",category:4,mode:"front"},
+{id:"laptop_dresser_standing",label:"واقف بجوار التسريحة أستخدم اللابتوب",description:"Standing with grounded feet beside the existing dresser at the RIGHT-front wall. A single open laptop sits fully supported on a physically clear part of that dresser top while the original book and folded clothing stay in their established places. Free fingertips touch the laptop trackpad and the other hand holds the front camera at realistic face distance; avoid an impossible separate photographer.",category:4,mode:"front"},
+{id:"laptop_side_bed_open",label:"مستلقي على الجنب واللابتوب أمامي",description:"Lying on the right side with head and shoulder supported by one existing pillow and mattress. A single open laptop rests on a broad flat section of mattress just ahead of the bent knees, away from the duvet slope. The right free forearm reaches forward to the trackpad without being pinned beneath the body, and the left hand holds the front-camera phone near the face within arm reach.",category:4,mode:"front"},
+{id:"laptop_reclined_reading",label:"متكئ على الوسائد أقرأ شاشة اللابتوب",description:"Semi-reclined naturally against the two existing sleeping pillows near the LEFT-wall headboard, hips on mattress. Laptop base lies steadily across supported thighs, screen tilted toward eyes without covering the face. One hand raises the phone within comfortable arm range; free hand rests by the trackpad with small natural finger movement.",category:4,mode:"front"},
+{id:"laptop_high_angle_keyboard",label:"سيلفي علوي يظهر اللابتوب واليد",description:"Seated on the bed with a real open laptop supported on both thighs. The phone is held slightly high and angled down from the subject shoulder line, capturing a believable partial face and a glimpse of the laptop keyboard through its actual sightline. The laptop screen faces the subject and may naturally occlude part of the keys; never show a transparent display and never claim an impossible full front-and-back screen view.",category:4,mode:"front"},
+{id:"laptop_dresser_typing_timer",label:"الكتابة بكلتا اليدين باللابتوب والمؤقت",description:"Standing at the existing RIGHT-front dresser with the laptop fully supported on its cleared surface. Both hands type on the laptop keyboard with relaxed shoulders. The actual photographing phone is separately and securely propped by the existing book on the same dresser with an unobstructed lens and timer shutter; no phone is gripped and no invented tripod and no floating camera is present.",category:4,mode:"timer"}
 ]
 export function renderBedroomShot(shot:BedroomShot):string {
  const mode=shot.mode==='mirror'
@@ -108,6 +116,14 @@ export function renderBedroomShot(shot:BedroomShot):string {
 
 // One canonical anatomical posture per shot; never append a second competing posture.
 export const shotPostures: Record<string,string> = {
+  "laptop_edge_trackpad": "seated_bed",
+  "laptop_edge_screen_glance": "seated_bed",
+  "laptop_rug_cross_legged": "seated_floor",
+  "laptop_dresser_standing": "standing",
+  "laptop_side_bed_open": "side_lying_right",
+  "laptop_reclined_reading": "reclined_pillows",
+  "laptop_high_angle_keyboard": "seated_bed",
+  "laptop_dresser_typing_timer": "standing",
   "edge_lean_both_elbows": "seated_bed",
   "edge_one_knee_raised": "seated_bed",
   "edge_half_turn_back": "seated_bed",
