@@ -1,6 +1,14 @@
 import type {CompilationContext} from '../domain/types'
 import {bedroomShots} from './bedroom-shots'
 export const poseInteractionRules:Record<string,string>={
+  "laptop_edge_trackpad": "Both laptop base corners remain supported by thighs; free finger moves trackpad. Phone arm remains independent and within shoulder range.",
+  "laptop_edge_screen_glance": "Camera stays slightly lateral at true arm distance; the face is partly turned toward the laptop without rotating the laptop toward the camera.",
+  "laptop_rug_cross_legged": "Floor supports laptop base and hips independently; bent knees leave keyboard clearance, free arm extends without pulling the laptop off its support.",
+  "laptop_dresser_standing": "Dresser top directly supports the whole laptop base; standing feet support body weight. One hand operates trackpad and the separate hand holds phone.",
+  "laptop_side_bed_open": "Laptop weight depresses mattress slightly at its actual base footprint. Right arm reaches forward independently from the shoulder; left arm supports phone without a trapped elbow.",
+  "laptop_reclined_reading": "Pillows compress behind back; knees and thighs stabilize laptop base, which is not propped against the chest.",
+  "laptop_high_angle_keyboard": "Phone viewpoint is bounded by a single extended arm; laptop lid occludes the keyboard naturally and free hand rests on accessible keys.",
+  "laptop_dresser_typing_timer": "Both hands stay on keyboard. Laptop rests on dresser; timer phone has its own separate stable contact point and unobstructed line of sight.",
   "edge_lean_both_elbows": "Both forearms supported on thighs; phone placed securely on dresser.",
   "edge_one_knee_raised": "One hand rests on lifted knee; phone hand remains free.",
   "edge_half_turn_back": "Pelvis stays supported and shoulder rotation remains small.",
@@ -14,9 +22,9 @@ export const poseInteractionRules:Record<string,string>={
   "side_head_at_pillow_corner": "Pillow corner deforms beneath cheek, lower shoulder supported.",
   "prone_one_knee_bent": "Mattress carries chest and pelvis; photographing arm is not load bearing.",
   "laptop_cross_legs_trackpad": "Laptop base bears on thighs; free hand accesses trackpad.",
-  "laptop_edge_typing_timer": "Both hands type on keyboard; phone rests on separate stable stand.",
+  "laptop_edge_typing_timer": "Both hands type on keyboard; camera phone is supported by the existing dresser with actual base contact.",
   "laptop_recline_chest": "Laptop supported by thighs, torso supported by pillows, free hand types.",
-  "laptop_side_floor": "Laptop base rests on floor; free hand reaches without twisting wrist.",
+  "laptop_side_floor": "Laptop base rests across a flat mattress patch in front of bent knees; free forearm reaches without twisting the wrist.",
   "laptop_notebook_compare": "Notebook and laptop have separate supports; camera hand stays occupied.",
   "laptop_tilt_screen": "Free hand grips screen edge, laptop base remains planted.",
   "floor_back_bed_knees": "Floor supports hips and feet; bed edge supports upper back.",

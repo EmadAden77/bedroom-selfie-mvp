@@ -2,6 +2,7 @@ import type { CompilationContext, PromptSection, ValidationResult } from '../dom
 import { bedroomShots, getShotPosture } from '../data/bedroom-shots'
 import { isMirrorFlash } from '../data/mirror-flash-physics'
 import { isLivedInClutter } from '../data/bedroom-clutter'
+import { isLaptopSelfieShot } from '../data/laptop-selfie-physics'
 
 /** Final deterministic consistency gate. Only proven contradictions block export. */
 export function validateFinalRealism(ctx: CompilationContext, sections: PromptSection[]): ValidationResult {
@@ -40,6 +41,8 @@ export function validateFinalRealism(ctx: CompilationContext, sections: PromptSe
   if (shot?.id === 'mirror_rear_flash' && light !== 'rear_flash') errors.push('Final realism: mirror flash requires rear LED source')
   if (isMirrorFlash(ctx) && !byId.get('mirror_flash_physics')?.includes('MIRROR FLASH OPTICS:')) errors.push('Final realism: mirror flash ray path missing')
   if (!isMirrorFlash(ctx) && byId.has('mirror_flash_physics')) errors.push('Final realism: mirror flash instructions leaked into a non-flash capture')
+  if(isLaptopSelfieShot(ctx.bedroomShotId)&&!byId.get('laptop_selfie_physics')?.includes('LAPTOP SELFIE PHYSICS:'))errors.push('Final realism: laptop support physics missing')
+  if(!isLaptopSelfieShot(ctx.bedroomShotId)&&byId.has('laptop_selfie_physics'))errors.push('Final realism: laptop pose instructions leaked into unrelated shot')
   if (ctx.faceDirectionId === 'toward_window' && !ctx.windowUncovered) warnings.push('Final realism: gaze points toward a curtained window')
   if (light === 'phone_screen_only' && shot?.mode === 'timer') warnings.push('Final realism: timer setup with phone screen as the only illuminant may be underexposed')
   return { isValid: errors.length === 0, errors, warnings }

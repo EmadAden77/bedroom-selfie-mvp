@@ -15,6 +15,7 @@ import { renderRealismIntensity } from '../data/realism-intensity'
 import { renderBedroomEnvironment } from '../data/bedroom-environment'
 import { renderBackgroundContinuity } from '../data/background-continuity'
 import { renderBedroomClutter } from '../data/bedroom-clutter'
+import { renderLaptopSelfiePhysics } from '../data/laptop-selfie-physics'
 import { renderLightGeometry } from '../data/light-geometry'
 import { bedroomShots,renderBedroomShot } from '../data/bedroom-shots'
 import { nightLightingPresets } from '../data/night-lighting'
@@ -117,6 +118,8 @@ export function renderSections(ctx: CompilationContext): PromptSection[] {
   if(interaction) sections.push({id:'pose_interaction',content:interaction})
   const mirrorComposition=renderMirrorComposition(ctx)
   if(mirrorComposition) sections.push({id:'mirror_composition',content:mirrorComposition})
+  const laptopPhysics=renderLaptopSelfiePhysics(ctx)
+  if(laptopPhysics) sections.push({id:'laptop_selfie_physics',content:laptopPhysics})
   const mirrorFlash=renderMirrorFlashPhysics(ctx)
   if(mirrorFlash) sections.push({id:'mirror_flash_physics',content:mirrorFlash})
   sections.push({ id: 'camera_physics', content: renderCameraPhysics(ctx) })
