@@ -74,7 +74,7 @@ describe('Laptop selfie physical poses and light integration',()=>{
   const brief=buildCreativeSceneBrief(ctx)
   expect(brief).toContain('SELECTED LAPTOP SELFIE:')
   expect(brief).toContain('partial face')
-  expect(brief).toContain('genuinely supported laptop')
+  expect(brief).toContain('the real physical object interacting with the person')
   expect(brief).toContain('sole physical light source')
   expect(brief).toContain('Exactly one hand is occupied')
   expect(brief).toContain('Gemini does not receive')
