@@ -120,6 +120,7 @@ export type CompilationContext = {
   surface: string
   referenceImagePresent: boolean
   roomReferencePresent?: boolean
+  bedroomClutterId?: 'reference' | 'lived_in_messy'
   nightLightingId?: string
   windowUncovered?: boolean
   poseId?: string
