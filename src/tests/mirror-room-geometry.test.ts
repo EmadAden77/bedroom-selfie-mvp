@@ -35,7 +35,7 @@ describe('Reference-grounded mirror room geometry',()=>{
   expect(layout).toContain('roughly 5 metres')
   expect(layout).toContain('IF that sofa actually exists')
   expect(layout).toContain('only when within that real reflected field of view')
-  expect(layout).toContain('do NOT invent unseen furniture')
+  expect(layout).toContain('do not invent a sofa')
  })
  it('reaches the main Gemini scene and offline fallback, without transferring photos',()=>{
   const brief=buildCreativeSceneBrief(base)
