@@ -2,6 +2,7 @@ import type {CompilationContext} from '../../domain/types'
 import {bedroomShots} from '../../data/bedroom-shots'
 import {isLaptopSelfieShot} from '../../data/laptop-selfie-physics'
 import {captureLightingIssues} from '../../data/scene-consistency'
+import {isLivedInClutter} from '../../data/bedroom-clutter'
 
 /**
  * Natural Scene Director: adds context-specific observable action, never a new pose,
@@ -27,7 +28,7 @@ export function buildNaturalSceneDirection(ctx:CompilationContext):string{
   : mirror
   ? 'Show relaxed weight distribution and fabric movement only where the selected hand or body genuinely touches clothing or furniture; reflective sightlines and mirror edges remain exact.'
   : 'Show only subtle real contact pressure, fabric folds or handheld-camera framing caused by the selected action; avoid theatrical posing.'
- const setting=ctx.bedroomClutterId==='lived_in_messy'
+ const setting=isLivedInClutter(ctx)
   ? 'Where the crop reveals them, use the already selected rumpled bedding and physically supported small loose items, without altering existing furniture.'
   : 'Use only existing visible bedroom architecture and objects; do not invent generic clutter, accessories or extra furniture for atmosphere.'
  const optics=mirror
