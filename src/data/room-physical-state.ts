@@ -22,7 +22,7 @@ const ANCHORS:readonly RoomObject[]=[
  {id:'bed_garment_01',zone:'bed',label:'قطعة ملابس على السرير',placement:'One small casual garment rests on a clear corner of the mattress, supported by bedding; its position is fixed until touched.'},
  {id:'floor_shoes_01',zone:'floor',label:'حذاء أو شبشب مرجعي',placement:'Keep the reference footwear on the original tile patch with both soles grounded; their small asymmetry is stable across views.'},
  {id:'floor_cloth_01',zone:'floor',label:'قميص صغير على الأرض',placement:'One loose shirt lies on a free floor patch outside the walking aisle; its fabric touches tile continuously without clipping the rug.'},
- {id:'dresser_items_01',zone:'dresser',label:'أغراض التسريحة',placement:'Keep two or three existing small dresser objects slightly unaligned, fully supported and clear of the separate vanity mirror. Never invent drawers.'},
+ {id:'dresser_items_01',zone:'dresser',label:'أغراض التسريحة',placement:'Keep a few existing small dresser objects slightly unaligned, fully supported and clear of the separate vanity mirror. Never invent drawers.'},
  {id:'dresser_fold_01',zone:'dresser',label:'قطعة قماش على التسريحة',placement:'A small garment is partly folded on free dresser surface, with one natural fabric edge; preserve the existing wardrobe-door tracks.'},
  {id:'nightstand_cable_01',zone:'nightstand',label:'سلك الشحن',placement:'The existing charging cable forms a short continuous loose curve on the nightstand; show a plugged connection only if its real real endpoint is visible.'},
  {id:'nightstand_small_01',zone:'nightstand',label:'غرض صغير على الكومود',placement:'One small everyday item rests flat on available nightstand surface, respecting existing reference belongings and real clearance.'}
@@ -53,7 +53,7 @@ export function renderRoomPhysicalState(ctx:Pick<CompilationContext,'roomPhysica
   ? 'LIMITED DUST: a faint localized deposit only at existing skirting corners and beneath accessible furniture, visible solely when the chosen camera and light reveal it. No dirt film, scratches, mould, stains, damage and mirror fogging.'
   :state.surface==='touch'
   ? 'TOUCH TRACES: restrained removable finger-contact traces only on plausible touched surfaces and only if visible; no invented permanent scratches, stains and damaged paint.'
-  :'SURFACE CONDITION: use only marks actually present in the room reference; invent no grime, wear or scratches.'
+  :'SURFACE CONDITION: use only marks actually present in the room reference; invent no grime, new wear and scratches.'
  const mode=state.order==='reference'
   ? 'ROOM ORDER: strictly match the reference; add no objects and no rearrangement.'
   :'ROOM ORDER: '+(state.order==='clear'?'visibly lived-in with several anchored loose items':'subtly used with few anchored loose items')+'. Changes are restricted to selected editable zones, do not replace original objects and avoid cluttering the clear walking aisle.'
