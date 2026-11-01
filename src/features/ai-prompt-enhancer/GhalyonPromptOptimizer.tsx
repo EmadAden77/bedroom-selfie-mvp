@@ -1,13 +1,13 @@
 import React,{useEffect,useRef,useState} from 'react'
 import type {GhalyonMode,GhalyonTarget} from './ghalyon-config'
 
-type Reply={status:'questions'|'complete';questions:string[];optimizedPrompt:string;improvements:string[];proTip:string;error?:string}
-type Props={sourcePrompt:string;onPromptReady:(prompt:string)=>void}
+type Reply={status:'questions'|'complete';questions:string[];optimizedPrompt:string;improvements:string[];proTip:string;error?:string;errorCode?:string}
+type Props={sourcePrompt:string;scenePrompt?:string;initialTarget?:GhalyonTarget;onPromptReady:(prompt:string)=>void}
 
-export const GhalyonPromptOptimizer:React.FC<Props>=({sourcePrompt,onPromptReady})=>{
+export const GhalyonPromptOptimizer:React.FC<Props>=({sourcePrompt,scenePrompt='',initialTarget='gemini',onPromptReady})=>{
  const [idea,setIdea]=useState('')
  const [mode,setMode]=useState<GhalyonMode>('auto')
- const [target,setTarget]=useState<GhalyonTarget>('gemini')
+ const [target,setTarget]=useState<GhalyonTarget>(initialTarget)
  const [questions,setQuestions]=useState<string[]>([])
  const [answers,setAnswers]=useState<string[]>([])
  const [result,setResult]=useState<Reply|null>(null)
@@ -16,10 +16,26 @@ export const GhalyonPromptOptimizer:React.FC<Props>=({sourcePrompt,onPromptReady
  const [copied,setCopied]=useState(false)
  const pending=useRef<AbortController|null>(null)
  const requestVersion=useRef(0)
+ const lastSubmittedIdea=useRef('')
+ const submittedFromScene=useRef(false)
+ const usableScene=scenePrompt.trim().length>=8&&scenePrompt.length<=14000
  useEffect(()=>()=>{requestVersion.current++;pending.current?.abort()},[])
- const reset=()=>{requestVersion.current++;pending.current?.abort();pending.current=null;setLoading(false);setQuestions([]);setAnswers([]);setResult(null);setError('');setCopied(false)}
- async function generate(answerList:{question:string;answer:string}[]=[]){
-  if(idea.trim().length<8)return
+ useEffect(()=>{
+  if(submittedFromScene.current){
+   requestVersion.current++;pending.current?.abort();pending.current=null
+   setLoading(false);setQuestions([]);setAnswers([]);setResult(null)
+   setError('');submittedFromScene.current=false
+  }
+ },[scenePrompt])
+ const reset=()=>{requestVersion.current++;pending.current?.abort();pending.current=null;lastSubmittedIdea.current='';submittedFromScene.current=false;setLoading(false);setQuestions([]);setAnswers([]);setResult(null);setError('');setCopied(false)}
+ async function generate(answerList:{question:string;answer:string}[]=[],overrideIdea?:string){
+  const selectedIdea=answerList.length>0?lastSubmittedIdea.current:(overrideIdea??(idea.trim()||scenePrompt.trim())).trim()
+  if(selectedIdea.length<8){setError('اكتب فكرة أو اختر تحسين مشهد السيلفي الحالي.');return}
+  if(selectedIdea.length>14000){setError('البرومبت طويل جدًا. اختصره إلى 14000 حرف أو أقل.');return}
+  if(answerList.length===0){
+   lastSubmittedIdea.current=selectedIdea
+   submittedFromScene.current=!!scenePrompt&&!idea.trim()&&selectedIdea===scenePrompt.trim()||!!overrideIdea&&overrideIdea===scenePrompt
+  }
   pending.current?.abort()
   const version=++requestVersion.current
   const ctrl=new AbortController();pending.current=ctrl
@@ -27,10 +43,12 @@ export const GhalyonPromptOptimizer:React.FC<Props>=({sourcePrompt,onPromptReady
   setLoading(true);setError('')
   try{
    const response=await fetch('/api/optimize-prompt',{method:'POST',headers:{'content-type':'application/json'},
-    signal:ctrl.signal,body:JSON.stringify({idea:idea.trim(),mode,target,answers:answerList})})
+    signal:ctrl.signal,body:JSON.stringify({idea:selectedIdea,mode,target,answers:answerList})})
+   if(!(response.headers.get('content-type')||'').includes('application/json'))
+    throw Error('خدمة غَليون لم تُرجع JSON صالحًا. تحقق من تحديث التطبيق وحالة الخادم (GHALYON_NON_JSON).')
    const data=await response.json() as Reply
    if(!current())return
-   if(!response.ok)throw Error(data.error||'تعذر تحسين البرومبت.')
+   if(!response.ok)throw Error((data.error||'تعذر تحسين البرومبت.')+(data.errorCode?' ('+data.errorCode+')':''))
    if(data.status==='questions'&&data.questions.length>0&&data.questions.length<=3){
     setQuestions(data.questions);setAnswers(data.questions.map(() => ''));setResult(null)
    }else if(data.status==='complete'&&data.optimizedPrompt){
@@ -50,8 +68,13 @@ export const GhalyonPromptOptimizer:React.FC<Props>=({sourcePrompt,onPromptReady
    مرحباً، أنا غَليون — مهندس تحسين الأوامر. أرسل فكرتك أو البرومبت الخام وحدد النموذج المستهدف وBASIC أو DETAIL وسأحوّله إلى Prompt احترافي جاهز للاستخدام.
   </p>
   <label htmlFor="ghalyon-idea" style={{fontSize:'12px'}}>الفكرة أو البرومبت الخام</label>
-  <textarea id="ghalyon-idea" className="input" rows={5} maxLength={10000} value={idea}
+  <textarea id="ghalyon-idea" className="input" rows={5} maxLength={14000} value={idea}
    onChange={e=>{reset();setIdea(e.target.value)}} placeholder="اكتب فكرة أو الصق برومبت..." />
+  {usableScene&&<div style={{marginTop:'8px'}}>
+   <p style={{fontSize:'11px',color:'var(--muted)',lineHeight:1.7,margin:'0 0 7px'}}>يمكنك تشغيل غَليون مباشرةً من خيارات التصوير الحالية دون توليد البرومبت الرئيسي أولًا. عند كتابة فكرة خاصة، تُعطى الأولوية لنصك.</p>
+   <button className="btn btn-secondary" type="button" disabled={loading}
+    onClick={()=>{reset();void generate([],scenePrompt)}}>🪞 تحسين مشهد السيلفي الحالي مباشرةً</button>
+  </div>}
   {sourcePrompt&&<button className="btn btn-secondary" type="button" style={{marginTop:'8px'}}
    onClick={()=>{reset();setIdea(sourcePrompt)}}>استخدام برومبت الصورة الحالي</button>}
   <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:'10px',margin:'12px 0'}}>
@@ -66,7 +89,7 @@ export const GhalyonPromptOptimizer:React.FC<Props>=({sourcePrompt,onPromptReady
     </select>
    </label>
   </div>
-  {questions.length===0&&<button type="button" className="btn" disabled={idea.trim().length<8||loading}
+  {questions.length===0&&<button type="button" className="btn" disabled={(!usableScene&&idea.trim().length<8)||loading}
    onClick={()=>void generate()}>{loading?'غَليون يحسّن…':'تحسين البرومبت'}</button>}
   {questions.length>0&&<div>
    <p style={{fontSize:'12px',fontWeight:700}}>أسئلة توضيحية (حتى 3)</p>
