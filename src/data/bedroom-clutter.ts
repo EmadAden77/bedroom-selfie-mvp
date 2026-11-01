@@ -8,7 +8,7 @@ export function isLivedInClutter(ctx:CompilationContext):boolean{
 }
 
 export function renderBedroomClutter(ctx:CompilationContext):string{
- if(ctx.roomPhysicalState)return renderRoomPhysicalState(ctx)
+ if(ctx.roomPhysicalState)return ''
  if(!isLivedInClutter(ctx))return ''
  return [
   'LIVED-IN BEDROOM CLUTTER: An ordinary occupied room with pre-existing casual disorder, not a staged commercial set. Keep the locked room topology, original furniture, exactly one nightstand, real material finishes and consistent object identities.',
