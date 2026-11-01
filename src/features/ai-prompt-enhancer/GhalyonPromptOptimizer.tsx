@@ -15,25 +15,29 @@ export const GhalyonPromptOptimizer:React.FC<Props>=({sourcePrompt,onPromptReady
  const [loading,setLoading]=useState(false)
  const [copied,setCopied]=useState(false)
  const pending=useRef<AbortController|null>(null)
- useEffect(()=>()=>pending.current?.abort(),[])
- const reset=()=>{pending.current?.abort();setLoading(false);setQuestions([]);setAnswers([]);setResult(null);setError('');setCopied(false)}
+ const requestVersion=useRef(0)
+ useEffect(()=>()=>{requestVersion.current++;pending.current?.abort()},[])
+ const reset=()=>{requestVersion.current++;pending.current?.abort();pending.current=null;setLoading(false);setQuestions([]);setAnswers([]);setResult(null);setError('');setCopied(false)}
  async function generate(answerList:{question:string;answer:string}[]=[]){
   if(idea.trim().length<8)return
   pending.current?.abort()
+  const version=++requestVersion.current
   const ctrl=new AbortController();pending.current=ctrl
+  const current=()=>version===requestVersion.current&&!ctrl.signal.aborted
   setLoading(true);setError('')
   try{
    const response=await fetch('/api/optimize-prompt',{method:'POST',headers:{'content-type':'application/json'},
     signal:ctrl.signal,body:JSON.stringify({idea:idea.trim(),mode,target,answers:answerList})})
    const data=await response.json() as Reply
+   if(!current())return
    if(!response.ok)throw Error(data.error||'تعذر تحسين البرومبت.')
    if(data.status==='questions'&&data.questions.length>0&&data.questions.length<=3){
     setQuestions(data.questions);setAnswers(data.questions.map(() => ''));setResult(null)
    }else if(data.status==='complete'&&data.optimizedPrompt){
     setResult(data);setQuestions([]);setAnswers([])
    }else throw Error('استجابة غير صالحة من المحرك.')
-  }catch(e){if(!ctrl.signal.aborted)setError(e instanceof Error?e.message:'تعذر الاتصال بـ Gemini.')}
-  finally{if(!ctrl.signal.aborted)setLoading(false)}
+  }catch(e){if(current())setError(e instanceof Error?e.message:'تعذر الاتصال بـ Gemini.')}
+  finally{if(current())setLoading(false)}
  }
  async function copy(){
   if(!result)return
