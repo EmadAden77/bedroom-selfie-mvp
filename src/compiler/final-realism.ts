@@ -23,7 +23,7 @@ export function validateFinalRealism(ctx: CompilationContext, sections: PromptSe
   if (posture === 'side_lying_right' && !body.includes('Right shoulder, right hip')) errors.push('Final realism: right-side contact missing')
   if (posture === 'side_lying_left' && !body.includes('Left shoulder, left hip')) errors.push('Final realism: left-side contact missing')
   if (shot?.mode === 'mirror') {
-    if (!camera.includes('MIRROR CAPTURE:') || !byId.get('bedroom_shot_' + shot.id)?.includes('iPhone 15 Pro Max')) errors.push('Final realism: mirror capture device mismatch')
+    if (!camera.includes('MIRROR CAPTURE:') || !byId.get('bedroom_shot_' + shot.id)?.includes('Xiaomi 15 Ultra')) errors.push('Final realism: mirror capture device mismatch')
     // Catch incompatible instructions even when leaked by another prompt section.
     if (/FRONT SELFIE CAPTURE:|front-facing smartphone|front-facing camera|held front camera|hand-held front camera/i.test(sections.map(s => s.content).join(' '))) {
       errors.push('Final realism: front selfie camera instruction leaked into mirror capture')
@@ -33,7 +33,7 @@ export function validateFinalRealism(ctx: CompilationContext, sections: PromptSe
   } else if (shot?.mode === 'rear') {
     if (!camera.includes('REAR CAMERA CAPTURE:')) errors.push('Final realism: rear capture camera mismatch')
   } else if (!camera.includes('FRONT SELFIE CAPTURE:')) errors.push('Final realism: front camera profile missing')
-  if (!room.includes('exactly one bedside nightstand') || !room.includes('sliding-door wardrobe')) errors.push('Final realism: fixed bedroom topology missing')
+  if (!room.includes('bedside nightstand') || !room.includes('sliding-door wardrobe')) errors.push('Final realism: fixed bedroom topology missing')
   if(isLivedInClutter(ctx)&&!byId.get('lived_in_bedroom_clutter')?.includes('LIVED-IN BEDROOM CLUTTER:'))errors.push('Final realism: selected lived-in clutter instructions missing')
   if(!isLivedInClutter(ctx)&&byId.has('lived_in_bedroom_clutter'))errors.push('Final realism: unselected clutter leaked into prompt')
   if (light === 'phone_screen_only' && !byId.get('night_lighting_phone_screen_only')?.includes('sole active light source')) errors.push('Final realism: phone-only lighting contradicts source')

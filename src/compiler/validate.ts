@@ -10,6 +10,7 @@ import { bedroomShots } from '../data/bedroom-shots'
 import { validateMirrorControls } from '../data/mirror-controls'
 import { nightLightingPresets } from '../data/night-lighting'
 import { garmentRecords, garmentStates, fitProfiles } from '../data/clothing'
+import {captureLightingIssues} from '../data/scene-consistency'
 
 export function validateContext(ctx: CompilationContext): ValidationResult {
   const errors: string[] = []
@@ -134,6 +135,7 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
     if (shot?.mode==='mirror' && ctx.nightLightingId==='phone_screen_only') warnings.push('Mirror selfie may be severely underexposed with phone screen only')
   }
 
+  errors.push(...captureLightingIssues(ctx).filter(issue=>!(issue.includes('فلاش المرآة')&&ctx.bedroomShotId==='mirror_rear_flash')))
   errors.push(...validateMirrorControls(ctx))
   return { isValid: errors.length === 0, errors, warnings }
 }

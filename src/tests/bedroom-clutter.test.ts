@@ -36,7 +36,7 @@ describe('Optional realistic lived-in bedroom clutter',()=>{
   const section=c.result.sections.find(s=>s.id==='lived_in_bedroom_clutter')?.content||''
   expect(section).toContain('LIVED-IN BEDROOM CLUTTER:')
   expect(section).toContain('gravity-loaded folds')
-  expect(section).toContain('single bedside nightstand')
+  expect(section).toContain('existing bedside nightstand')
   expect(section).toContain('glossy beige floor')
   expect(section).toContain('9:16')
   expect(c.result.sections.filter(s=>s.id==='lived_in_bedroom_clutter')).toHaveLength(1)

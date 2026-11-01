@@ -20,6 +20,7 @@ import { PhotoResultAudit } from '../features/photo-result-audit/PhotoResultAudi
 import { useReferenceImage } from '../hooks/useReferenceImage'
 import { CompilationContext } from '../domain/types'
 import { compilePrompt } from '../compiler'
+import {reconcileCaptureSelection} from '../data/scene-consistency'
 
 const defaultContext: CompilationContext = {
   hairVariantId: 'reference_natural_dry',
@@ -67,7 +68,7 @@ export const App: React.FC = () => {
   }, [ctxWithImage])
 
   const handleContextChange = useCallback((patch: Partial<CompilationContext>) => {
-    setCtx(prev => ({ ...prev, ...patch }))
+    setCtx(prev => reconcileCaptureSelection(prev,patch))
   }, [])
 
   const handleReset = useCallback(() => {
@@ -86,13 +87,14 @@ export const App: React.FC = () => {
       <HairSelector direction={ctx.hairDirection || 'auto'} volume={ctx.hairVolume || 'auto'} texture={ctx.hairTexture || 'auto'} onAdvancedChange={handleContextChange} selectedId={ctx.hairVariantId} mode={ctx.hairstyleMode || 'preserve'} onModeChange={mode=>handleContextChange({hairstyleMode:mode})} onSelect={(id) => handleContextChange({ hairVariantId: id, hairstyleMode: id==='reference_natural_dry'?'preserve':'apply' })} />
       <ExpressionSelector selectedId={ctx.expressionVariantId} gaze={ctx.gazeId || 'auto'} micro={ctx.microExpressionId || 'none'} onAdvancedChange={handleContextChange} onSelect={(id) => handleContextChange({ expressionVariantId: id })} />
       <ClothingSelector ctx={ctxWithImage} onChange={handleContextChange} />
-      <NightLightingSelector selectedId={ctx.nightLightingId || 'phone_screen_only'} windowUncovered={!!ctx.windowUncovered} onSelect={id=>handleContextChange({ nightLightingId:id })} onWindowChange={open=>handleContextChange({ windowUncovered:open })}/>
+      <NightLightingSelector shotId={ctx.bedroomShotId} selectedId={ctx.nightLightingId || 'phone_screen_only'} windowUncovered={!!ctx.windowUncovered} onSelect={id=>handleContextChange({ nightLightingId:id })} onWindowChange={open=>handleContextChange({ windowUncovered:open })}/>
       <LightGeometrySelector poseId={ctx.poseId || 'seated_bed'} faceDirectionId={ctx.faceDirectionId || 'toward_camera'} lampSideId={ctx.lampSideId || 'left'} onChange={patch=>handleContextChange({ ...patch, ...(patch.poseId ? {bedroomShotId:''} : {}) })}/>
       <BedroomShotsSelector value={ctx.bedroomShotId || ''} onChange={id=>{
         const selectedShot=bedroomShots.find(s=>s.id===id)
         const currentLighting=ctx.nightLightingId || 'phone_screen_only'
         const nextLighting=id==='mirror_rear_flash' ? 'rear_flash'
           : selectedShot?.mode==='mirror' && ['phone_screen_only','rear_flash'].includes(currentLighting) ? 'ceiling_neutral'
+          : selectedShot?.mode==='rear' && currentLighting==='phone_screen_only' ? 'ceiling_neutral'
           : id && currentLighting==='rear_flash' ? 'ceiling_neutral'
           : currentLighting
         handleContextChange({bedroomShotId:id,...(getShotPosture(id)?{poseId:getShotPosture(id)}:{}),nightLightingId:nextLaptopLighting(id,nextLighting),

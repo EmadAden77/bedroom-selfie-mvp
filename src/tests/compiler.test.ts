@@ -248,7 +248,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(right.validation.isValid).toBe(true)
     expect(right.result.promptText).toContain('right cheek and shoulder')
     expect(left.result.promptText).toContain('left cheek and shoulder')
-    expect(right.result.promptText).toContain('on the subject left side')
+    expect(right.result.promptText).toContain('subject left face side')
   })
   it('Rejects unrecognized pose configurations', () => {
     expect(compilePrompt({ ...defaultCtx, poseId: 'floating' }).validation.isValid).toBe(false)
@@ -324,12 +324,12 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     const compiled=compilePrompt({...defaultCtx,hairVariantId:'wind_blown_natural',hairstyleMode:mode})
     expect(compiled.result.sections.filter(s=>s.id.startsWith('hair_') && s.id!=='hair_identity_guard')).toHaveLength(1)
   })
-  it.each(bedroomShots.filter(s=>s.mode === 'mirror'))('Mirror $id uses Black Titanium iPhone 15 Pro Max', shot => {
+  it.each(bedroomShots.filter(s=>s.mode === 'mirror'))('Mirror $id uses the same Xiaomi 15 Ultra as other selfie modes', shot => {
     const {result,validation}=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:shot.id==='mirror_rear_flash'?'rear_flash':'ceiling_dim'})
     expect(validation.isValid).toBe(true)
-    expect(result.promptText).toContain('iPhone 15 Pro Max in Black Titanium')
-    expect(result.promptText).toContain('three camera lenses')
-    expect(result.promptText).toContain('LiDAR')
+    expect(result.promptText).toContain('Xiaomi 15 Ultra')
+    expect(result.promptText).toContain('genuine rear camera module')
+    expect(result.promptText).not.toContain('LiDAR')
   })
   it.each(bedroomShots.filter(s=>s.mode !== 'mirror'))('Non-mirror $id has no iPhone model lock',shot => {
     const lighting = shot.id==='silhouette'||shot.id==='half_light'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
@@ -343,7 +343,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
       const compiled=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:true})
       expect(compiled.validation.isValid).toBe(true)
       expect(compiled.result.sections.filter(s=>s.id==='bedroom_environment_lock')).toHaveLength(1)
-      expect(compiled.result.promptText).toContain('queen bed approximately 160 by 200 cm against the LEFT wall')
+      expect(compiled.result.promptText).toContain('original bed against the LEFT wall')
       expect(compiled.result.promptText).toContain('RIGHT wall: sliding-door wardrobe')
     }
   })
@@ -357,7 +357,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(chatgpt.result.promptText).toContain('ChatGPT hairstyle priority:')
     expect(chatgpt.result.promptText).toContain('Lying on the back')
     expect(gemini.result.promptText).toContain('Lying on the back')
-    expect(chatgpt.result.promptText).toContain('queen bed approximately 160 by 200 cm')
+    expect(chatgpt.result.promptText).toContain('original bed against the LEFT wall')
   })
   it('ChatGPT does not force hairstyle changes in preserve mode', () => {
     const result=compilePrompt({...defaultCtx,promptTarget:'chatgpt',hairstyleMode:'preserve'})
@@ -372,7 +372,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     const content=physics[0].content
     if (shot.mode==='mirror') {
       expect(content).toContain('MIRROR CAPTURE:')
-      expect(content).toContain('iPhone 15 Pro Max Black Titanium')
+      expect(content).toContain('Xiaomi 15 Ultra')
       expect(content).not.toContain('FRONT SELFIE CAPTURE:')
     } else if (shot.mode==='timer') {
       expect(content).toContain('TIMER CAPTURE:')
@@ -382,7 +382,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
       expect(content).not.toContain('FRONT SELFIE CAPTURE:')
     } else {
       expect(content).toContain('FRONT SELFIE CAPTURE:')
-      expect(content).toContain('40–60 cm')
+      expect(content).toContain('realistic available arm distance')
     }
     expect(content).toContain('No beauty smoothing')
     expect(content).toContain('physically credible camera-to-subject distance')
@@ -404,7 +404,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
   it('Front selfie preserves its own camera-facing text', () => {
     const compiled=compilePrompt({...defaultCtx,bedroomShotId:'edge_one_knee_raised',nightLightingId:'ceiling_neutral'})
     expect(compiled.validation.isValid).toBe(true)
-    expect(compiled.result.sections.find(s=>s.id==='light_pose_geometry')?.content).toContain('Face oriented toward the held front camera.')
+    expect(compiled.result.sections.find(s=>s.id==='light_pose_geometry')?.content).toContain('Face oriented toward the actual recording camera')
   })
   it('Final realism rejects any front-camera instructions leaked into a mirror prompt', async () => {
     const {validateFinalRealism}=await import('../compiler/final-realism')
@@ -492,7 +492,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(without.result.promptText).not.toContain('ROOM IMAGE REFERENCE:')
     expect(withRoom.result.promptText).toContain('ROOM IMAGE REFERENCE:')
     expect(withRoom.result.promptText).toContain('subject identity reference controls the person only')
-    expect(withRoom.result.promptText).toContain('queen bed approximately 160 by 200 cm')
+    expect(withRoom.result.promptText).toContain('original bed against the LEFT wall')
     expect(withRoom.result.sections.filter(x=>x.id==='bedroom_environment_lock')).toHaveLength(1)
     expect(withRoom.result.sections.filter(x=>x.id==='reference_identity')).toEqual(without.result.sections.filter(x=>x.id==='reference_identity'))
   })
@@ -540,8 +540,8 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     for(const output of [seated,standing]){
       const sections=output.result.sections.filter(s=>s.id==='background_continuity')
       expect(sections).toHaveLength(1)
-      expect(sections[0].content).toContain('sole nightstand keeps the same mug')
-      expect(sections[0].content).toContain('two ordinary sleeping pillows')
+      expect(sections[0].content).toContain('existing nightstand and right-side dresser keep the same objects')
+      expect(sections[0].content).toContain('actual pillow count from the room reference')
       expect(output.result.errors).toEqual([])
     }
     expect(seated.result.promptText).toContain('BED CONTACT CONTINUITY:')

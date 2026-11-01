@@ -42,7 +42,7 @@ export function buildCreativeSceneBrief(ctx:CompilationContext):string{
 
  const details=[
   'Photograph concept: a real adult person taking an authentic everyday bedroom selfie.',
-  'Capture method: '+(shot?.mode||'front')+' smartphone camera.',
+  'Capture method: '+(shot?.mode==='mirror'?'Xiaomi 15 Ultra rear-camera mirror selfie; the real phone screen faces its holder':shot?.mode==='rear'?'Xiaomi 15 Ultra handheld rear-camera photograph':shot?.mode==='timer'?'Xiaomi 15 Ultra on stable timer support, facing the subject':'Xiaomi 15 Ultra front-camera handheld selfie')+'. No invented device, exact focal length or floating viewpoint.',
   'Scene choice: '+(shot?.description||plain(ctx.poseId)||'a plausible natural bedroom pose')+'.',
   'Body posture: '+plain(shot?getShotPosture(shot.id):ctx.poseId)+'.',
   buildNaturalSceneDirection(ctx),
@@ -67,7 +67,7 @@ export function buildCreativeSceneBrief(ctx:CompilationContext):string{
   'Bedroom image reference: '+(ctx.roomReferencePresent?'provided separately to the final image generator; Gemini does not receive or see it':'not supplied')+'.',
   ...(shot?.mode==='mirror'?[buildMirrorGeminiBrief(ctx)]:[]),
   ...(shot?.mode==='mirror'&&ctx.nightLightingId==='rear_flash'?[buildMirrorFlashGeminiBrief(ctx)]:[]),
-  'Treat these selections as scene guidance, not as literal wording or an instruction to append legacy locks. Freely invent believable everyday photographic details while staying within real physics.'
+  'Treat these selections as scene guidance, not literal text to paste. Express the selected candid moment naturally; only improvise details that do not add new identifiable objects, furniture, lighting or facial anatomy. Subject and room references outrank generic scene defaults, and real physics constrains all visible actions.'
  ]
  return details.join('\n')
 }

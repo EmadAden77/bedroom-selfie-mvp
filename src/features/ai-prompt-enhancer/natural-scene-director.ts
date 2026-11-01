@@ -1,6 +1,7 @@
 import type {CompilationContext} from '../../domain/types'
 import {bedroomShots} from '../../data/bedroom-shots'
 import {isLaptopSelfieShot} from '../../data/laptop-selfie-physics'
+import {captureLightingIssues} from '../../data/scene-consistency'
 
 /**
  * Natural Scene Director: adds context-specific observable action, never a new pose,
@@ -17,7 +18,7 @@ export function buildNaturalSceneDirection(ctx:CompilationContext):string{
   : timer
   ? 'Describe a quiet instant after setting the real phone timer on its selected stable support. Do not turn this into a handheld capture.'
   : mirror
-  ? 'Describe the selected mirror-selfie action in progress. Follow the exact free-hand movement, gaze and phone position already selected; do not add a competing gesture or a second mirror.'
+  ? 'Describe the selected mirror-selfie action in progress. Follow the exact free-hand movement, gaze and phone position already selected; do not add a competing gesture or invent another recording mirror; preserve the original separate vanity mirror where visible.'
   : 'Describe a candid instant within the selected bedroom selfie action, rather than a staged pose. Keep one reachable recording phone and only the already selected hand or object interaction.'
  const contacts=laptop
   ? 'Show small physically caused effects: weight and fabric compression only under the actual laptop and body contact; its screen, hinge, hands and support stay connected.'
@@ -41,14 +42,5 @@ export function buildNaturalSceneDirection(ctx:CompilationContext):string{
 
 /** A small preflight for unambiguously contradictory user selections. */
 export function naturalSceneSelectionIssues(ctx:CompilationContext):string[]{
- const shot=bedroomShots.find(item=>item.id===ctx.bedroomShotId)
- if(!shot)return []
- const issues:string[]=[]
- if(shot.id==='mirror_rear_flash'&&ctx.nightLightingId&&ctx.nightLightingId!=='rear_flash'){
-  issues.push('وضعية فلاش المرآة تتطلب اختيار إضاءة الفلاش الخلفي حتى تتوافق اللقطة مع مصدر الضوء الحقيقي.')
- }
- if(ctx.nightLightingId==='laptop_screen_only'&&!isLaptopSelfieShot(shot.id)){
-  issues.push('إضاءة شاشة اللابتوب لا تصلح لهذه الوضعية من دون وجود لابتوب فعلي في المشهد.')
- }
- return issues
+ return captureLightingIssues(ctx)
 }

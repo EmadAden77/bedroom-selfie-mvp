@@ -42,7 +42,7 @@ describe('Reference-grounded mirror room geometry',()=>{
   const layout=buildMirrorRoomReferenceGeometry(base)
   expect(layout).toContain('roughly 3 metres')
   expect(layout).toContain('roughly 5 metres')
-  expect(layout).toContain('IF that sofa actually exists')
+  expect(layout).toContain('IF that sofa is actually shown')
   expect(layout).toContain('only when within that real reflected field of view')
   expect(layout).toContain('do not invent a sofa')
  })
