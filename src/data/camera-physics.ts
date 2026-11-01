@@ -9,7 +9,7 @@ export function renderCameraPhysics(ctx: CompilationContext): string {
   if (mode === 'mirror') return [
     base,
     'MIRROR CAPTURE: Rear-facing handset visible in the existing wardrobe mirror. The displayed camera viewpoint and reflected phone position follow real equal-angle reflection geometry.',
-    'The iPhone 15 Pro Max Black Titanium appearance remains governed by the mirror handset lock. A real gripping hand holds the device at the selected waist-to-eye height within normal shoulder and wrist reach, with correct finger contacts. The screen faces the subject and rear camera lenses face the mirror.',
+    'The Xiaomi 15 Ultra appearance follows the selected real recording handset, without inventing an iPhone or changing device identity between captures. A real gripping hand holds the device at the selected waist-to-eye height within normal shoulder and wrist reach, with correct finger contacts. The screen faces the subject and rear camera lenses face the mirror.',
     'Reflected distances, mirror perspective and occlusion are physically consistent. Room lighting determines noise, shadow and flash reflection. No additional selfie camera viewpoint.'
   ].join(' ')
   if (mode === 'timer') return [
@@ -25,8 +25,8 @@ export function renderCameraPhysics(ctx: CompilationContext): string {
   ].join(' ')
   return [
     base,
-    'FRONT SELFIE CAPTURE: Xiaomi 15 Ultra front-facing smartphone camera perspective, approximately 21–22 mm full-frame equivalent, naturally broad depth of field.',
-    'Held approximately 40–60 cm from the face when pose permits. Camera pitch, yaw and roll reflect the chosen pose; the forearm extends from a real shoulder with a feasible elbow and wrist angle.',
+    'FRONT SELFIE CAPTURE: Xiaomi 15 Ultra front-facing smartphone camera perspective, with plausible wide-angle phone optics and naturally broad depth of field; do not invent a precise focal length.',
+    'Held at realistic available arm distance from the face when pose permits. Camera pitch, yaw and roll reflect the chosen pose; the forearm extends from a real shoulder with a feasible elbow and wrist angle.',
     'Mild wide-angle proximity effects only, realistic face-to-background scale, modest edge distortion and no exaggerated head enlargement.',
     'Phone screen illumination contributes solely when the selected lighting setup actually enables it; no automatic front flash.',
     'Noise, white balance variation and JPEG detail follow the exposure. Preserve ordinary imperfect handheld alignment.'
