@@ -248,7 +248,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(right.validation.isValid).toBe(true)
     expect(right.result.promptText).toContain('right cheek and shoulder')
     expect(left.result.promptText).toContain('left cheek and shoulder')
-    expect(right.result.promptText).toContain('on the subject left side')
+    expect(right.result.promptText).toContain('subject left face side')
   })
   it('Rejects unrecognized pose configurations', () => {
     expect(compilePrompt({ ...defaultCtx, poseId: 'floating' }).validation.isValid).toBe(false)
