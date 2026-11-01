@@ -3,7 +3,10 @@
  * offline fallback, not a hidden source of mandatory text appended to Gemini.
  * Text-only scene choices are shared; no uploaded reference images leave this UI.
  */
-import {MAX_SCENE_BRIEF_CHARS,MAX_SCENE_REQUEST_BYTES} from '../src/features/ai-prompt-enhancer/scene-request-limits'
+// Keep these serverless-runtime limits local: Vercel deploys api/ as standalone functions.
+// Importing this from src/ compiles under Vitest but breaks production Node ESM resolution.
+export const MAX_SCENE_BRIEF_CHARS=12000
+export const MAX_SCENE_REQUEST_BYTES=24000
 
 type MainPayload = {
  sceneBrief?:unknown;shotId?:unknown;mode?:unknown;posture?:unknown;lighting?:unknown;target?:unknown
