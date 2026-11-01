@@ -3,6 +3,7 @@ import type {CompilationContext,CompilationResult,ValidationResult} from '../../
 import {bedroomShots,getShotPosture} from '../../data/bedroom-shots'
 import {buildCreativeSceneBrief} from './buildCreativeSceneBrief'
 import {GhalyonPromptOptimizer} from './GhalyonPromptOptimizer'
+import {naturalSceneSelectionIssues} from './natural-scene-director'
 
 type Props={ctx:CompilationContext;result:CompilationResult;validation:ValidationResult;onReset:()=>void;onPromptReady:(prompt:string)=>void}
 type MainReply={prompt?:string;source?:string;model?:string;error?:string;errorCode?:string}
@@ -17,7 +18,8 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
   const requestVersion=useRef(0)
   const prompt=result.promptText
   const sceneBrief=buildCreativeSceneBrief(ctx)
-  const ready=sceneBrief.trim().length>=50
+  const selectionIssues=naturalSceneSelectionIssues(ctx)
+  const ready=sceneBrief.trim().length>=50&&selectionIssues.length===0
   const fallbackReady=validation.isValid&&result.errors.length===0&&prompt.length>=100
   const targetLabels={gemini:'Gemini / Imagen',chatgpt:'ChatGPT / GPT Image',flux:'FLUX',midjourney:'Midjourney'} as const
   const selectedTarget=targetLabels[ctx.promptTarget||'gemini']
@@ -93,6 +95,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
     <p style={{fontSize:'10px',color:'var(--muted)',lineHeight:1.7,margin:'0 0 14px'}}>
       تُرسل إلى Google اختيارات مشهد مختصرة فقط؛ لا يُرسل البرومبت المحلي الطويل أو ملفات صور الوجه والغرفة. يمكنك دائمًا استخدام النسخة المحلية الاحتياطية المستقلة. رابط التطبيق عام وقد يستهلك زواره حصة Gemini.
     </p>
+    {selectionIssues.length>0&&<div role="alert" style={{fontSize:'12px',color:'#b91c1c',marginBottom:'10px'}}>{selectionIssues.map(issue=><p key={issue}>{issue}</p>)}</div>}
     {(validation.errors.length>0||result.errors.length>0)&&<div style={{fontSize:'11px',color:'var(--muted)',marginBottom:'10px'}}>ملاحظة: بعض الخيارات لا تصلح لمحرك النسخة المحلية الاحتياطية فقط؛ لا تمنع Gemini من تأليف برومبت فيزيائي واقعي.</div>}
     <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
       <button type="button" className="btn" disabled={!ready||loading} onClick={generate}>{loading?'Gemini يولّد البرومبت…':engine==='gemini'?'إعادة التوليد بواسطة Gemini':'توليد البرومبت بواسطة Gemini'}</button>
