@@ -135,7 +135,10 @@ export default {
   }
   if(sceneBrief.length>MAX_SCENE_BRIEF_CHARS)return fail('SCENE_BRIEF_TOO_LONG','وصف المشهد طويل جدًا. قلّل التفاصيل المكررة ثم أعد التوليد.',413)
   if((shotId==='mirror_rear_flash'&&lighting!=='rear_flash')||
-     (lighting==='laptop_screen_only'&&(!String(shotId).startsWith('laptop_')||shotId==='laptop_reflection'))){
+     (lighting==='laptop_screen_only'&&(!String(shotId).startsWith('laptop_')||shotId==='laptop_reflection'))||
+     (String(shotId).startsWith('mirror_')&&mode!=='mirror')||
+     (lighting==='rear_flash'&&mode!=='mirror'&&mode!=='rear')||
+     (lighting==='phone_screen_only'&&mode==='rear')){
     return fail('NATURAL_SCENE_CONFLICT','إضاءة المشهد لا تتوافق مع نشاط أو وضعية التصوير المختارة.',400)
   }
   if(!allowBurst(request))return fail('GEMINI_RATE_LIMIT','طلبات كثيرة من نفس الشبكة. أعد المحاولة بعد دقيقة.',429)
