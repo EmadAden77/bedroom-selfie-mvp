@@ -8,7 +8,8 @@ export const LightGeometrySelector: React.FC<Props> = ({poseId,faceDirectionId,l
   <div style={{display:'grid',gap:'10px'}}>
    <label style={{fontSize:'12px'}}>وضعية الجسم<select className="input" value={poseId} onChange={e=>onChange({poseId:e.target.value})}>{poseOptions.map(x=><option key={x.id} value={x.id}>{x.label}</option>)}</select></label>
    <label style={{fontSize:'12px'}}>اتجاه الوجه<select className="input" value={faceDirectionId} onChange={e=>onChange({faceDirectionId:e.target.value})}>{faceOptions.map(x=><option key={x.id} value={x.id}>{x.label}</option>)}</select></label>
-   <label style={{fontSize:'12px'}}>موضع المصباح بالنسبة للشخص<select className="input" value={lampSideId} onChange={e=>onChange({lampSideId:e.target.value})}>{lampSideOptions.map(x=><option key={x.id} value={x.id}>{x.label}</option>)}</select></label>
+   <p style={{fontSize:'11px',color:'var(--muted)',margin:'0'}}>هذا تفضيل لاتجاه سقوط الضوء على الوجه، ولا ينقل المصباح من موقعه الحقيقي بجانب السرير.</p>
+   <label style={{fontSize:'12px'}}>تفضيل الجانب الأقرب لضوء المصباح<select className="input" value={lampSideId} onChange={e=>onChange({lampSideId:e.target.value})}>{lampSideOptions.map(x=><option key={x.id} value={x.id}>{x.label}</option>)}</select></label>
   </div>
  </section>
 )
