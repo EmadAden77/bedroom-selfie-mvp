@@ -66,3 +66,41 @@ describe('Ghalyon prompt optimizer',()=>{
   expect((await r.json() as {status:string}).status).toBe('questions')
  })
 })
+
+
+describe('Verified Gemini API error handling',()=>{
+ it.each([
+  [400,'GEMINI_REQUEST',502],
+  [401,'GEMINI_ACCESS',502],
+  [403,'GEMINI_ACCESS',502],
+  [404,'GEMINI_MODEL',502],
+  [429,'GEMINI_QUOTA',429],
+  [503,'GEMINI_UPSTREAM',502]
+ ] as const)('maps upstream %d to safe %s',async(status,code,expectedStatus)=>{
+  vi.stubEnv('GEMINI_API_KEY','test-key')
+  vi.stubGlobal('fetch',vi.fn(async()=>new Response('secret error body',{status})))
+  const result=await handler.fetch(req(payload,'ghalyon-status-'+status))
+  expect(result.status).toBe(expectedStatus)
+  const data=await result.json() as {errorCode:string;error:string}
+  expect(data.errorCode).toBe(code)
+  expect(data.error).not.toContain('secret error')
+ })
+ it('distinguishes timeout from network failure',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','test-key')
+  for(const [name,code,status] of [['TimeoutError','GEMINI_TIMEOUT',504],['TypeError','GEMINI_NETWORK',502]] as const){
+   const err=new Error('secret')
+   err.name=name
+   vi.stubGlobal('fetch',vi.fn(async()=>{throw err}))
+   const result=await handler.fetch(req(payload,'ghalyon-'+name))
+   expect(result.status).toBe(status)
+   expect((await result.json() as {errorCode:string}).errorCode).toBe(code)
+  }
+ })
+ it('rejects oversized JSON even if content-length is omitted',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','test-key')
+  const r=new Request(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({
+   ...payload,irrelevant:'x'.repeat(21000)
+  })})
+  expect((await handler.fetch(r)).status).toBe(413)
+ })
+})
