@@ -1,8 +1,8 @@
 // @vitest-environment node
-import {describe,expect,it} from 'vitest'
+import {describe,expect,it,vi,afterEach} from 'vitest'
 import {buildNaturalSceneDirection,naturalSceneSelectionIssues} from '../features/ai-prompt-enhancer/natural-scene-director'
 import {buildCreativeSceneBrief} from '../features/ai-prompt-enhancer/buildCreativeSceneBrief'
-import {PHYSICS_ONLY_SYSTEM,validatePhysicalPrompt} from '../../api/generate-main-prompt'
+import mainHandler,{PHYSICS_ONLY_SYSTEM,validatePhysicalPrompt} from '../../api/generate-main-prompt'
 import {SYSTEM as GHALYON_SYSTEM} from '../../api/optimize-prompt'
 import type {CompilationContext} from '../domain/types'
 
@@ -83,5 +83,29 @@ describe('Natural photo-output consistency checks',()=>{
   expect(()=>validatePhysicalPrompt(text,{mode:'front',lighting:'phone_screen_only'})).toThrow('screen_light_conflict')
   expect(()=>validatePhysicalPrompt(text,{mode:'front',lighting:'laptop_screen_only'})).toThrow('screen_light_conflict')
   expect(()=>validatePhysicalPrompt(text,{mode:'front',lighting:'ceiling_neutral'})).not.toThrow()
+ })
+})
+
+afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals()})
+
+describe('Server-side natural activity preflight',()=>{
+ it('rejects mirror-flash without rear flash or a nonexistent laptop screen source',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','test-key')
+  const upstream=vi.fn()
+  vi.stubGlobal('fetch',upstream)
+  const endpoint='https://bedroom-selfie-mvp.vercel.app/api/generate-main-prompt'
+  const sceneBrief='Realistic bedroom selfie in an ordinary room with a physically supported phone, real gravity and light falloff.'
+  for(const selection of [
+   {shotId:'mirror_rear_flash',mode:'mirror',lighting:'ceiling_neutral'},
+   {shotId:'bed_edge',mode:'front',lighting:'laptop_screen_only'}
+  ]){
+   const response=await mainHandler.fetch(new Request(endpoint,{method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({...selection,sceneBrief,posture:'standing',target:'gemini'})
+   }))
+   expect(response.status).toBe(400)
+   expect((await response.json() as {errorCode:string}).errorCode).toBe('NATURAL_SCENE_CONFLICT')
+  }
+  expect(upstream).not.toHaveBeenCalled()
  })
 })
