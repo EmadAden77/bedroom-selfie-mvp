@@ -19,8 +19,8 @@ export const faceOptions = [
   { id: 'toward_window', label: 'نحو النافذة', text: 'Head oriented toward the uncovered window.' }
 ] as const
 export const lampSideOptions = [
-  { id: 'left', label: 'يسار الشخص', text: 'on the subject left side as set by the fixed actual lamp position' },
-  { id: 'right', label: 'يمين الشخص', text: 'on the subject right side as set by the fixed actual lamp position' }
+  { id: 'left', label: 'الجانب الأيسر من الوجه', text: 'subject left face side, only if attainable with the actual lamp and head orientation' },
+  { id: 'right', label: 'الجانب الأيمن من الوجه', text: 'subject right face side, only if attainable with the actual lamp and head orientation' }
 ] as const
 
 export function renderLightGeometry(ctx: CompilationContext): string {
@@ -63,7 +63,7 @@ export function renderLightGeometry(ctx: CompilationContext): string {
     'Face direction: ' + faceDescription,
     stationary ? 'The phone rests securely on a fixed support and captures with a timer; no hand holds it.' : reflected ? 'The camera points into the existing wardrobe mirror; subject and phone positions must satisfy real reflection lines.' : rear ? 'The subject holds the rear camera within feasible arm reach; camera viewpoint never floats.' : 'The hand-held front camera remains at feasible arm reach; the face orientation changes which surfaces receive light. Do not rotate room light sources with the head.'
   ]
-  if (usesLamp) pieces.push('Bedside lamp fixed ' + side.text + ' on the nightstand. Recompute cheek, nose, pillow and neck shadows from this source and the actual head tilt; do not force the same bright cheek across poses.')
+  if (usesLamp) pieces.push('Bedside lamp stays on the original fixed nightstand beside the LEFT-wall bed. Preferred receiving cheek: ' + side.text + '. Apply this preference only when the real pose permits it; actual source position determines face, pillow and neck shadows. Do not relocate the fixture to change the bright cheek.')
   if (usesPhone && !rear && !reflected && !stationary) pieces.push('Phone display faces the subject near the camera optical axis. Illumination tracks phone-to-face distance and angle; the camera sensor does not emit light. Face-to-neck falloff remains natural.')
   if (usesCeiling) pieces.push('Ceiling fixtures remain above the physical room even when the head is horizontal; their projection onto face and bedding changes with posture.')
   if (ledPlacement[lighting]) pieces.push(ledPlacement[lighting])
