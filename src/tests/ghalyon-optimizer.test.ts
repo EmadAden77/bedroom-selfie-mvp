@@ -1,6 +1,6 @@
 // @vitest-environment node
 import {afterEach,describe,expect,it,vi} from 'vitest'
-import handler,{parseReply,SYSTEM as GHALYON_SYSTEM,SCHEMA} from '../../api/optimize-prompt'
+import handler,{parseReply,SYSTEM as GHALYON_SYSTEM,SCHEMA,MAX_GHALYON_IDEA_CHARS,MAX_GHALYON_REQUEST_BYTES} from '../../api/optimize-prompt'
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals()})
 const endpoint='https://bedroom-selfie-mvp.vercel.app/api/optimize-prompt'
 const idea='Generate a careful realistic bedroom selfie prompt for an adult person.'
@@ -102,5 +102,38 @@ describe('Verified Gemini API error handling',()=>{
    ...payload,irrelevant:'x'.repeat(21000)
   })})
   expect((await handler.fetch(r)).status).toBe(413)
+ })
+})
+
+describe('Direct selfie-scene Ghalyon request handling',()=>{
+ it('accepts a full existing mirror-scene brief and forwards it without truncation',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','fake-key')
+  const longIdea='Mirror selfie with physically correct rear camera, wardrobe, bed, dresser and true reflection. '.repeat(100)
+  expect(longIdea.length).toBeGreaterThan(7000)
+  expect(longIdea.length).toBeLessThan(MAX_GHALYON_IDEA_CHARS)
+  let outbound:any
+  vi.stubGlobal('fetch',vi.fn(async(_url:string,opts:{body:string})=>{outbound=JSON.parse(opts.body);return provider(complete)}))
+  const result=await handler.fetch(req({...payload,idea:longIdea},'ghalyon-full-room'))
+  expect(result.status).toBe(200)
+  const input=JSON.parse(outbound.contents[0].parts[0].text)
+  expect(input.idea).toBe(longIdea)
+ })
+ it('rejects excessive input size and omitted content-length safely',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','fake-key')
+  const tooMany='x'.repeat(MAX_GHALYON_IDEA_CHARS+1)
+  const response=await handler.fetch(req({...payload,idea:tooMany},'ghalyon-length'))
+  expect(response.status).toBe(400)
+  expect((await response.json() as {errorCode:string}).errorCode).toBe('INVALID_INPUT')
+  const huge=await handler.fetch(new Request(endpoint,{method:'POST',
+   headers:{'content-type':'application/json'},
+   body:JSON.stringify({...payload,extra:'x'.repeat(MAX_GHALYON_REQUEST_BYTES+5)})}))
+  expect(huge.status).toBe(413)
+ })
+ it('returns actionable JSON error when Gemini sends no candidate',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','fake-key')
+  vi.stubGlobal('fetch',vi.fn(async()=>new Response(JSON.stringify({candidates:[]}),{status:200})))
+  const result=await handler.fetch(req(payload,'ghalyon-empty-provider'))
+  expect(result.status).toBe(422)
+  expect((await result.json() as {errorCode:string}).errorCode).toBe('GEMINI_EMPTY_RESPONSE')
  })
 })
