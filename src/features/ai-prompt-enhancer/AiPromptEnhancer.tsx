@@ -2,6 +2,7 @@ import React,{useEffect,useRef,useState} from 'react'
 import type {CompilationContext,CompilationResult,ValidationResult} from '../../domain/types'
 import {bedroomShots,getShotPosture} from '../../data/bedroom-shots'
 import {buildCreativeSceneBrief} from './buildCreativeSceneBrief'
+import {GhalyonPromptOptimizer} from './GhalyonPromptOptimizer'
 
 type Props={ctx:CompilationContext;result:CompilationResult;validation:ValidationResult;onReset:()=>void;onPromptReady:(prompt:string)=>void}
 type MainReply={prompt?:string;source?:string;model?:string;error?:string;errorCode?:string}
@@ -98,5 +99,6 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
         <button type="button" className="btn btn-secondary" onClick={onReset}>إعادة تعيين الخيارات</button>
       </div>
     </div>}
+    <GhalyonPromptOptimizer sourcePrompt={generated} onPromptReady={onPromptReady} />
   </section>
 }
