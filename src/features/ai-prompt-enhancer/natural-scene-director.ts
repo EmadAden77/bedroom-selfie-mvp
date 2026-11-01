@@ -1,6 +1,7 @@
 import type {CompilationContext} from '../../domain/types'
 import {bedroomShots} from '../../data/bedroom-shots'
 import {isLaptopSelfieShot} from '../../data/laptop-selfie-physics'
+import {captureLightingIssues} from '../../data/scene-consistency'
 
 /**
  * Natural Scene Director: adds context-specific observable action, never a new pose,
@@ -41,14 +42,5 @@ export function buildNaturalSceneDirection(ctx:CompilationContext):string{
 
 /** A small preflight for unambiguously contradictory user selections. */
 export function naturalSceneSelectionIssues(ctx:CompilationContext):string[]{
- const shot=bedroomShots.find(item=>item.id===ctx.bedroomShotId)
- if(!shot)return []
- const issues:string[]=[]
- if(shot.id==='mirror_rear_flash'&&ctx.nightLightingId&&ctx.nightLightingId!=='rear_flash'){
-  issues.push('وضعية فلاش المرآة تتطلب اختيار إضاءة الفلاش الخلفي حتى تتوافق اللقطة مع مصدر الضوء الحقيقي.')
- }
- if(ctx.nightLightingId==='laptop_screen_only'&&!isLaptopSelfieShot(shot.id)){
-  issues.push('إضاءة شاشة اللابتوب لا تصلح لهذه الوضعية من دون وجود لابتوب فعلي في المشهد.')
- }
- return issues
+ return captureLightingIssues(ctx)
 }
