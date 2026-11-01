@@ -26,7 +26,7 @@ export function parseReply(text:string,mode:Mode,answered:boolean):Reply{
  d.improvements.length<1||d.improvements.length>4||d.improvements.some(s=>typeof s!=='string'||!s.trim())||!d.proTip.trim())throw Error('INVALID_PROMPT')
  return {...d,questions:[]}
 }
-const json=(body:object,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store'}})
+const json=(body:object,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'}})
 const fail=(errorCode:string,error:string,status=502)=>json({errorCode,error},status)
 const attempts=new Map<string,{count:number;until:number}>()
 function allowed(req:Request):boolean{
@@ -45,6 +45,7 @@ export default {async fetch(req:Request):Promise<Response>{
  const size=Number(req.headers.get('content-length')||'0')
  if(size>20000)return fail('TOO_LARGE','الطلب كبير',413)
  let x:any;try{x=await req.json()}catch{return fail('BAD_JSON','تعذر قراءة الطلب',400)}
+ if(JSON.stringify(x).length>20000)return fail('TOO_LARGE','الطلب كبير',413)
  const {idea,target,mode,answers=[]}=x||{}
  if(typeof idea!=='string'||idea.trim().length<8||idea.length>10000||
  !['chatgpt','claude','gemini'].includes(target)||!['auto','basic','detail'].includes(mode)||
@@ -62,10 +63,20 @@ export default {async fetch(req:Request):Promise<Response>{
     generationConfig:{temperature:0.4,maxOutputTokens:3500,responseFormat:{text:{mimeType:'APPLICATION_JSON',schema:SCHEMA}}}}),
    signal:AbortSignal.timeout(30000)
   })
-  if(!res.ok)return fail(res.status===429?'GEMINI_QUOTA':'GEMINI_UPSTREAM','خدمة Gemini غير متاحة',res.status===429?429:502)
+  if(!res.ok){
+   if(res.status===429)return fail('GEMINI_QUOTA','اكتملت حصة Gemini المتاحة',429)
+   if(res.status===401||res.status===403)return fail('GEMINI_ACCESS','تحقق من صلاحيات Gemini على الخادم')
+   if(res.status===404)return fail('GEMINI_MODEL','نموذج Gemini المحدد غير متاح')
+   if(res.status===400)return fail('GEMINI_REQUEST','رفضت Google إعدادات الطلب')
+   return fail('GEMINI_UPSTREAM','خدمة Gemini غير متاحة')
+  }
   const data=await res.json() as {candidates?:Array<{content?:{parts?:Array<{text?:string}>}}>}
   const replyText=data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||''
   try{return json(parseReply(replyText,mode,answers.length>0))}
   catch{return fail('INVALID_PROVIDER_REPLY','صيغة استجابة Gemini غير صالحة',422)}
- }catch{return fail('GEMINI_NETWORK','تعذر الاتصال بـ Gemini')}
+ }catch(error){
+  const name=(error as Error)?.name
+  const timeout=name==='TimeoutError'||name==='AbortError'
+  return fail(timeout?'GEMINI_TIMEOUT':'GEMINI_NETWORK',timeout?'انتهت مهلة اتصال Gemini':'تعذر الاتصال بـ Gemini',timeout?504:502)
+ }
 }}
