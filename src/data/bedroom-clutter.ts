@@ -1,12 +1,14 @@
 import type {CompilationContext} from '../domain/types'
+import {renderRoomPhysicalState} from './room-physical-state'
 
 /** Optional everyday disorder adapted from the supplied lived-in bedroom brief.
  * Never mutate immutable furniture or introduce incompatible light sources. */
 export function isLivedInClutter(ctx:CompilationContext):boolean{
- return ctx.bedroomClutterId==='lived_in_messy'
+ return ctx.roomPhysicalState?ctx.roomPhysicalState.order!=='reference':ctx.bedroomClutterId==='lived_in_messy'
 }
 
 export function renderBedroomClutter(ctx:CompilationContext):string{
+ if(ctx.roomPhysicalState)return renderRoomPhysicalState(ctx)
  if(!isLivedInClutter(ctx))return ''
  return [
   'LIVED-IN BEDROOM CLUTTER: An ordinary occupied room with pre-existing casual disorder, not a staged commercial set. Keep the locked room topology, original furniture, exactly one nightstand, real material finishes and consistent object identities.',
@@ -20,6 +22,7 @@ export function renderBedroomClutter(ctx:CompilationContext):string{
 }
 
 export function buildBedroomClutterGeminiBrief(ctx:CompilationContext):string{
+ if(ctx.roomPhysicalState)return renderRoomPhysicalState(ctx,true)
  if(!isLivedInClutter(ctx))return ''
  return [
   'Selected room appearance: an authentically lived-in, casually messy bedroom, with unmade existing bed, rumpled duvet folds under gravity, wrinkled fitted sheet and two naturally uneven pillows.',
