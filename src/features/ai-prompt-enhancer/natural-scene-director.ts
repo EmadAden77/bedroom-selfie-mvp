@@ -18,7 +18,7 @@ export function buildNaturalSceneDirection(ctx:CompilationContext):string{
   : timer
   ? 'Describe a quiet instant after setting the real phone timer on its selected stable support. Do not turn this into a handheld capture.'
   : mirror
-  ? 'Describe the selected mirror-selfie action in progress. Follow the exact free-hand movement, gaze and phone position already selected; do not add a competing gesture or a second mirror.'
+  ? 'Describe the selected mirror-selfie action in progress. Follow the exact free-hand movement, gaze and phone position already selected; do not add a competing gesture or invent another recording mirror; preserve the original separate vanity mirror where visible.'
   : 'Describe a candid instant within the selected bedroom selfie action, rather than a staged pose. Keep one reachable recording phone and only the already selected hand or object interaction.'
  const contacts=laptop
   ? 'Show small physically caused effects: weight and fabric compression only under the actual laptop and body contact; its screen, hinge, hands and support stay connected.'
