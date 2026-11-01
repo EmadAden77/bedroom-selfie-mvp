@@ -1,7 +1,6 @@
 import type { CompilationContext } from '../../domain/types'
 import type { AuditRatings } from './audit'
 import {getAuditCriteria} from './audit'
-import {bedroomShots,getShotPosture} from '../../data/bedroom-shots'
 const instructions: Record<string,string> = {
  identity:'Preserve original face geometry, age and beard.',
  hair:'Make the selected hairstyle visible using existing strands and unchanged hairline.',
