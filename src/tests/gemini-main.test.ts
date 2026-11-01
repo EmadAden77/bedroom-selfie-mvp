@@ -6,6 +6,7 @@ import {buildHairCreativeBrief} from '../data/hair-creative'
 import {hairVariants} from '../data/hair'
 import {compilePrompt} from '../compiler'
 import type {CompilationContext} from '../domain/types'
+import {MAX_SCENE_BRIEF_CHARS,MAX_SCENE_REQUEST_BYTES} from '../features/ai-prompt-enhancer/scene-request-limits'
 
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals()})
 const endpoint='https://bedroom-selfie-mvp.vercel.app/api/generate-main-prompt'
@@ -30,6 +31,45 @@ describe('Gemini creative freedom with physics-only checks',()=>{
   vi.stubEnv('GEMINI_API_KEY','test-only')
   expect((await handler.fetch(post(payload,{origin:'https://evil.example'}))).status).toBe(403)
   expect((await handler.fetch(post({...payload,target:'unsupported'}))).status).toBe(400)
+ })
+ it('accepts a complete scene longer than the former 6500-character cap for ChatGPT target',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','test-only')
+  const extended=sceneBrief+'\n'+('Real bedroom geometry, physical contact and lens reflections remain reference-consistent. ').repeat(95)
+  expect(extended.length).toBeGreaterThan(6500)
+  expect(extended.length).toBeLessThan(MAX_SCENE_BRIEF_CHARS)
+  let outgoing:any
+  vi.stubGlobal('fetch',vi.fn(async(_url:string,opts:{body:string})=>{
+   outgoing=JSON.parse(opts.body);return mockModel()
+  }))
+  const r=await handler.fetch(post({...payload,sceneBrief:extended,target:'chatgpt'},{'x-forwarded-for':'extended-scene-case'}))
+  expect(r.status).toBe(200)
+  expect((await r.json() as {prompt:string}).prompt).toBe(prompt)
+  const body=JSON.parse(outgoing.contents[0].parts[0].text) as {selectedSceneBrief:string}
+  expect(body.selectedSceneBrief).toBe(extended)
+  expect(outgoing.systemInstruction.parts[0].text).toContain(IMAGE_TARGET_GUIDANCE.chatgpt)
+ })
+ it('rejects an over-limit scene with a useful error, not INVALID_SELECTION',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','test-only')
+  const upstream=vi.fn()
+  vi.stubGlobal('fetch',upstream)
+  const r=await handler.fetch(post({...payload,sceneBrief:'x'.repeat(MAX_SCENE_BRIEF_CHARS+1)}))
+  expect(r.status).toBe(413)
+  expect((await r.json() as {errorCode:string}).errorCode).toBe('SCENE_BRIEF_TOO_LONG')
+  expect(upstream).not.toHaveBeenCalled()
+ })
+ it('enforces the request byte limit even without a content-length header',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','test-only')
+  const upstream=vi.fn()
+  vi.stubGlobal('fetch',upstream)
+  const r=await handler.fetch(post({...payload,sceneBrief:'x'.repeat(MAX_SCENE_REQUEST_BYTES+1)}))
+  expect(r.status).toBe(413)
+  expect((await r.json() as {errorCode:string}).errorCode).toBe('TOO_LARGE')
+  expect(upstream).not.toHaveBeenCalled()
+ })
+ it('retains invalid model and capture selection protection',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','test-only')
+  expect((await handler.fetch(post({...payload,target:'unknown'}))).status).toBe(400)
+  expect((await handler.fetch(post({...payload,mode:'wrong'}))).status).toBe(400)
  })
  it('receives a concise brief rather than old immutable text or user photos',async()=>{
   vi.stubEnv('GEMINI_API_KEY','test-only')

@@ -3,6 +3,8 @@
  * offline fallback, not a hidden source of mandatory text appended to Gemini.
  * Text-only scene choices are shared; no uploaded reference images leave this UI.
  */
+import {MAX_SCENE_BRIEF_CHARS,MAX_SCENE_REQUEST_BYTES} from '../src/features/ai-prompt-enhancer/scene-request-limits'
+
 type MainPayload = {
  sceneBrief?:unknown;shotId?:unknown;mode?:unknown;posture?:unknown;lighting?:unknown;target?:unknown
 }
@@ -111,18 +113,24 @@ export default {
   const site=request.headers.get('sec-fetch-site')
   if(site&&!['same-origin','none'].includes(site))return fail('CROSS_SITE','لا يمكن استدعاء المحرك من موقع مختلف.',403)
   if(!(request.headers.get('content-type')||'').toLowerCase().includes('application/json'))return fail('JSON_REQUIRED','نوع البيانات غير صحيح.',415)
-  if(Number(request.headers.get('content-length')||'0')>10000)return fail('TOO_LARGE','حجم الطلب كبير.',413)
+  if(Number(request.headers.get('content-length')||'0')>MAX_SCENE_REQUEST_BYTES)return fail('TOO_LARGE','حجم الطلب كبير.',413)
   const key=process.env.GEMINI_API_KEY
   if(!key)return fail('GEMINI_NOT_CONFIGURED','مفتاح Gemini غير متاح على الخادم.',503)
   let payload:MainPayload
-  try{payload=await request.json() as MainPayload}catch{return fail('BAD_JSON','تعذر قراءة الطلب.',400)}
+  try{
+   const body=await request.text()
+   if(new TextEncoder().encode(body).length>MAX_SCENE_REQUEST_BYTES)
+    return fail('TOO_LARGE','حجم الطلب كبير.',413)
+   payload=JSON.parse(body) as MainPayload
+  }catch{return fail('BAD_JSON','تعذر قراءة الطلب.',400)}
   const {sceneBrief,shotId,mode,posture,lighting,target}=payload
-  if(typeof sceneBrief!=='string'||sceneBrief.trim().length<50||sceneBrief.length>6500||
+  if(typeof sceneBrief!=='string'||sceneBrief.trim().length<50||
      ![mode,posture,lighting,shotId,target].every(isCode)||
      !['front','mirror','rear','timer'].includes(String(mode))||
      !['gemini','chatgpt','flux','midjourney'].includes(String(target))){
    return fail('INVALID_SELECTION','الخيارات أو وصف المشهد غير صالح.',400)
   }
+  if(sceneBrief.length>MAX_SCENE_BRIEF_CHARS)return fail('SCENE_BRIEF_TOO_LONG','وصف المشهد طويل جدًا. قلّل التفاصيل المكررة ثم أعد التوليد.',413)
   if((shotId==='mirror_rear_flash'&&lighting!=='rear_flash')||
      (lighting==='laptop_screen_only'&&(!String(shotId).startsWith('laptop_')||shotId==='laptop_reflection'))){
     return fail('NATURAL_SCENE_CONFLICT','إضاءة المشهد لا تتوافق مع نشاط أو وضعية التصوير المختارة.',400)
