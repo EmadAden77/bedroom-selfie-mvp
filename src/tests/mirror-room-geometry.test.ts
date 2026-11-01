@@ -53,6 +53,6 @@ describe('Reference-grounded mirror room geometry',()=>{
   expect(layout).toContain('No room photo is attached')
   expect(layout).toContain('do NOT invent unseen furniture')
   expect(PHYSICS_ONLY_SYSTEM).toContain('REFERENCE ROOM PLAN')
-  expect(PHYSICS_ONLY_SYSTEM).toContain('real reflected camera ray')
+  expect(PHYSICS_ONLY_SYSTEM).toContain('actual reflected camera ray')
  })
 })
