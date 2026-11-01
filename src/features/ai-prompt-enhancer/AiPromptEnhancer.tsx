@@ -14,6 +14,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
   const [loading,setLoading]=useState(false)
   const [copied,setCopied]=useState(false)
   const requestRef=useRef<AbortController|null>(null)
+  const requestVersion=useRef(0)
   const prompt=result.promptText
   const sceneBrief=buildCreativeSceneBrief(ctx)
   const ready=sceneBrief.trim().length>=50
@@ -23,17 +24,22 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
 
 
   useEffect(()=>{
+    // Invalidate the old response even if the provider or a mock ignores AbortSignal.
+    requestVersion.current++
     requestRef.current?.abort()
+    requestRef.current=null
     setGenerated('');setEngine('');setError('');setLoading(false);setCopied(false)
     onPromptReady('')
-  },[prompt,ctx.promptTarget,onPromptReady])
-  useEffect(()=>()=>requestRef.current?.abort(),[])
+  },[prompt,sceneBrief,ctx.promptTarget,onPromptReady])
+  useEffect(()=>()=>{requestVersion.current++;requestRef.current?.abort()},[])
 
   async function generate(){
     if(!ready)return
     requestRef.current?.abort()
+    const version=++requestVersion.current
     const ctrl=new AbortController()
     requestRef.current=ctrl
+    const current=()=>version===requestVersion.current&&!ctrl.signal.aborted
     setLoading(true);setError('');setCopied(false);setGenerated('');setEngine('')
     const shot=bedroomShots.find(s=>s.id===ctx.bedroomShotId)
     try{
@@ -57,11 +63,11 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
       catch{throw Error('تعذر قراءة رد Gemini.')}
       if(!response.ok||typeof payload.prompt!=='string'||payload.prompt.length<100)
         throw Error((payload.error||'تعذر توليد البرومبت عبر Gemini.')+(payload.errorCode?' ('+payload.errorCode+')':''))
-      if(!ctrl.signal.aborted){setGenerated(payload.prompt);setEngine('gemini');onPromptReady(payload.prompt)}
+      if(current()){setGenerated(payload.prompt);setEngine('gemini');onPromptReady(payload.prompt)}
     }catch(err){
-      if(!ctrl.signal.aborted)setError(err instanceof Error?err.message:'تعذر الاتصال بـGemini.')
+      if(current())setError(err instanceof Error?err.message:'تعذر الاتصال بـGemini.')
     }finally{
-      if(!ctrl.signal.aborted)setLoading(false)
+      if(current())setLoading(false)
     }
   }
 
@@ -72,7 +78,9 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
   }
 
   function useLocal(){
+    requestVersion.current++
     requestRef.current?.abort()
+    requestRef.current=null
     if(!fallbackReady)return
     setGenerated(prompt);setEngine('local');setError('');setLoading(false);setCopied(false);onPromptReady(prompt)
   }
