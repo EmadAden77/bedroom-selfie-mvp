@@ -41,6 +41,11 @@ export const MirrorSelfieSelector:React.FC<Props>=({ctx,onShotChange,onChange})=
   </p>
   {!active&&<button type="button" className="btn" onClick={()=>onShotChange('mirror_wardrobe')} style={{marginBottom:12}}>تفعيل تصوير المرآة</button>}
   {active&&<div style={{fontSize:12,fontWeight:650,marginBottom:12}}>✓ وضع المرآة نشط — انعكاس حقيقي وهندسة غرفة ثابتة</div>}
+  {active&&<div style={{border:'1px solid var(--border)',borderRadius:12,padding:12,marginBottom:16,background:'var(--surface, transparent)'}} role="note">
+   <div style={{fontSize:13,fontWeight:700,marginBottom:8}}>📐 هندسة غرفة النوم المرجعية — مفعّلة تلقائيًا</div>
+   <p style={{fontSize:12,lineHeight:1.9,margin:'0 0 8px'}}>🪞 <strong>مرآة دولاب الملابس:</strong> المرآة الأساسية للتصوير على الجدار الأيمن. <strong>مرآة التسريحة:</strong> إلى يمين الدولاب وفق منظور الصورة المرجعية، ولا تحل محله. <strong>السرير:</strong> يسار الغرفة، خلف الشخص بنحو ٣ أمتار. <strong>الأريكة:</strong> معلم خلفي على مسافة تقارب ٥ أمتار إذا كانت موجودة فعلًا في مرجع الغرفة.</p>
+   <p style={{fontSize:11,color:'var(--muted)',lineHeight:1.7,margin:0}}>يظهر الأثاث فقط إذا سمحت زاوية الانعكاس وحدود المرآة برؤيته. لا تتحرك قطع الأثاث لإجبارها على الدخول في الكادر. {ctx.roomReferencePresent?'✓ صورة الغرفة مرفوعة؛ سيتم الاعتماد عليها عند استخدامها في توليد الصورة.':'⚠️ أرفق صورة الغرفة المرجعية لتحديد وجود الأريكة ومواضع الأثاث بدقة.'}</p>
+  </div>}
   {active&&<div style={{border:'1px solid var(--border)',borderRadius:12,padding:12,marginBottom:16}}>
    <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>⚡ فلاش المرآة الفيزيائي</div>
    <p style={{fontSize:11,color:'var(--muted)',lineHeight:1.8,margin:'0 0 9px'}}>يعمل مع جميع وضعيات المرآة: ضوء الفلاش يرتد من الزجاج إلى الشخص، والوهج والظلال والنويز تتبع مسار الضوء والتعريض الحقيقي.</p>
