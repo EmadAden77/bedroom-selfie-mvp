@@ -44,7 +44,7 @@ export function validateRoomPhysicalState(state:RoomPhysicalState):string[]{
  if(typeof state.sessionLocked!=='boolean')issues.push('Invalid room session lock')
  return issues
 }
-export function renderRoomPhysicalState(ctx:Pick<CompilationContext,'roomPhysicalState'|'roomReferencePresent'>,compact=false):string{
+export function renderRoomPhysicalState(ctx:CompilationContext,compact=false):string{
  const state=ctx.roomPhysicalState
  if(!state)return ''
  const items=selectedRoomObjects(state)
