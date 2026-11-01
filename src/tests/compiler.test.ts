@@ -540,7 +540,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     for(const output of [seated,standing]){
       const sections=output.result.sections.filter(s=>s.id==='background_continuity')
       expect(sections).toHaveLength(1)
-      expect(sections[0].content).toContain('sole nightstand keeps the same mug')
+      expect(sections[0].content).toContain('existing nightstand and right-side dresser keep the same objects')
       expect(sections[0].content).toContain('two ordinary sleeping pillows')
       expect(output.result.errors).toEqual([])
     }
