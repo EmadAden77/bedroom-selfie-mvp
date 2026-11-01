@@ -14,7 +14,7 @@ describe('Photo Result Audit',()=>{
   it('maps mirror phone and selected hairstyle into review expectations',()=>{
     const checks=getAuditCriteria(ctx)
     expect(checks).toHaveLength(8)
-    expect(checks.find(c=>c.id==='camera')?.expectation).toContain('iPhone 15 Pro Max')
+    expect(checks.find(c=>c.id==='camera')?.expectation).toContain('Xiaomi 15 Ultra')
     expect(checks.find(c=>c.id==='hair')?.expectation).toContain('تغيير')
   })
   it('uses existing reference hairstyle for preserve mode',()=>{
