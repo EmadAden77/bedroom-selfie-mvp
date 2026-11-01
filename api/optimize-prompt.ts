@@ -14,7 +14,7 @@ export const SCHEMA={type:'object',properties:{
  optimizedPrompt:{type:'string'},improvements:{type:'array',items:{type:'string'}},proTip:{type:'string'}
 },required:['status','questions','optimizedPrompt','improvements','proTip'],additionalProperties:false}
 export function parseReply(text:string,mode:Mode,answered:boolean):Reply{
- const d=JSON.parse(text) as Reply
+ const d=JSON.parse(text.trim().replace(/^\x60\x60\x60(?:json)?\s*/i,'').replace(/\s*\x60\x60\x60$/,'')) as Reply
  if(!d||!['questions','complete'].includes(d.status)||!Array.isArray(d.questions)||
  !Array.isArray(d.improvements)||typeof d.optimizedPrompt!=='string'||typeof d.proTip!=='string')
  throw Error('INVALID_RESPONSE')
@@ -28,10 +28,20 @@ export function parseReply(text:string,mode:Mode,answered:boolean):Reply{
 }
 const json=(body:object,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store'}})
 const fail=(errorCode:string,error:string,status=502)=>json({errorCode,error},status)
+const attempts=new Map<string,{count:number;until:number}>()
+function allowed(req:Request):boolean{
+ const now=Date.now(),key=(req.headers.get('x-forwarded-for')||req.headers.get('x-real-ip')||'anonymous').split(',')[0].slice(0,80)
+ const prev=attempts.get(key)
+ if(!prev||prev.until<now){if(attempts.size>1500)for(const [k,v] of attempts)if(v.until<now)attempts.delete(k)
+  attempts.set(key,{count:1,until:now+60000});return true}
+ if(prev.count>=6)return false
+ prev.count++;return true
+}
 export default {async fetch(req:Request):Promise<Response>{
  if(req.method!=='POST')return json({error:'POST only'},405)
  if(req.headers.get('origin')&&req.headers.get('origin')!==new URL(req.url).origin)return fail('ORIGIN','رفض المصدر',403)
- if(!(req.headers.get('content-type')||'').includes('application/json'))return fail('CONTENT_TYPE','تنسيق غير صالح',415)
+ if(req.headers.get('sec-fetch-site')&&!['same-origin','none'].includes(req.headers.get('sec-fetch-site')||''))return fail('CROSS_SITE','رفض الطلب من موقع آخر',403)
+ if(!(req.headers.get('content-type')||'').toLowerCase().includes('application/json'))return fail('CONTENT_TYPE','تنسيق غير صالح',415)
  const size=Number(req.headers.get('content-length')||'0')
  if(size>20000)return fail('TOO_LARGE','الطلب كبير',413)
  let x:any;try{x=await req.json()}catch{return fail('BAD_JSON','تعذر قراءة الطلب',400)}
@@ -41,6 +51,7 @@ export default {async fetch(req:Request):Promise<Response>{
  !Array.isArray(answers)||answers.length>3||answers.some(a=>!a||typeof a.question!=='string'||typeof a.answer!=='string'||a.question.length>400||a.answer.length>1500))return fail('INVALID_INPUT','البيانات غير صالحة',400)
  const key=process.env.GEMINI_API_KEY
  if(!key)return fail('GEMINI_NOT_CONFIGURED','خدمة Gemini غير مفعلة',503)
+ if(!allowed(req))return fail('RATE_LIMIT','طلبات كثيرة. أعد المحاولة لاحقاً.',429)
  const model=process.env.GEMINI_MAIN_MODEL||'gemini-3.5-flash-lite'
  if(!/^[a-zA-Z0-9._-]{3,80}$/.test(model))return fail('MODEL_CONFIG','اسم النموذج غير صالح',503)
  try{
