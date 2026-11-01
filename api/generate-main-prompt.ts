@@ -123,6 +123,10 @@ export default {
      !['gemini','chatgpt','flux','midjourney'].includes(String(target))){
    return fail('INVALID_SELECTION','الخيارات أو وصف المشهد غير صالح.',400)
   }
+  if((shotId==='mirror_rear_flash'&&lighting!=='rear_flash')||
+     (lighting==='laptop_screen_only'&&(!String(shotId).startsWith('laptop_')||shotId==='laptop_reflection'))){
+    return fail('NATURAL_SCENE_CONFLICT','إضاءة المشهد لا تتوافق مع نشاط أو وضعية التصوير المختارة.',400)
+  }
   if(!allowBurst(request))return fail('GEMINI_RATE_LIMIT','طلبات كثيرة من نفس الشبكة. أعد المحاولة بعد دقيقة.',429)
   const model=process.env.GEMINI_MAIN_MODEL||'gemini-3.5-flash-lite'
   if(!/^[a-zA-Z0-9._-]{3,80}$/.test(model))return fail('MODEL_CONFIG','إعداد النموذج غير صالح.',503)
