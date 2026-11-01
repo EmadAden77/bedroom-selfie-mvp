@@ -99,7 +99,7 @@ describe('Verified Gemini API error handling',()=>{
  it('rejects oversized JSON even if content-length is omitted',async()=>{
   vi.stubEnv('GEMINI_API_KEY','test-key')
   const r=new Request(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({
-   ...payload,irrelevant:'x'.repeat(21000)
+   ...payload,irrelevant:'x'.repeat(MAX_GHALYON_REQUEST_BYTES+5)
   })})
   expect((await handler.fetch(r)).status).toBe(413)
  })
