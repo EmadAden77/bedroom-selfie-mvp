@@ -44,7 +44,7 @@ describe('Cross-engine scene invariants',()=>{
  })
  it('never lets a capture mode borrow a light source facing away from the person',()=>{
   expect(captureLightingIssues({...base,bedroomShotId:'bed_edge',nightLightingId:'rear_flash'})).toHaveLength(1)
-  expect(captureLightingIssues({...base,bedroomShotId:'rear_lookdown',nightLightingId:'phone_screen_only'})).toHaveLength(1)
+  expect(captureLightingIssues({...base,bedroomShotId:'ultrawide_rear',nightLightingId:'phone_screen_only'})).toHaveLength(1)
   expect(captureLightingIssues({...base,bedroomShotId:'mirror_wardrobe',nightLightingId:'rear_flash'})).toEqual([])
   expect(captureLightingIssues({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'ceiling_neutral'})).toHaveLength(1)
   expect(captureLightingIssues({...base,bedroomShotId:'bed_edge',nightLightingId:'laptop_screen_only'})).toHaveLength(1)
