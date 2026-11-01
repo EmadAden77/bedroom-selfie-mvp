@@ -92,6 +92,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
     <p style={{fontSize:'12px',color:'var(--muted)',lineHeight:1.8,margin:'0 0 12px'}}>
       اختر الإعدادات ثم دع Gemini يكتب <strong>البرومبت كاملًا بحرية</strong> لـ <strong>{selectedTarget}</strong>. الشرط الأساسي: واقعية الجسم والحركة والوزن والضوء والعدسة والمرآة. لن تُلصق أي قواعد محلية إضافية بنص Gemini.
     </p>
+    <p style={{fontSize:'11px',color:'var(--muted)',lineHeight:1.7,margin:'0 0 10px'}}>🛏️ مخرج المشهد الطبيعي مفعّل تلقائيًا: يحوّل الوضعية المختارة إلى لحظة عفوية بتفاصيل حركة واقعية، من دون تغيير الهوية أو الأثاث أو مصادر الضوء.</p>
     <p style={{fontSize:'10px',color:'var(--muted)',lineHeight:1.7,margin:'0 0 14px'}}>
       تُرسل إلى Google اختيارات مشهد مختصرة فقط؛ لا يُرسل البرومبت المحلي الطويل أو ملفات صور الوجه والغرفة. يمكنك دائمًا استخدام النسخة المحلية الاحتياطية المستقلة. رابط التطبيق عام وقد يستهلك زواره حصة Gemini.
     </p>
