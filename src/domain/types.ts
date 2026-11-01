@@ -100,6 +100,8 @@ export type ReferenceImageMeta = {
   objectUrl: string
 }
 
+import type {RoomPhysicalState} from '../data/room-physical-state'
+
 export type CompilationContext = {
   hairVariantId: string
   hairstyleMode?: 'preserve' | 'apply'
@@ -121,6 +123,7 @@ export type CompilationContext = {
   referenceImagePresent: boolean
   roomReferencePresent?: boolean
   bedroomClutterId?: 'reference' | 'lived_in_messy'
+  roomPhysicalState?:RoomPhysicalState
   nightLightingId?: string
   windowUncovered?: boolean
   poseId?: string
