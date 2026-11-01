@@ -61,7 +61,7 @@ export function buildCreativeSceneBrief(ctx:CompilationContext):string{
   'Gaze '+plain(ctx.gazeId)+'; face direction '+plain(ctx.faceDirectionId)+
     '; subtle expression '+plain(ctx.microExpressionId)+'.',
   'Photographic mood '+(mood?.id||'natural')+'.',
-  ...(ctx.bedroomClutterId==='lived_in_messy'?[buildBedroomClutterGeminiBrief(ctx)]:[]),
+  ...(ctx.roomPhysicalState||ctx.bedroomClutterId==='lived_in_messy'?[buildBedroomClutterGeminiBrief(ctx)]:[]),
   ...(shot&&isSelectedLaptop(shot.id)?[buildLaptopGeminiBrief(ctx)]:[]),
   'Subject image reference: '+(ctx.referenceImagePresent?'provided separately to the final image generator; Gemini does not receive or see it':'not supplied')+'.',
   'Bedroom image reference: '+(ctx.roomReferencePresent?'provided separately to the final image generator; Gemini does not receive or see it':'not supplied')+'.',

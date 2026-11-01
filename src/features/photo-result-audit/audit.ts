@@ -1,5 +1,6 @@
 import type { CompilationContext } from '../../domain/types'
 import { bedroomShots } from '../../data/bedroom-shots'
+import {selectedRoomObjects} from '../../data/room-physical-state'
 
 export type AuditStatus = 'pass' | 'fail' | 'unreviewed'
 export type AuditCriterion = { id: string; label: string; expectation: string }
@@ -16,9 +17,15 @@ export function getAuditCriteria(ctx: CompilationContext): AuditCriterion[] {
     { id: 'room', label: 'ثبات غرفة النوم', expectation: 'نفس السرير والأثاث والدولاب والستائر ومواقعها' },
     { id: 'pose', label: 'الجسم والوضعية', expectation: shot ? 'تطابق الوضعية المختارة: ' + shot.label : 'توافق الجسم مع الوضعية المختارة ونقاط الارتكاز' },
     { id: 'hands', label: 'اليد والأصابع', expectation: shot?.mode === 'timer' ? 'الهاتف ثابت وغير ممسوك، والأيدي طبيعية' : 'قبضة الهاتف والأصابع والذراعان متصلة وطبيعية' },
-    { id: 'camera', label: 'الهاتف والمنظور', expectation: shot?.mode === 'mirror' ? 'iPhone 15 Pro Max Black Titanium بثلاث عدسات وانعكاس مرآة صحيح' : 'منظور هاتف واقعي بلا تشوه غير طبيعي' },
+    { id: 'camera', label: 'الهاتف والمنظور', expectation: shot?.mode === 'mirror' ? 'Xiaomi 15 Ultra بعدسته الخلفية وانعكاس مرآة صحيح' : 'منظور هاتف واقعي بلا تشوه غير طبيعي' },
     { id: 'light', label: 'الإضاءة', expectation: 'الإضاءة والظلال متوافقة مع المصدر المختار: ' + (ctx.nightLightingId || 'phone_screen_only') },
-    { id: 'clothing', label: 'الملابس', expectation: 'اللون والنوع والملاءمة والثنيات تحترم الاختيارات والجاذبية' }
+    { id: 'clothing', label: 'الملابس', expectation: 'اللون والنوع والملاءمة والثنيات تحترم الاختيارات والجاذبية' },
+    ...(ctx.roomPhysicalState?[
+     {id:'tile_grid',label:'شبكة السيراميك',expectation:'ثبات فواصل البلاط واتجاهها واللمعان الحقيقي وانتهاء الحواف عند السجادة'},
+     {id:'surface_materials',label:'الجدران وآثار الأسطح',expectation:ctx.roomPhysicalState.surface==='dust'?'غبار خفيف ومحلي قرب الوزرات وأسفل الأثاث فقط، بحسب الإضاءة دون تلف مختلق':'مطابقة خامة الجدران والسطوح والآثار المختارة دون تلف جديد'},
+     {id:'room_objects',label:'الأغراض ونقاط التلامس',expectation:'مواضع ثابتة ودعم فعلي للأغراض المختارة: '+(selectedRoomObjects(ctx.roomPhysicalState).map(o=>o.label).join('، ')||'لا أغراض إضافية')},
+     {id:'room_session',label:'ثبات الجلسة والانعكاسات',expectation:ctx.roomPhysicalState.sessionLocked?'الأغراض نفسها في مواضعها عبر الزوايا المختلفة؛ المرآة تعكس الموجود فعلًا ولا تكرر الأشياء':'المرآة تعكس الموجود فعلًا دون عناصر طافية أو مكررة'}
+    ]:[])
   ]
 }
 

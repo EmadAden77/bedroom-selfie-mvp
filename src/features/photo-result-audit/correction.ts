@@ -1,19 +1,25 @@
 import type { CompilationContext } from '../../domain/types'
 import type { AuditRatings } from './audit'
+import {getAuditCriteria} from './audit'
 const instructions: Record<string,string> = {
  identity:'Preserve original face geometry, age and beard.',
  hair:'Make the selected hairstyle visible using existing strands and unchanged hairline.',
- room:'BED GEOMETRY: Maintain a single queen mattress 160 by 200 cm with consistent thickness and parallel edges, against the dark tufted headboard on the left wall. Keep one bed frame, two naturally sized sleeping pillows, one duvet and one nightstand. Avoid distorted geometry and floating bedding.',
- pose:'SUPPORT: The pelvis and lower back bear weight on the mattress. The upper back, shoulders and head compress the pillows naturally. Maintain a continuous neck alignment and realistic local bedding depressions.',
+ room:'BED GEOMETRY: Preserve the original bed and pillow count from the room reference, the existing wardrobe and separate dresser mirror, true walking clearance and straight furniture edges. Correct distorted perspective and floating bedding without inventing dimensions.',
+ pose:'SUPPORT: Respect the chosen shot posture, actual supporting surfaces, connected joints, reachable camera and contact-dependent bedding compression. Do not force a seated body into a standing shot.',
  hands:'Maintain anatomically continuous arms and natural fingers.',
  camera:'Align smartphone viewpoint with reachable arm position, face perspective and bed edges.',
- light:'Keep the phone screen as the only active light source, with soft illumination near the face and falloff toward the bedding and background.',
- clothing:'Preserve clothing material, color, fit and natural folds.'
+ light:'Use only the originally selected light sources. Respect actual emitter positions, distance, occlusion, exposure, reflection and falloff without introducing lamps or daylight.',
+ clothing:'Preserve clothing material, color, fit and natural folds.',
+ tile_grid:'Match the reference ceramic tile boundaries and grout lines, specular response, floor/rug contacts and real reflected fixture positions.',
+ surface_materials:'Keep reference wall texture, finish, paint and surface wear; confine selected faint dust to credible corners beneath furniture and avoid fabricated damage.',
+ room_objects:'Preserve the selected stable movable-object anchors with proper supports, contact shadows, distinct item identities and continuous cables.',
+ room_session:'Keep each session object fixed between views unless touched. A mirror may show it only through the true reflected sightline.'
 }
 export function makeAuditCorrection(ctx:CompilationContext,ratings:AuditRatings,notes:string):string {
- const failed=Object.keys(instructions).filter(id=>ratings[id]==='fail')
+ const active=new Set(getAuditCriteria(ctx).map(c=>c.id))
+ const failed=Object.keys(instructions).filter(id=>active.has(id)&&ratings[id]==='fail')
  if(!failed.length)return ''
- const passed=Object.keys(instructions).filter(id=>ratings[id]==='pass')
+ const passed=Object.keys(instructions).filter(id=>active.has(id)&&ratings[id]==='pass')
  return [
   'TARGETED MANUAL AUDIT CORRECTION',
   ctx.bedroomShotId==='pillow_stack'?'Selected shot: semi-reclined against pillows.':'Keep the original selected shot.',
