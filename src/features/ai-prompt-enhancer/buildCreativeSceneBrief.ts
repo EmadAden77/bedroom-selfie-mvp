@@ -42,7 +42,7 @@ export function buildCreativeSceneBrief(ctx:CompilationContext):string{
 
  const details=[
   'Photograph concept: a real adult person taking an authentic everyday bedroom selfie.',
-  'Capture method: '+(shot?.mode||'front')+' smartphone camera.',
+  'Capture method: '+(shot?.mode==='mirror'?'Xiaomi 15 Ultra rear-camera mirror selfie; the real phone screen faces its holder':shot?.mode==='rear'?'Xiaomi 15 Ultra handheld rear-camera photograph':shot?.mode==='timer'?'Xiaomi 15 Ultra on stable timer support, facing the subject':'Xiaomi 15 Ultra front-camera handheld selfie')+'. No invented device, exact focal length or floating viewpoint.',
   'Scene choice: '+(shot?.description||plain(ctx.poseId)||'a plausible natural bedroom pose')+'.',
   'Body posture: '+plain(shot?getShotPosture(shot.id):ctx.poseId)+'.',
   buildNaturalSceneDirection(ctx),
