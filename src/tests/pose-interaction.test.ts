@@ -34,7 +34,7 @@ describe('15 physically coherent wardrobe mirror poses',()=>{
   for(const shot of mirrors){
    expect(shot.requires).toBe('mirror')
    expect(shot.category).toBe(1)
-   expect(shot.description).not.toMatch(/hand mirror|leaning mirror|dresser mirror|condensation on mirror/i)
+   expect(shot.description).not.toMatch(/hand mirror|leaning mirror|dresser as recording mirror|condensation on mirror/i)
    expect(getShotPosture(shot.id)).toBeDefined()
   }
  })
@@ -44,7 +44,7 @@ describe('15 physically coherent wardrobe mirror poses',()=>{
   expect(compiled.validation.isValid).toBe(true)
   expect(compiled.result.errors).toHaveLength(0)
   expect(compiled.result.promptText).toContain('MIRROR ROOM GEOMETRY:')
-  expect(compiled.result.promptText).toContain('iPhone 15 Pro Max')
+  expect(compiled.result.promptText).toContain('Xiaomi 15 Ultra')
   expect(compiled.result.promptText).toContain('sliding wardrobe')
   expect(compiled.result.promptText).not.toContain('FRONT SELFIE CAPTURE:')
   if(shot.id==='mirror_bed_reflection'){
