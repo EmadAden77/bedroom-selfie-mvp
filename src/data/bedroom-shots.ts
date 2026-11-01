@@ -109,7 +109,7 @@ export function renderBedroomShot(shot:BedroomShot):string {
   ? 'Phone rear camera held by subject within realistic reach; no floating third-person point of view.'
   : 'Subject holds front-facing smartphone at plausible arm reach; the photographing hand is occupied, free hand performs the selected action.'
  const phoneLock=shot.mode==='mirror'
-  ? ' MIRROR HANDSET LOCK: Exactly one Xiaomi 15 Ultra appears in the reflection, with its genuine rear camera module and true handset proportions. Do not substitute an Apple iPhone, invent camera lenses, or change the device model between shots. Real fingers and wrist support the handset. Its reflection respects left-right reversal, distance and occlusion. The phone can conceal facial features at the actual overlap; no duplicated devices, floating capture and invented camera lenses.'
+  ? ' MIRROR HANDSET LOCK: Exactly one Xiaomi 15 Ultra appears in the reflection, with its genuine rear camera module and true handset proportions. Do not substitute an Apple iPhone, invent camera lenses, and never change the device model between shots. Real fingers and wrist support the handset. Its reflection respects left-right reversal, distance and occlusion. The phone can conceal facial features at the actual overlap; no duplicated devices, floating capture and invented camera lenses.'
   : ''
  return 'Bedroom shot: '+shot.description+' '+mode+phoneLock+' Preserve the reference identity, physical support, real source lighting and natural household photographic exposure.'
 }
