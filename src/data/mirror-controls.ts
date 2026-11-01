@@ -1,4 +1,5 @@
 import type {CompilationContext} from '../domain/types'
+import {buildMirrorRoomReferenceGeometry} from './mirror-room-geometry'
 
 /** Physical settings for the EXISTING right-wall wardrobe mirror, not a new prop. */
 type MirrorOption={id:string;label:string;description:string}
@@ -51,7 +52,7 @@ export function mirrorChoice<T extends MirrorOption>(items:readonly T[],id:strin
  return items.find(item=>item.id===id)||items[0]
 }
 
-const mirrorGeometryBase='Only the existing fixed vertical mirrored sliding wardrobe on the RIGHT bedroom wall is reflective. The queen bed stays along the LEFT wall, the dresser stays on the RIGHT toward the front, and the walking gap remains real. The subject and one recording phone stay on the room-facing side of the glass. Its rear camera points toward the mirror; its screen faces the subject. Equal-angle reflection determines the single camera ray, visible background, true reflected scale and glass-edge occlusion. The grip has continuous fingers, wrist, elbow and shoulder. The free hand performs at most one independent action. Light and flash reflections come from the selected real sources; no new mirror, displaced furniture, floating viewpoint and duplicated limbs.'
+const mirrorGeometryBase='The primary recording reflection uses the fixed vertical sliding wardrobe mirror on the RIGHT wall. The queen bed stays along the LEFT wall, and the separate dresser and its original vanity mirror stay on the RIGHT toward the front. The walking gap remains real. The subject and one recording phone stay on the room-facing side of the glass. Its rear camera points toward the mirror; its screen faces the subject. Equal-angle reflection determines the single camera ray, visible background, true reflected scale and glass-edge occlusion. The grip has continuous fingers, wrist, elbow and shoulder. The free hand performs at most one independent action. Light and flash reflections come from the selected real sources; no new mirror, displaced furniture, floating viewpoint and duplicated limbs.'
 
 export function isMirrorShotId(id:string|undefined):boolean{
  return !!id&&id.startsWith('mirror_')
@@ -64,7 +65,7 @@ export function renderMirrorComposition(ctx:CompilationContext):string{
  const distance=fixedMirrorDistance[ctx.bedroomShotId||'']?mirrorDistances[0]:mirrorChoice(mirrorDistances,ctx.mirrorDistanceId)
  const gaze=fixedMirrorGaze[ctx.bedroomShotId||'']?mirrorGazes[0]:mirrorChoice(mirrorGazes,ctx.mirrorGazeId)
  const framing=mirrorChoice(mirrorFramings,ctx.mirrorFramingId)
- return 'MIRROR COMPOSITION: '+mirrorGeometryBase+' Free-hand movement: '+motion.description+' Camera height: '+height.description+' Mirror distance: '+distance.description+' Reflection crop: '+framing.description+' Eye direction: '+gaze.description
+ return 'MIRROR COMPOSITION: '+mirrorGeometryBase+' '+buildMirrorRoomReferenceGeometry(ctx)+' Free-hand movement: '+motion.description+' Camera height: '+height.description+' Mirror distance: '+distance.description+' Reflection crop: '+framing.description+' Eye direction: '+gaze.description
 }
 
 export function buildMirrorGeminiBrief(ctx:CompilationContext):string{
@@ -75,8 +76,9 @@ export function buildMirrorGeminiBrief(ctx:CompilationContext):string{
  const gaze=fixedMirrorGaze[ctx.bedroomShotId||'']?mirrorGazes[0]:mirrorChoice(mirrorGazes,ctx.mirrorGazeId)
  const framing=mirrorChoice(mirrorFramings,ctx.mirrorFramingId)
  return [
-  'Mirror scene geometry: existing fixed sliding wardrobe mirror on RIGHT wall, bed on LEFT, dresser near the right-front, real walking gap. Keep the architecture and furniture in place.',
-  'Mirror capture is a real handheld REAR-camera photograph. Exactly one physical phone and one mirror; screen toward subject, rear lenses toward glass, geometrically correct optical path and occlusion. Never use a front-facing camera perspective.',
+  'Mirror scene geometry: existing fixed sliding wardrobe mirror on RIGHT wall, bed on LEFT, original dresser and vanity mirror to its right near the doorway. Preserve the architecture, real walking gap and furniture order.',
+  buildMirrorRoomReferenceGeometry(ctx),
+  'Mirror capture is a real handheld REAR-camera photograph. Exactly one physical phone and ONE PRIMARY recording mirror (the wardrobe); the separate existing vanity mirror remains in its actual position, not a second recording surface. Screen toward subject, rear lenses toward wardrobe glass, geometrically correct optical path and occlusion. Never use a front-facing camera perspective.',
   'Mirror movement: '+motion.description,
   'Phone position: '+height.description,
   'Distance to glass: '+distance.description,
