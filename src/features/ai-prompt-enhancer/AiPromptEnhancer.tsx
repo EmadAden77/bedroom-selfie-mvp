@@ -114,6 +114,6 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
         <button type="button" className="btn btn-secondary" onClick={onReset}>إعادة تعيين الخيارات</button>
       </div>
     </div>}
-    <GhalyonPromptOptimizer sourcePrompt={generated} onPromptReady={onPromptReady} />
+    <GhalyonPromptOptimizer sourcePrompt={generated} scenePrompt={sceneBrief} initialTarget={ctx.promptTarget==='chatgpt'?'chatgpt':'gemini'} onPromptReady={onPromptReady} />
   </section>
 }

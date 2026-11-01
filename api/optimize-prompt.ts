@@ -2,6 +2,9 @@
 type Mode='auto'|'basic'|'detail'
 type Target='chatgpt'|'claude'|'gemini'
 type Reply={status:'questions'|'complete';questions:string[];optimizedPrompt:string;improvements:string[];proTip:string}
+// Standalone serverless handler: avoid runtime imports from src/ in Vercel Node ESM.
+export const MAX_GHALYON_IDEA_CHARS=14000
+export const MAX_GHALYON_REQUEST_BYTES=50000
 const tips:Record<Target,string>={
  chatgpt:'Use structured instructions and layered context.',
  claude:'Use explicit long-context boundaries and ordered task steps.',
@@ -43,11 +46,15 @@ export default {async fetch(req:Request):Promise<Response>{
  if(req.headers.get('sec-fetch-site')&&!['same-origin','none'].includes(req.headers.get('sec-fetch-site')||''))return fail('CROSS_SITE','رفض الطلب من موقع آخر',403)
  if(!(req.headers.get('content-type')||'').toLowerCase().includes('application/json'))return fail('CONTENT_TYPE','تنسيق غير صالح',415)
  const size=Number(req.headers.get('content-length')||'0')
- if(size>20000)return fail('TOO_LARGE','الطلب كبير',413)
- let x:any;try{x=await req.json()}catch{return fail('BAD_JSON','تعذر قراءة الطلب',400)}
- if(JSON.stringify(x).length>20000)return fail('TOO_LARGE','الطلب كبير',413)
+ if(size>MAX_GHALYON_REQUEST_BYTES)return fail('TOO_LARGE','الطلب كبير',413)
+ let x:any
+ try{
+  const raw=await req.text()
+  if(new TextEncoder().encode(raw).length>MAX_GHALYON_REQUEST_BYTES)return fail('TOO_LARGE','الطلب كبير',413)
+  x=JSON.parse(raw)
+ }catch{return fail('BAD_JSON','تعذر قراءة الطلب',400)}
  const {idea,target,mode,answers=[]}=x||{}
- if(typeof idea!=='string'||idea.trim().length<8||idea.length>10000||
+ if(typeof idea!=='string'||idea.trim().length<8||idea.length>MAX_GHALYON_IDEA_CHARS||
  !['chatgpt','claude','gemini'].includes(target)||!['auto','basic','detail'].includes(mode)||
  !Array.isArray(answers)||answers.length>3||answers.some(a=>!a||typeof a.question!=='string'||typeof a.answer!=='string'||a.question.length>400||a.answer.length>1500))return fail('INVALID_INPUT','البيانات غير صالحة',400)
  const key=process.env.GEMINI_API_KEY
@@ -64,6 +71,7 @@ export default {async fetch(req:Request):Promise<Response>{
    signal:AbortSignal.timeout(30000)
   })
   if(!res.ok){
+   console.warn('[Ghalyon] provider status',res.status)
    if(res.status===429)return fail('GEMINI_QUOTA','اكتملت حصة Gemini المتاحة',429)
    if(res.status===401||res.status===403)return fail('GEMINI_ACCESS','تحقق من صلاحيات Gemini على الخادم')
    if(res.status===404)return fail('GEMINI_MODEL','نموذج Gemini المحدد غير متاح')
@@ -72,8 +80,15 @@ export default {async fetch(req:Request):Promise<Response>{
   }
   const data=await res.json() as {candidates?:Array<{content?:{parts?:Array<{text?:string}>}}>}
   const replyText=data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||''
+  if(!replyText.trim()){
+   console.warn('[Ghalyon] provider sent empty candidate')
+   return fail('GEMINI_EMPTY_RESPONSE','لم يُرجع Gemini نصًا قابلًا للاستخدام. أعد المحاولة أو اختر BASIC.',422)
+  }
   try{return json(parseReply(replyText,mode,answers.length>0))}
-  catch{return fail('INVALID_PROVIDER_REPLY','صيغة استجابة Gemini غير صالحة',422)}
+  catch(error){
+   console.warn('[Ghalyon] provider reply validation',error instanceof Error?error.message:'UNKNOWN')
+   return fail('INVALID_PROVIDER_REPLY','لم تتطابق استجابة Gemini مع تنسيق غَليون. أعد المحاولة أو اختر BASIC.',422)
+  }
  }catch(error){
   const name=(error as Error)?.name
   const timeout=name==='TimeoutError'||name==='AbortError'
