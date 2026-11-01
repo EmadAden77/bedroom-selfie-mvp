@@ -1,0 +1,58 @@
+import {describe,expect,it} from 'vitest'
+import type {CompilationContext} from '../domain/types'
+import {buildMirrorRoomReferenceGeometry} from '../data/mirror-room-geometry'
+import {buildCreativeSceneBrief} from '../features/ai-prompt-enhancer/buildCreativeSceneBrief'
+import {renderMirrorComposition} from '../data/mirror-controls'
+import {PHYSICS_ONLY_SYSTEM} from '../../api/generate-main-prompt'
+
+const base:CompilationContext={
+ hairVariantId:'reference_natural_dry',expressionVariantId:'reference_expression_preserved',
+ upperGarmentId:'reference_garment_preserved',lowerGarmentId:null,
+ materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
+ stateId:'observed_natural_state',color:'gray',surface:'knit',
+ referenceImagePresent:false,roomReferencePresent:true,nightLightingId:'ceiling_neutral',
+ bedroomShotId:'mirror_wardrobe'
+}
+
+describe('Reference-grounded mirror room geometry',()=>{
+ it('is active only for wardrobe-mirror poses, never regular selfies',()=>{
+  expect(buildMirrorRoomReferenceGeometry(base)).toContain('WARDROBE-MIRROR SELFIE')
+  expect(buildMirrorRoomReferenceGeometry({...base,bedroomShotId:'mirror_floor'})).toContain('REFERENCE ROOM PLAN')
+  expect(buildMirrorRoomReferenceGeometry({...base,bedroomShotId:'high_angle'})).toBe('')
+ })
+ it('preserves two real mirrors but one primary recording surface',()=>{
+  const layout=buildMirrorRoomReferenceGeometry(base)
+  expect(layout).toContain('LEFT wall')
+  expect(layout).toContain('RIGHT wall')
+  expect(layout).toContain('vanity/dresser mirror')
+  expect(layout).toContain('PRIMARY recording surface')
+  expect(layout).toContain('REAR cameras')
+  expect(layout).toContain('equal angles')
+ })
+ it('treats 3 m and 5 m as approximate geometry, not optical proof',()=>{
+  const layout=buildMirrorRoomReferenceGeometry(base)
+  expect(layout).toContain('roughly 3 metres')
+  expect(layout).toContain('roughly 5 metres')
+  expect(layout).toContain('IF that sofa actually exists')
+  expect(layout).toContain('only when within that real reflected field of view')
+  expect(layout).toContain('do NOT invent unseen furniture')
+ })
+ it('reaches the main Gemini scene and offline fallback, without transferring photos',()=>{
+  const brief=buildCreativeSceneBrief(base)
+  const local=renderMirrorComposition(base)
+  for(const output of [brief,local]){
+   expect(output).toContain('Fixed mirror-selfie room topology:')
+   expect(output).toContain('roughly 3 metres')
+   expect(output).toContain('roughly 5 metres')
+   expect(output).toContain('The vanity/dresser mirror')
+  }
+  expect(brief).toContain('Gemini does not receive or see it')
+ })
+ it('does not assume unseen sofa or claim provider saw room reference',()=>{
+  const layout=buildMirrorRoomReferenceGeometry({...base,roomReferencePresent:false})
+  expect(layout).toContain('No room photo is attached')
+  expect(layout).toContain('do NOT invent unseen furniture')
+  expect(PHYSICS_ONLY_SYSTEM).toContain('REFERENCE ROOM PLAN')
+  expect(PHYSICS_ONLY_SYSTEM).toContain('real reflected camera ray')
+ })
+})
