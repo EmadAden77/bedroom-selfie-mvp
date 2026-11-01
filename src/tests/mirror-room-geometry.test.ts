@@ -51,7 +51,7 @@ describe('Reference-grounded mirror room geometry',()=>{
  it('does not assume unseen sofa or claim provider saw room reference',()=>{
   const layout=buildMirrorRoomReferenceGeometry({...base,roomReferencePresent:false})
   expect(layout).toContain('No room photo is attached')
-  expect(layout).toContain('do NOT invent unseen furniture')
+  expect(layout).toContain('Do NOT invent unseen furniture')
   expect(PHYSICS_ONLY_SYSTEM).toContain('REFERENCE ROOM PLAN')
   expect(PHYSICS_ONLY_SYSTEM).toContain('actual reflected camera ray')
  })
