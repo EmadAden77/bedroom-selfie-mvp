@@ -1,6 +1,7 @@
 // @vitest-environment node
 import {afterEach,describe,it,expect,vi} from 'vitest'
-import handler,{assembleCreativePrompt,PHYSICS_ONLY_SYSTEM,MAIN_PROMPT_SCHEMA,IMAGE_TARGET_GUIDANCE,validatePhysicalPrompt} from '../../api/generate-main-prompt'
+import {readFileSync} from 'node:fs'
+import handler,{assembleCreativePrompt,PHYSICS_ONLY_SYSTEM,MAIN_PROMPT_SCHEMA,IMAGE_TARGET_GUIDANCE,validatePhysicalPrompt,MAX_SCENE_BRIEF_CHARS as SERVER_SCENE_CHARS,MAX_SCENE_REQUEST_BYTES as SERVER_REQUEST_BYTES} from '../../api/generate-main-prompt'
 import {buildCreativeSceneBrief} from '../features/ai-prompt-enhancer/buildCreativeSceneBrief'
 import {buildHairCreativeBrief} from '../data/hair-creative'
 import {hairVariants} from '../data/hair'
@@ -17,6 +18,18 @@ const post=(data:unknown=payload,headers:Record<string,string>={})=>
 const prompt='An adult stands naturally beside an ordinary dresser in a lived-in bedroom, making a candid mirror selfie with their phone facing the mirror. Their body weight rests realistically on one foot, the other leg loosely relaxed, while the shirt settles with gravity. Ceiling lighting casts everyday downward shadows across the face and clothes, and the camera records natural perspective with authentic smartphone exposure.'
 const mockModel=(p=prompt)=>new Response(JSON.stringify({candidates:[{content:{parts:[{text:JSON.stringify({prompt:p})}]}}]}),{status:200})
 const context={mode:'mirror',lighting:'ceiling_neutral'}
+
+describe('Vercel standalone Gemini route',()=>{
+ it('does not rely on a src-relative import unavailable in Node ESM production',()=>{
+  const source=readFileSync(new URL('../../api/generate-main-prompt.ts',import.meta.url),'utf8')
+  expect(source).not.toMatch(/from\s*['"]\.\.\/src\//)
+  expect(source).not.toMatch(/import\s*\(['"]\.\.\/src\//)
+ })
+ it('maintains identical server and browser size limits',()=>{
+  expect(SERVER_SCENE_CHARS).toBe(MAX_SCENE_BRIEF_CHARS)
+  expect(SERVER_REQUEST_BYTES).toBe(MAX_SCENE_REQUEST_BYTES)
+ })
+})
 
 describe('Gemini creative freedom with physics-only checks',()=>{
  it('requires no password and returns valid POST-only JSON',async()=>{
