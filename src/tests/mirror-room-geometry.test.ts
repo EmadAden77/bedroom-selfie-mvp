@@ -20,6 +20,15 @@ describe('Reference-grounded mirror room geometry',()=>{
   expect(buildMirrorRoomReferenceGeometry({...base,bedroomShotId:'mirror_floor'})).toContain('REFERENCE ROOM PLAN')
   expect(buildMirrorRoomReferenceGeometry({...base,bedroomShotId:'high_angle'})).toBe('')
  })
+ it('keeps rug-seated and bed-edge mirror poses physically seated',()=>{
+  for(const shot of ['mirror_floor','mirror_bed_reflection']){
+   const text=buildMirrorRoomReferenceGeometry({...base,bedroomShotId:shot})
+   expect(text).toContain('Person stays seated')
+   expect(text).toContain('selected real rug/bed support')
+   expect(text).not.toContain('Person stands balanced')
+   expect(text).toContain('Do not impose standing 3 m bed clearance')
+  }
+ })
  it('preserves two real mirrors but one primary recording surface',()=>{
   const layout=buildMirrorRoomReferenceGeometry(base)
   expect(layout).toContain('LEFT wall')
