@@ -1,6 +1,6 @@
 // @vitest-environment node
 import {afterEach,describe,expect,it,vi} from 'vitest'
-import handler,{parseReply,GHALYON_SYSTEM,SCHEMA} from '../../api/optimize-prompt'
+import handler,{parseReply,SYSTEM as GHALYON_SYSTEM,SCHEMA} from '../../api/optimize-prompt'
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals()})
 const endpoint='https://bedroom-selfie-mvp.vercel.app/api/optimize-prompt'
 const idea='Generate a careful realistic bedroom selfie prompt for an adult person.'
