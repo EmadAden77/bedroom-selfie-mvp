@@ -12,7 +12,7 @@ export const poseOptions = [
   { id: 'standing', label: 'واقف بجانب السرير', text: 'Standing near the bed; upright gravity-dependent shadows and clothing drape.' }
 ] as const
 export const faceOptions = [
-  { id: 'toward_camera', label: 'نحو الكاميرا', text: 'Face oriented toward the actual recording camera, matching front, rear, timer or reflected view.' },
+  { id: 'toward_camera', label: 'نحو الكاميرا', text: 'Face oriented toward the actual recording camera, matching front, rear, timer and reflected capture.' },
   { id: 'toward_lamp', label: 'نحو المصباح الجانبي', text: 'Head turned toward the bedside lamp location; illuminated side becomes more frontal.' },
   { id: 'away_from_lamp', label: 'بعيدًا عن المصباح', text: 'Head turned away from the bedside lamp; lamp-side cheek may fall into shadow.' },
   { id: 'toward_door', label: 'نحو الباب', text: 'Head oriented toward the doorway.' },
