@@ -541,7 +541,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
       const sections=output.result.sections.filter(s=>s.id==='background_continuity')
       expect(sections).toHaveLength(1)
       expect(sections[0].content).toContain('existing nightstand and right-side dresser keep the same objects')
-      expect(sections[0].content).toContain('two ordinary sleeping pillows')
+      expect(sections[0].content).toContain('actual pillow count from the room reference')
       expect(output.result.errors).toEqual([])
     }
     expect(seated.result.promptText).toContain('BED CONTACT CONTINUITY:')
