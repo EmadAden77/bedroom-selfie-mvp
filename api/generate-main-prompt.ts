@@ -23,6 +23,7 @@ export const PHYSICS_ONLY_SYSTEM = [
  'Do NOT copy, append, reconstruct or mention the old local engine, mandatory locks, identity engine, room guard, anti-AI lists or long rule catalogues. Do not add section labels, meta-instructions, quality-tag lists or repetitive constraints. Your entire output is one self-sufficient English image prompt.',
  'The governing PHOTOGRAPHIC CONSTRAINTS are real-world PHYSICAL, OPTICAL, ANATOMICAL AND MECHANICAL PLAUSIBILITY: believable gravity, weight, balance, joint range, hands and phone grip, fabric tension, bedding compression only at contact, coherent mirror ray paths, single physical camera viewpoint, natural shadows, real light sources, sensible exposure and camera perspective.',
  'Creative freedom describes photographic composition and wording; always comply with the image-generation provider\'s ordinary content safety policies. Do not attempt to bypass safety filters or moderation.',
+ 'NATURAL SCENE DIRECTOR: Lead with the actual selected action, not a generic static pose. Add only activity-caused realism: bedding indentation at real load points, authentic garment folds, natural grip and slight imperfect handheld framing. Keep background elements and accessories compatible with what the chosen bedroom crop really contains. Do not import generic gym, street or car styling, extra products, makeup, new freckles, false sweat, added jewelry or extra hair into this bedroom scene. Selected expression and reference face take priority over generic playful smiles. A normal unflipped mirror reverses printed text; never demand forward-reading mirrored logos or lettering. Scene details must obey the selected camera, light sources, object support and real room reference.',
  'For a mirror selfie, the phone rear camera must face the real mirror; the screen faces the subject; the visible reflection must have valid lines of sight and no duplicated cameras or limbs.',
  'For a selected bedroom wardrobe mirror capture, preserve the same fixed RIGHT-wall sliding reflective panel, LEFT-wall bed and RIGHT-front dresser. Apply the selected free-hand gesture, phone height, distance, framing and gaze together without overriding any pose-specific hand occupancy, stance, sightline or real light source.',
  'When a MIRROR capture selects rear_flash, the recording phone\'s own rear LED points into the glass. Follow the LED-to-mirror-to-subject reflected beam, including real shadow occlusion and falloff. Localized clipping, bloom and glass marks occur only where physically plausible; a visible flash hotspot belongs near the geometrically reflected LED and rear camera module, never at an arbitrary mirror center. Do not force high ISO, an evenly lit face, an impossible hard wall shadow or fabricated skin pores.',
@@ -68,13 +69,19 @@ export const validatePhysicalPrompt=(prompt:string,context:ShotContext):void=>{
  if(context.mode==='mirror'&&!/\b(?:mirror|reflection|reflective wardrobe)\b/i.test(prompt)){
   throw Error('missing_mirror')
  }
+ if(context.mode==='mirror'&&/\b(?:unreversed|unmirrored|forward[- ]facing|forward[- ]reading)\s+(?:text|writing|lettering|logo)\b/i.test(prompt)){
+  throw Error('mirror_text_conflict')
+ }
+ if(context.mode==='mirror'&&/\b(?:text|writing|lettering|logo)\s+(?:appears|is|reads)\s+(?:perfectly\s+)?(?:unreversed|unmirrored|forward[- ]facing)\b/i.test(prompt)){
+  throw Error('mirror_text_conflict')
+ }
  if(context.mode==='mirror'&&context.lighting==='rear_flash'&&!/\b(?:flash|LED)\b/i.test(prompt)){
   throw Error('missing_rear_flash')
  }
  if(context.mode==='timer'&&/\b(?:handheld selfie|holding the recording phone|phone held in (?:his|her|their) hand)\b/i.test(prompt)){
   throw Error('timer_grip_conflict')
  }
- if(context.lighting==='phone_screen_only'&&/\b(?:ceiling lights? (?:illuminat(?:e|es)|lit)|daylight (?:illuminat(?:e|es)|fills)|sunlight (?:floods|fills)|lamp (?:illuminat(?:e|es)|lights up)|softbox (?:illuminat(?:e|es)|lights up))\b/i.test(prompt)){
+ if(['phone_screen_only','laptop_screen_only'].includes(context.lighting)&&/\b(?:ceiling lights? (?:illuminat(?:e|es)|lit)|daylight (?:illuminat(?:e|es)|fills)|sunlight (?:floods|fills)|lamp (?:illuminat(?:e|es)|lights up)|softbox (?:illuminat(?:e|es)|lights up)|window light (?:fills|falls|streams|illuminates)|warm lamp glow (?:fills|falls|illuminates))\b/i.test(prompt)){
   throw Error('screen_light_conflict')
  }
  if(/\b(?:invisible (?:lamp|light source)|physically impossible|impossible camera angle)\b/i.test(prompt)){
@@ -115,6 +122,10 @@ export default {
      !['front','mirror','rear','timer'].includes(String(mode))||
      !['gemini','chatgpt','flux','midjourney'].includes(String(target))){
    return fail('INVALID_SELECTION','الخيارات أو وصف المشهد غير صالح.',400)
+  }
+  if((shotId==='mirror_rear_flash'&&lighting!=='rear_flash')||
+     (lighting==='laptop_screen_only'&&(!String(shotId).startsWith('laptop_')||shotId==='laptop_reflection'))){
+    return fail('NATURAL_SCENE_CONFLICT','إضاءة المشهد لا تتوافق مع نشاط أو وضعية التصوير المختارة.',400)
   }
   if(!allowBurst(request))return fail('GEMINI_RATE_LIMIT','طلبات كثيرة من نفس الشبكة. أعد المحاولة بعد دقيقة.',429)
   const model=process.env.GEMINI_MAIN_MODEL||'gemini-3.5-flash-lite'

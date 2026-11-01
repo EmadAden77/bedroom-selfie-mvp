@@ -14,6 +14,7 @@ import {buildMirrorGeminiBrief} from '../../data/mirror-controls'
 import {buildMirrorFlashGeminiBrief} from '../../data/mirror-flash-physics'
 import {buildBedroomClutterGeminiBrief} from '../../data/bedroom-clutter'
 import {buildLaptopGeminiBrief} from '../../data/laptop-selfie-physics'
+import {buildNaturalSceneDirection} from './natural-scene-director'
 
 const isSelectedLaptop=(id:string)=>id.startsWith('laptop_')&&id!=='laptop_reflection'
 const selected=<T extends {id:string}>(items:readonly T[],id:string|undefined)=>items.find(x=>x.id===id)
@@ -44,6 +45,7 @@ export function buildCreativeSceneBrief(ctx:CompilationContext):string{
   'Capture method: '+(shot?.mode||'front')+' smartphone camera.',
   'Scene choice: '+(shot?.description||plain(ctx.poseId)||'a plausible natural bedroom pose')+'.',
   'Body posture: '+plain(shot?getShotPosture(shot.id):ctx.poseId)+'.',
+  buildNaturalSceneDirection(ctx),
   'Expression: '+(face?.observableFacialConfiguration||'natural relaxed expression')+'.',
   buildHairCreativeBrief(ctx),
   'Upper clothing: '+upperDescription+
