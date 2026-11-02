@@ -23,6 +23,9 @@ export function validateFinalRealism(ctx: CompilationContext, sections: PromptSe
   if (posture === 'side_lying_right' && !body.includes('Right shoulder, right hip')) errors.push('Final realism: right-side contact missing')
   if (posture === 'side_lying_left' && !body.includes('Left shoulder, left hip')) errors.push('Final realism: left-side contact missing')
   if (shot?.mode === 'mirror') {
+    const mirrorMechanics=byId.get('mirror_composition')||''
+    if(!mirrorMechanics.includes('MIRROR OPTICS AND BIOMECHANICS CONTRACT:'))errors.push('Final realism: mirror optical mechanics contract missing')
+    if(!mirrorMechanics.includes('Wardrobe')&&!mirrorMechanics.includes('wardrobe'))errors.push('Final realism: wardrobe mirror surface lost')
     if (!camera.includes('MIRROR CAPTURE:') || !byId.get('bedroom_shot_' + shot.id)?.includes('Xiaomi 15 Ultra')) errors.push('Final realism: mirror capture device mismatch')
     // Catch incompatible instructions even when leaked by another prompt section.
     if (/FRONT SELFIE CAPTURE:|front-facing smartphone|front-facing camera|held front camera|hand-held front camera/i.test(sections.map(s => s.content).join(' '))) {
