@@ -1,4 +1,4 @@
-import { bedroomShots } from './bedroom-shots'
+import { bedroomShots,getShotPosture } from './bedroom-shots'
 import type { CompilationContext } from '../domain/types'
 
 export const poseOptions = [
@@ -24,11 +24,12 @@ export const lampSideOptions = [
 ] as const
 
 export function renderLightGeometry(ctx: CompilationContext): string {
-  const pose = poseOptions.find(x=>x.id===(ctx.poseId || 'seated_bed'))!
+  const shot = bedroomShots.find(s=>s.id===ctx.bedroomShotId)
+  const actualPosture=shot?(getShotPosture(shot.id)||ctx.poseId):ctx.poseId
+  const pose = poseOptions.find(x=>x.id===(actualPosture || 'seated_bed'))!
   const face = faceOptions.find(x=>x.id===(ctx.faceDirectionId || 'toward_camera'))!
   const side = lampSideOptions.find(x=>x.id===(ctx.lampSideId || 'left'))!
   const lighting = ctx.nightLightingId || 'phone_screen_only'
-  const shot = bedroomShots.find(s=>s.id===ctx.bedroomShotId)
   const stationary = shot?.mode === 'timer'
   const reflected = shot?.mode === 'mirror'
   const rear = shot?.mode === 'rear'
