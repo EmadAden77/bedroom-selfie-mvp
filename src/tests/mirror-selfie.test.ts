@@ -32,7 +32,7 @@ describe('Independent mirror photography with Gemini and physical geometry',()=>
   expect(mirror).toContain('MIRROR COMPOSITION:')
   expect(mirror).toContain('Free fingertips lightly touch')
   expect(mirror).toContain('Phone at upper chest level')
-  expect(mirror).toContain('walking area')
+  expect(mirror).toContain('existing free clearance between wardrobe and bed')
   expect(mirror).toContain('whole person')
   expect(mirror).toContain('real phone screen facing the subject')
   expect(mirror).toContain('Equal-angle reflection')

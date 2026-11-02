@@ -58,8 +58,10 @@ export function buildCreativeSceneBrief(ctx:CompilationContext):string{
       '; color '+(ctx.lowerColor||'as selected')+'; fabric '+(ctx.lowerSurface||'natural'):'')+'.',
   'Real-world illumination choice: '+(light?.id||'natural')+
     '. '+(light?.description||'Only plausible real room light sources.')+'.',
-  'Gaze '+plain(ctx.gazeId)+'; face direction '+plain(ctx.faceDirectionId)+
-    '; subtle expression '+plain(ctx.microExpressionId)+'.',
+  ...(shot?.mode==='mirror'
+    ?['Eye direction and head position must follow the selected mirror-specific gaze and reachable rear-camera sightline; generic front-selfie gaze is not authoritative.']
+    :['Gaze '+plain(ctx.gazeId)+'; face direction '+plain(ctx.faceDirectionId)+
+      '; subtle expression '+plain(ctx.microExpressionId)+'.']),
   'Photographic mood '+(mood?.id||'natural')+'.',
   ...(ctx.roomPhysicalState||ctx.bedroomClutterId==='lived_in_messy'?[buildBedroomClutterGeminiBrief(ctx)]:[]),
   ...(shot&&isSelectedLaptop(shot.id)?[buildLaptopGeminiBrief(ctx)]:[]),

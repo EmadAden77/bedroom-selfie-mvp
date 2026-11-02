@@ -51,3 +51,12 @@ The app now offers **physical room state** controls with the requested defaults:
 - The manual photo-result audit adds checks for tile grid, wall/surface response, object contact and inter-view consistency when this feature is active. It does not inspect the image automatically; Gemini image audit still requires explicit user consent and upload.
 
 There is no guaranteed way to make AI-generated photographs undetectable; this feature is for physically and contextually consistent images.
+
+
+## Wardrobe mirror optics and biomechanics — geometry-first strictness
+
+All 15 wardrobe-mirror shots now share the same deterministic optical and mechanical description in the local compiler and the Gemini **scene brief**, plus a mirror-specific Gemini system constraint. The single Xiaomi 15 Ultra rear camera, rear LED where selected, front-facing screen, real hand/wrist/elbow/shoulder chain, free-hand occupancy, planar equal-angle ray path, virtual image depth, occlusion, furniture continuity, ceramic grid and exposure-dependent flash are all constrained by the selected shot. `renderLightGeometry` now derives the effective body posture from the selected shot rather than stale general pose controls.
+
+Crucially, the floor-seated selfie has real pelvis support on the rug/floor, the bed-edge selfie compresses the mattress at actual pressure points, and standing shots rely on feet on the floor. Mirror distance presets no longer force a seated person to stand. The originally described approximately 3 m bed and 5 m sofa cues do **not** move reference furniture or override real reflected field of view; a cropped scene may simply omit distant features. The separate original dresser mirror is not a second recording surface. The rear LED stays off unless flash was explicitly selected; screen-only shots can remain underexposed rather than being automatically filled by fictional light.
+
+These are *prompt and selection consistency* rules, not a geometric ray tracer or visual image proof. Gemini's prompt-writing route does not receive the original photo pixels and actual generated results still need visual review against the photo references. No software prompt can guarantee realism in every generated pixel or defeat image provenance/detection systems.

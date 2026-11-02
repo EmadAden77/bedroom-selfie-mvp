@@ -1,5 +1,6 @@
 import type {CompilationContext} from '../domain/types'
 import {buildMirrorRoomReferenceGeometry} from './mirror-room-geometry'
+import {buildMirrorOpticsMechanics} from './mirror-optics-mechanics'
 
 /** Physical settings for the EXISTING right-wall wardrobe mirror, not a new prop. */
 type MirrorOption={id:string;label:string;description:string}
@@ -25,8 +26,8 @@ export const mirrorPhoneHeights:readonly MirrorOption[]=[
 ]
 export const mirrorDistances:readonly MirrorOption[]=[
  {id:'shot',label:'المسافة الأصلية',description:'Keep the subject distance implied by the selected shot.'},
- {id:'close',label:'قريب من المرآة',description:'Stand within comfortable clearance from the vertical glass, without touching it with the phone.'},
- {id:'comfortable',label:'مسافة طبيعية',description:'Stand in the clear walking area between the right-wall wardrobe and the left-wall bed.'},
+ {id:'close',label:'قريب من المرآة',description:'Position the body with comfortable clearance from the vertical glass, without touching it with the phone.'},
+ {id:'comfortable',label:'مسافة طبيعية',description:'Keep the selected seated/standing posture with real body support while staying within the existing free clearance between wardrobe and bed.'},
  {id:'far',label:'أبعد ضمن الغرفة',description:'Use only the existing clear floor space; stay on the room side of the glass without crossing the bed.'}
 ]
 export const mirrorFramings:readonly MirrorOption[]=[
@@ -65,7 +66,7 @@ export function renderMirrorComposition(ctx:CompilationContext):string{
  const distance=fixedMirrorDistance[ctx.bedroomShotId||'']?mirrorDistances[0]:mirrorChoice(mirrorDistances,ctx.mirrorDistanceId)
  const gaze=fixedMirrorGaze[ctx.bedroomShotId||'']?mirrorGazes[0]:mirrorChoice(mirrorGazes,ctx.mirrorGazeId)
  const framing=mirrorChoice(mirrorFramings,ctx.mirrorFramingId)
- return 'MIRROR COMPOSITION: '+mirrorGeometryBase+' '+buildMirrorRoomReferenceGeometry(ctx)+' Free-hand movement: '+motion.description+' Camera height: '+height.description+' Mirror distance: '+distance.description+' Reflection crop: '+framing.description+' Eye direction: '+gaze.description
+ return 'MIRROR COMPOSITION: '+mirrorGeometryBase+' '+buildMirrorRoomReferenceGeometry(ctx)+' '+buildMirrorOpticsMechanics(ctx)+' Free-hand movement: '+motion.description+' Camera height: '+height.description+' Mirror distance: '+distance.description+' Reflection crop: '+framing.description+' Eye direction: '+gaze.description
 }
 
 export function buildMirrorGeminiBrief(ctx:CompilationContext):string{
@@ -78,6 +79,7 @@ export function buildMirrorGeminiBrief(ctx:CompilationContext):string{
  return [
   'Mirror scene geometry: existing fixed sliding wardrobe mirror on RIGHT wall, bed on LEFT, original dresser and vanity mirror to its right near the doorway. Preserve the architecture, real walking gap and furniture order.',
   buildMirrorRoomReferenceGeometry(ctx),
+  buildMirrorOpticsMechanics(ctx,true),
   'Mirror capture is a real handheld REAR-camera photograph. Exactly one physical phone and ONE PRIMARY recording mirror (the wardrobe); the separate existing vanity mirror remains in its actual position, not a second recording surface. Screen toward subject, rear lenses toward wardrobe glass, geometrically correct optical path and occlusion. Never use a front-facing camera perspective.',
   'Mirror movement: '+motion.description,
   'Phone position: '+height.description,
