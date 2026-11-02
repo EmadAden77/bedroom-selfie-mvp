@@ -7,11 +7,11 @@ const ROOM_TOPOLOGY=[
 ].join('\n')
 const STANDING_MIRROR=[
  'WARDROBE-MIRROR SELFIE: Person stands balanced in clear aisle facing wardrobe glass. One handheld phone: REAR cameras at glass, screen at person. Wardrobe is PRIMARY recording surface. Vanity mirror stays separate.',
- 'DEPTH: bed roughly 3 metres behind subject; sofa roughly 5 metres deeper IF that sofa is actually shown in the photograph, independently confirmed by the user. Distances are approximate depth cues.'
+ 'DEPTH: preserve the original left-wall bed and the user-estimated roughly 3-metre subject-to-bed separation where the photographed layout permits it. The sofa is an approximately 5-metre depth landmark only if physically confirmed and within the reflected view. Treat these as optional reference-relative cues, never reasons to move furniture.'
 ].join('\n')
 const SEATED_MIRROR=[
  'WARDROBE-MIRROR SELFIE: Person stays seated on the selected real rug/bed support, with natural weight contacts. One handheld phone: REAR cameras at wardrobe glass, screen at person. Wardrobe remains PRIMARY recording surface.',
- 'DEPTH: bed remains LEFT; it supports the body in bed-edge shots. Do not impose standing 3 m bed clearance on a seated pose. Sofa roughly 5 metres deeper only when shown in reference, confirmed by the user and visible in the reflected ray.'
+ 'DEPTH: bed remains LEFT and supports the subject only for the bed-edge seat; floor-seat shots keep floor contact. Do not impose a standing 3-metre bed clearance on seated poses. A sofa is a distant landmark only where confirmed and optically visible.'
 ].join('\n')
 
 export const MIRROR_ROOM_REFERENCE_LAYOUT=ROOM_TOPOLOGY+'\n'+STANDING_MIRROR
