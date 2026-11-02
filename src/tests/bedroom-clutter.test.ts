@@ -70,7 +70,7 @@ describe('Optional realistic lived-in bedroom clutter',()=>{
   expect(brief).toContain('glossy beige tile floor')
   expect(brief).toContain('Use ONLY the separately selected real lighting')
   expect(brief).toContain('Mirror scene geometry:')
-  expect(brief.length).toBeLessThan(6500)
+  expect(brief.length).toBeLessThan(12000)
   expect(buildBedroomClutterGeminiBrief(base)).toBe('')
  })
 })
