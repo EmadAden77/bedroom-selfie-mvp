@@ -81,6 +81,9 @@ export const validatePhysicalPrompt=(prompt:string,context:ShotContext):void=>{
  if(context.mode==='mirror'&&/\b(?:text|writing|lettering|logo)\s+(?:appears|is|reads)\s+(?:perfectly\s+)?(?:unreversed|unmirrored|forward[- ]facing)\b/i.test(prompt)){
   throw Error('mirror_text_conflict')
  }
+ if(context.mode==='mirror'&&/\b(?:front-camera mirror selfie|front-facing camera (?:captures|records|photographs) (?:the|a) mirror|mirror selfie (?:captured|taken|shot|photographed) (?:using|with|on) (?:the )?front(?:-facing)? camera)\b/i.test(prompt)){
+  throw Error('mirror_front_camera_conflict')
+ }
  if(context.mode==='mirror'&&context.lighting==='rear_flash'&&!/\b(?:flash|LED)\b/i.test(prompt)){
   throw Error('missing_rear_flash')
  }
