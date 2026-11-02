@@ -5,7 +5,7 @@ import {renderLightGeometry} from '../data/light-geometry'
 import {buildCreativeSceneBrief} from '../features/ai-prompt-enhancer/buildCreativeSceneBrief'
 import {renderMirrorComposition} from '../data/mirror-controls'
 import {compilePrompt} from '../compiler'
-import {PHYSICS_ONLY_SYSTEM} from '../../api/generate-main-prompt'
+import {PHYSICS_ONLY_SYSTEM,validatePhysicalPrompt} from '../../api/generate-main-prompt'
 import type {CompilationContext} from '../domain/types'
 
 const base:CompilationContext={
@@ -79,6 +79,11 @@ describe('Extreme physical mirror capture consistency',()=>{
   expect(text).toContain('omit it rather than breaking optics')
   expect(text).toContain('ceramic grid')
   expect(text).toContain('Original separate vanity mirror')
+ })
+ it('rejects explicit front-camera mirror hallucinations but accepts real rear-camera optics',()=>{
+  expect(()=>validatePhysicalPrompt('A mirror selfie captured with the front camera and wardrobe reflected.',{mode:'mirror',lighting:'ceiling_neutral'})).toThrow('mirror_front_camera_conflict')
+  expect(()=>validatePhysicalPrompt('A front-camera mirror selfie shows the phone in a mirror.',{mode:'mirror',lighting:'ceiling_neutral'})).toThrow('mirror_front_camera_conflict')
+  expect(()=>validatePhysicalPrompt('Real rear-camera Xiaomi 15 Ultra mirror selfie, the phone screen faces the holder and the wardrobe glass reflects the scene.',{mode:'mirror',lighting:'ceiling_neutral'})).not.toThrow()
  })
  it('excludes mirror-only physics from ordinary front selfies',()=>{
   const ctx={...base,bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'ceiling_neutral'}
