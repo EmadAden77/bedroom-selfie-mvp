@@ -5,11 +5,10 @@ import {bedroomShots,getShotPosture} from './bedroom-shots'
  * One physical optical/mechanical contract for every wardrobe-mirror shot.
  * Prompts describe enforceable relationships; a prompt-only API cannot measure pixels.
  */
-export function buildMirrorOpticsMechanics(ctx:CompilationContext):string{
+export function buildMirrorOpticsMechanics(ctx:CompilationContext,compact=false):string{
  const shot=bedroomShots.find(x=>x.id===ctx.bedroomShotId)
  if(shot?.mode!=='mirror')return ''
  const posture=getShotPosture(shot.id)||'standing'
- const seated=posture==='seated_bed'||posture==='seated_floor'
  const mirrorSeat=posture==='seated_bed'
   ? 'Seated on the actual left-wall mattress edge: pelvis and thighs load the mattress, feet carry their share of weight on real floor tiles, knees and neck remain naturally aligned. The mattress depresses only at true contact.'
   :posture==='seated_floor'
@@ -22,6 +21,15 @@ export function buildMirrorOpticsMechanics(ctx:CompilationContext):string{
   ? 'FLASH: only the real rear LED fires during exposure; reflect its rays from the actual glass to surfaces that can receive them. Flash highlight position is bound to the real lens/LED geometry and exposure; glass bloom, occluding handset silhouette, falloff, clipped pixels and shadow direction arise only when optically possible. Do not assume a central hotspot, diffuse studio fill or equal light over the face.'
   :'NO FLASH: the rear LED is OFF. Exposure, shadows, skin and ceramic specular reflections follow only the selected real room sources. Never add an LED hotspot, invisible frontal fill or a reflected flash.'
  const camera='Use a single rear-camera exposure with actual ray geometry and reachable handheld framing; no front-selfie framing or floating viewpoint. Perspective must match the camera height and distance, including slight handheld tilt and plausible crop. Sensor grain, local sharpening, white balance and clipped highlights depend on exposure rather than a global artificial noise effect.'
+ if(compact)return [
+  'MIRROR OPTICS AND BIOMECHANICS CONTRACT:',
+  posture==='seated_bed'?'Hips load the real bed edge, feet are grounded; do not call this standing.':posture==='seated_floor'?'Pelvis loads the actual floor/rug; no unsupported bed contact.':'Feet support the standing body on real floor; no bed compression.',
+  'One Xiaomi 15 Ultra rear-camera phone: glass-facing lenses and optional LED, screen facing holder, single connected gripping arm and one independent free-hand task.',
+  'Wardrobe mirror is one fixed plane: equal-angle rays, correct virtual depths, frame and phone occlusions; vanity mirror stays physically separate. Reuse the same reflected room, ceramic grid and item identities.',
+  'Approximate bed/sofa depth cues never override room geometry or reflected field of view.',
+  ctx.nightLightingId==='rear_flash'?'Rear LED flash reflects only along valid rays, with conditional glare and directional shadows.':'Rear LED remains off; illumination has only the selected real sources.',
+  'Natural camera exposure, joint loads, surface contacts and crop; no extra people, invisible camera or fictitious fill.'
+ ].join(' ')
  return 'MIRROR OPTICS AND BIOMECHANICS CONTRACT: '+mirrorSeat+' '+phone+' '+glass+' '+scene+' '+light+' '+camera+' The selected pose has priority over generic standing instructions; if the crop cannot contain distant furniture, omit it rather than breaking optics.'
 }
 
@@ -29,8 +37,6 @@ export function mirrorMechanicalIssues(ctx:CompilationContext):string[]{
  const shot=bedroomShots.find(x=>x.id===ctx.bedroomShotId)
  if(shot?.mode!=='mirror')return []
  const errors:string[]=[]
- if(ctx.nightLightingId==='phone_screen_only')
-  errors.push('شاشة الهاتف تتجه إلى الشخص في تصوير المرآة، لكنها لا تصلح وحدها لإضاءة الوجه والانعكاس بهذه الوضعية؛ اختر مصدرًا منزليًا أو الفلاش.')
  if(ctx.nightLightingId==='laptop_screen_only')
   errors.push('إضاءة اللابتوب تتطلب وضعية تحتوي لابتوب حقيقيًا، وليس سيلفي مرآة عاديًا.')
  return errors
