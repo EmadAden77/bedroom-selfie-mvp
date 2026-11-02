@@ -26,7 +26,7 @@ describe('Reference-grounded mirror room geometry',()=>{
    expect(text).toContain('Person stays seated')
    expect(text).toContain('selected real rug/bed support')
    expect(text).not.toContain('Person stands balanced')
-   expect(text).toContain('Do not impose standing 3 m bed clearance')
+   expect(text).toContain('Do not impose a standing 3-metre bed clearance')
   }
  })
  it('preserves two real mirrors but one primary recording surface',()=>{
@@ -40,7 +40,7 @@ describe('Reference-grounded mirror room geometry',()=>{
  })
  it('treats 3 m and 5 m as approximate geometry, not optical proof',()=>{
   const layout=buildMirrorRoomReferenceGeometry(base)
-  expect(layout).toContain('roughly 3 metres')
+  expect(layout).toContain('roughly 3-metre')
   expect(layout).toContain('5-metre depth landmark')
   expect(layout).toContain('only if physically confirmed')
   expect(layout).toContain('only when within that real reflected field of view')
@@ -51,7 +51,7 @@ describe('Reference-grounded mirror room geometry',()=>{
   const local=renderMirrorComposition(base)
   for(const output of [brief,local]){
    expect(output).toContain('Fixed mirror-selfie room topology:')
-   expect(output).toContain('roughly 3 metres')
+   expect(output).toContain('roughly 3-metre')
    expect(output).toContain('5-metre depth landmark')
    expect(output).toContain('The vanity/dresser mirror')
   }
