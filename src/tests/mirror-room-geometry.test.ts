@@ -41,8 +41,8 @@ describe('Reference-grounded mirror room geometry',()=>{
  it('treats 3 m and 5 m as approximate geometry, not optical proof',()=>{
   const layout=buildMirrorRoomReferenceGeometry(base)
   expect(layout).toContain('roughly 3 metres')
-  expect(layout).toContain('roughly 5 metres')
-  expect(layout).toContain('IF that sofa is actually shown')
+  expect(layout).toContain('5-metre depth landmark')
+  expect(layout).toContain('only if physically confirmed')
   expect(layout).toContain('only when within that real reflected field of view')
   expect(layout).toContain('do not invent a sofa')
  })
@@ -52,7 +52,7 @@ describe('Reference-grounded mirror room geometry',()=>{
   for(const output of [brief,local]){
    expect(output).toContain('Fixed mirror-selfie room topology:')
    expect(output).toContain('roughly 3 metres')
-   expect(output).toContain('roughly 5 metres')
+   expect(output).toContain('5-metre depth landmark')
    expect(output).toContain('The vanity/dresser mirror')
   }
   expect(brief).toContain('Gemini does not receive or see it')
