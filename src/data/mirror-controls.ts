@@ -27,7 +27,7 @@ export const mirrorPhoneHeights:readonly MirrorOption[]=[
 export const mirrorDistances:readonly MirrorOption[]=[
  {id:'shot',label:'المسافة الأصلية',description:'Keep the subject distance implied by the selected shot.'},
  {id:'close',label:'قريب من المرآة',description:'Position the body with comfortable clearance from the vertical glass, without touching it with the phone.'},
- {id:'comfortable',label:'مسافة طبيعية',description:'Maintain the selected seated or standing body support within the actual walking area between the wardrobe and bed.'},
+ {id:'comfortable',label:'مسافة طبيعية',description:'Keep the chosen seated/standing body's real support while staying within the room's actual free clearance between wardrobe and bed.'},
  {id:'far',label:'أبعد ضمن الغرفة',description:'Use only the existing clear floor space; stay on the room side of the glass without crossing the bed.'}
 ]
 export const mirrorFramings:readonly MirrorOption[]=[
