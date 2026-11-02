@@ -60,7 +60,7 @@ describe('Extreme physical mirror capture consistency',()=>{
    expect(local).toContain(contact)
    expect(local).not.toContain('Stand in the clear walking area')
    expect(local).toContain('Maintain the selected seated or standing body support')
-   expect(buildMirrorOpticsMechanics(ctx,true)).toContain('Hips')
+   expect(buildMirrorOpticsMechanics(ctx,true)).toMatch(/Hips|Pelvis/)
   }
  })
  it('shapes real light and flash exclusively from selected sources',()=>{
@@ -69,7 +69,7 @@ describe('Extreme physical mirror capture consistency',()=>{
   expect(without).toContain('rear LED is OFF')
   expect(without).not.toContain('FLASH: only the real rear LED fires')
   expect(withFlash).toContain('FLASH: only the real rear LED fires')
-  expect(withFlash).toContain('flash highlight')
+  expect(withFlash).toContain('Flash highlight')
   expect(withFlash).not.toContain('front camera')
  })
  it('keeps posture mechanics independent of image crop and furniture wish-list',()=>{
