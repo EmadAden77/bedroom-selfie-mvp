@@ -33,11 +33,3 @@ export function buildMirrorOpticsMechanics(ctx:CompilationContext,compact=false)
  return 'MIRROR OPTICS AND BIOMECHANICS CONTRACT: '+mirrorSeat+' '+phone+' '+glass+' '+scene+' '+light+' '+camera+' The selected pose has priority over generic standing instructions; if the crop cannot contain distant furniture, omit it rather than breaking optics.'
 }
 
-export function mirrorMechanicalIssues(ctx:CompilationContext):string[]{
- const shot=bedroomShots.find(x=>x.id===ctx.bedroomShotId)
- if(shot?.mode!=='mirror')return []
- const errors:string[]=[]
- if(ctx.nightLightingId==='laptop_screen_only')
-  errors.push('إضاءة اللابتوب تتطلب وضعية تحتوي لابتوب حقيقيًا، وليس سيلفي مرآة عاديًا.')
- return errors
-}
