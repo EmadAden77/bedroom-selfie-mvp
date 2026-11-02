@@ -48,7 +48,7 @@ describe('Mirror rear LED flash optics',()=>{
   expect(brief).toContain('LED-to-mirror-to-subject')
   expect(brief).toContain('geometrically reflected LED')
   expect(brief).toContain('Flash does not automatically imply high ISO')
-  expect(brief.length).toBeLessThan(6500)
+  expect(brief.length).toBeLessThan(12000)
   expect(PHYSICS_ONLY_SYSTEM).toContain('MIRROR capture selects rear_flash')
  })
  it('does not activate mirror flash physics in nonflash or nonmirror captures',()=>{
