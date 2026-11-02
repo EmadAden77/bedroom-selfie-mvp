@@ -59,7 +59,7 @@ describe('Extreme physical mirror capture consistency',()=>{
    const local=renderMirrorComposition(ctx)
    expect(local).toContain(contact)
    expect(local).not.toContain('Stand in the clear walking area')
-   expect(local).toContain('Maintain the selected seated or standing body support')
+   expect(local).toContain('Keep the chosen seated/standing body's real support')
    expect(buildMirrorOpticsMechanics(ctx,true)).toMatch(/Hips|Pelvis/)
   }
  })
