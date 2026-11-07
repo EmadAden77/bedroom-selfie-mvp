@@ -3,6 +3,7 @@ import type {CompilationContext,CompilationResult,ValidationResult} from '../../
 import {bedroomShots,getShotPosture} from '../../data/bedroom-shots'
 import {buildCreativeSceneBrief} from './buildCreativeSceneBrief'
 import {GhalyonPromptOptimizer} from './GhalyonPromptOptimizer'
+import {ImagePromptAuditorV8} from './ImagePromptAuditorV8'
 import {naturalSceneSelectionIssues} from './natural-scene-director'
 import {MAX_SCENE_BRIEF_CHARS} from './scene-request-limits'
 
@@ -11,6 +12,7 @@ type MainReply={prompt?:string;source?:string;model?:string;error?:string;errorC
 
 export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,onPromptReady})=>{
   const [generated,setGenerated]=useState('')
+  const [auditorSource,setAuditorSource]=useState('')
   const [engine,setEngine]=useState<'gemini'|'local'|''>('')
   const [error,setError]=useState('')
   const [loading,setLoading]=useState(false)
@@ -32,7 +34,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
     requestVersion.current++
     requestRef.current?.abort()
     requestRef.current=null
-    setGenerated('');setEngine('');setError('');setLoading(false);setCopied(false)
+    setGenerated('');setAuditorSource('');setEngine('');setError('');setLoading(false);setCopied(false)
     onPromptReady('')
   },[prompt,sceneBrief,ctx.promptTarget,onPromptReady])
   useEffect(()=>()=>{requestVersion.current++;requestRef.current?.abort()},[])
@@ -44,7 +46,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
     const ctrl=new AbortController()
     requestRef.current=ctrl
     const current=()=>version===requestVersion.current&&!ctrl.signal.aborted
-    setLoading(true);setError('');setCopied(false);setGenerated('');setEngine('')
+    setLoading(true);setError('');setCopied(false);setGenerated('');setAuditorSource('');setEngine('')
     const shot=bedroomShots.find(s=>s.id===ctx.bedroomShotId)
     try{
       const response=await fetch('/api/generate-main-prompt',{
@@ -86,7 +88,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
     requestRef.current?.abort()
     requestRef.current=null
     if(!fallbackReady)return
-    setGenerated(prompt);setEngine('local');setError('');setLoading(false);setCopied(false);onPromptReady(prompt)
+    setGenerated(prompt);setAuditorSource('');setEngine('local');setError('');setLoading(false);setCopied(false);onPromptReady(prompt)
   }
 
   return <section className="card" aria-label="المحرك الرئيسي لتوليد البرومبت">
@@ -114,6 +116,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
         <button type="button" className="btn btn-secondary" onClick={onReset}>إعادة تعيين الخيارات</button>
       </div>
     </div>}
-    <GhalyonPromptOptimizer sourcePrompt={generated} scenePrompt={sceneBrief} initialTarget={ctx.promptTarget==='chatgpt'?'chatgpt':'gemini'} onPromptReady={onPromptReady} />
+    <GhalyonPromptOptimizer sourcePrompt={generated} scenePrompt={sceneBrief} initialTarget={ctx.promptTarget==='chatgpt'?'chatgpt':'gemini'} onPromptReady={text=>{setAuditorSource(text);onPromptReady(text)}} />
+    <ImagePromptAuditorV8 ctx={ctx} sourcePrompt={auditorSource||generated} sceneBrief={sceneBrief} onPromptReady={onPromptReady}/>
   </section>
 }
