@@ -91,10 +91,21 @@ function validateSceneSpec(v:unknown):SceneSpec{
     p.lowerGarmentId,p.lowerMaterialId,p.lowerSurface,p.mirrorMovementId,p.mirrorPhoneHeightId,
     p.mirrorDistanceId,p.mirrorFramingId,p.mirrorGazeId].every(x=>typeof x==='string')||
   typeof p.windowUncovered!=='boolean'||typeof p.poseId!=='string'||typeof p.shotPosture!=='string'||
-  typeof p.referenceImagePresent!=='boolean'||typeof p.roomReferencePresent!=='boolean')throw Error('SPEC_PHYSICS_SCHEMA')
+  typeof p.referenceImagePresent!=='boolean'||typeof p.roomReferencePresent!=='boolean'||
+  ![p.hairVariantId,p.hairstyleMode,p.hairDirection,p.hairVolume,p.hairTexture,p.promptTarget,
+    p.realismIntensity,p.expressionVariantId,p.gazeId,p.microExpressionId,p.bedroomClutterId,
+    p.faceDirectionId,p.lampSideId].every(x=>typeof x==='string'))throw Error('SPEC_PHYSICS_SCHEMA')
  if(p.mode!==cap.mode||p.shotId!==cap.shotId||p.nightLightingId!==cap.lighting||
   p.shotPosture!==cap.posture||p.referenceImagePresent!==s.references.personDeclared||
-  p.roomReferencePresent!==s.references.roomDeclared||p.upperGarmentId!==s.selections.upperGarmentId||p.materialId!==s.selections.upperMaterialId||
+  p.roomReferencePresent!==s.references.roomDeclared||p.promptTarget!==cap.target||
+  p.hairVariantId!==s.selections.hairVariantId||p.hairstyleMode!==s.selections.hairstyleMode||
+  p.hairDirection!==s.selections.hairDirection||p.hairVolume!==s.selections.hairVolume||
+  p.hairTexture!==s.selections.hairTexture||p.expressionVariantId!==s.selections.expressionVariantId||
+  p.gazeId!==s.selections.gazeId||p.microExpressionId!==s.selections.microExpressionId||
+  p.mirrorMovementId!==s.selections.mirrorMovementId||p.mirrorPhoneHeightId!==s.selections.mirrorPhoneHeightId||
+  p.mirrorDistanceId!==s.selections.mirrorDistanceId||p.mirrorFramingId!==s.selections.mirrorFramingId||
+  p.mirrorGazeId!==s.selections.mirrorGazeId||
+  p.upperGarmentId!==s.selections.upperGarmentId||p.materialId!==s.selections.upperMaterialId||
   p.fitId!==s.selections.upperFitId||p.color!==s.selections.upperColor||
   p.lowerGarmentId!==s.selections.lowerGarmentId||
   JSON.stringify(p.roomPhysicalState)!==JSON.stringify(s.selections.roomPhysicalState))
