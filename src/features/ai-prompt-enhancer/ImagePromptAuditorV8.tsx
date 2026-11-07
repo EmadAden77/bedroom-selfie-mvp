@@ -14,13 +14,13 @@ type Props={
  ctx:CompilationContext
  sourcePrompt:string
  sceneBrief:string
- onPromptReady:(prompt:string)=>void
+ onAdvisoryReady:(prompt:string)=>void
 }
 export const MAX_V8_INPUT=14000
 export const MAX_V8_SCENE=12000
 
 /** Optional, text-only final auditor. This does not alter the main Gemini or Ghalyon engines. */
-export const ImagePromptAuditorV8:React.FC<Props>=({ctx,sourcePrompt,sceneBrief,onPromptReady})=>{
+export const ImagePromptAuditorV8:React.FC<Props>=({ctx,sourcePrompt,sceneBrief,onAdvisoryReady})=>{
  const [draft,setDraft]=useState('')
  const [ownPortrait,setOwnPortrait]=useState(true)
  const [promptOnly,setPromptOnly]=useState(false)
@@ -88,6 +88,7 @@ export const ImagePromptAuditorV8:React.FC<Props>=({ctx,sourcePrompt,sceneBrief,
  }
  return <section aria-label="مدقق برومبت الصور v8" style={{borderTop:'1px solid var(--border)',marginTop:20,paddingTop:16}}>
   <h2 style={{fontSize:16,margin:'0 0 8px'}}>🔬 IMAGE PROMPT AUDITOR — v8</h2>
+  <p role="note" style={{fontSize:12,fontWeight:700}}>Advisory Output — Non-Authoritative</p>
   <p style={{fontSize:12,color:'var(--muted)',lineHeight:1.8}}>
    تدقيق وإصلاح النص قبل إنشاء الصورة: الهوية والشعر، الفيزياء والتشريح، مسار المرآة والكاميرا، التعريض، السيراميك والجدران وآثار الاستخدام الحقيقية. لا يولّد صورًا.
   </p>
@@ -123,13 +124,13 @@ export const ImagePromptAuditorV8:React.FC<Props>=({ctx,sourcePrompt,sceneBrief,
     : <p style={{fontSize:12}}>لم يرصد المدقق تناقضًا نصيًا يستوجب الإصلاح.</p>}
    <h3 style={{fontSize:13}}>B — المشهد والكاميرا والأسطح</h3>
    <p style={{fontSize:12,lineHeight:1.8,whiteSpace:'pre-wrap'}}>{result.sceneCameraSurfaceDetails}</p></>}
-   <h3 style={{fontSize:13}}>C — البرومبت الإنجليزي النهائي</h3>
+   <h3 style={{fontSize:13}}>C — مسودة البرومبت الإنجليزية (استشارية وليست نهائية)</h3>
    <pre className="preview-box" dir="ltr" style={{textAlign:'left',whiteSpace:'pre-wrap',overflowWrap:'anywhere',maxHeight:520,overflowY:'auto'}}>
     <code>{result.finalImagePrompt}</code>
    </pre>
    <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}>
-    <button className="btn" type="button" onClick={()=>void copy()}>{copied?'✓ تم النسخ':'نسخ البرومبت النهائي'}</button>
-    <button className="btn btn-secondary" type="button" onClick={()=>onPromptReady(result.finalImagePrompt)}>اعتماده لمراجعة الصورة</button>
+    <button className="btn" type="button" onClick={()=>void copy()}>{copied?'✓ تم النسخ':'نسخ المسودة الاستشارية'}</button>
+    <button className="btn btn-secondary" type="button" onClick={()=>onAdvisoryReady(result.finalImagePrompt)}>إرسال المسودة لمراجعة الصورة (استشاري)</button>
    </div>
   </div>}
   <p style={{fontSize:11,color:'var(--muted)',lineHeight:1.7,margin:'12px 0 0'}}>
