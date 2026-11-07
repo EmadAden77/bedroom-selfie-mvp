@@ -133,14 +133,14 @@ export function evaluateBodyMechanics(input:BodyMechanicalInput):BodyMechanicalS
 /** Only factual qualitative relationships are sent to the immutable prompt unit. */
 export function renderBodyMechanics(state:BodyMechanicalState):string{
  const parts=['BODY MECHANICS V2.1 CONTRACT:']
- if(state.status==='INVALID')return parts.concat('Unresolved body support or hand conflict; scene cannot be generated.').join(' ')
+ if(state.status==='INVALID')return parts.concat('Unresolved body support and hand conflict; scene cannot be generated.').join(' ')
  const phrases:Record<string,string>={
  'subject.feet|room.floor':'Standing feet bear weight on the actual room floor.',
- 'subject.pelvis|room.floor':'Seated pelvis is supported by the existing floor or rug, not by the bed.',
+ 'subject.pelvis|room.floor':'Seated pelvis is supported by the existing floor/rug surface, not the bed.',
  'subject.pelvis|bed.mattress':'Pelvis receives support from the actual mattress.',
  'subject.torso|bed.mattress':'Torso makes posture-dependent supported contact with the mattress.',
  'subject.thighs|bed.mattress':'Thigh fabric can rest at a natural seated mattress contact when actually touching.',
- 'subject.head_or_back|bed.pillow':'The selected pillow supports only the touching head or back region.',
+ 'subject.head_or_back|bed.pillow':'Selected pillow supports only the contacting head/back region.',
  'subject.free_elbow|bed.mattress':'The selected free elbow presses the bed edge while the pelvis remains on the floor.',
  'phone|existing.stable_support':'Timer phone rests on a real stable surface; neither hand grips the recording phone.',
  'subject.camera_hand|phone':'One anatomically continuous camera arm supports the handheld phone; exact joint angles are not asserted.',
@@ -154,7 +154,7 @@ export function renderBodyMechanics(state:BodyMechanicalState):string{
  if(state.deformations.some(d=>d.targetId==='bed.pillow'))parts.push('Pillow compresses locally under its established body contact.')
  if(state.deformations.every(d=>d.targetId!=='bed.mattress'))parts.push('No unsupported mattress deformation.')
  if(state.visibility.feet==='outside_crop'||state.visibility.feet==='occluded')
-  parts.push('Feet outside the crop or visually blocked are not treated as physically absent; exact hidden positions are not asserted.')
- parts.push('Keep selected posture, garment, room anchors, camera profile and lighting unchanged. Do not infer joint angles or hidden limb positions.')
+  parts.push('Feet outside the crop and visually blocked feet are not treated as physically absent; exact hidden positions are not asserted.')
+ parts.push('Keep selected posture, garment, room anchors, camera profile and lighting unchanged. Do not invent joint angles and hidden limb positions.')
  return parts.join(' ')
 }
