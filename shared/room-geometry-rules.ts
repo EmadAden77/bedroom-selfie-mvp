@@ -155,8 +155,10 @@ export function deriveRoomGeometry(
  }
  return geometry
 }
-export function roomGeometryIssues(geometry:RoomGeometry):RuleResult[]{
- return [geometry.bedFitValid,geometry.mirrorFitValid,geometry.lightingFitValid].filter(x=>x.status!=='valid')
+export type RoomIssue=Extract<RuleResult,{status:'unknown'|'invalid'}>
+export function roomGeometryIssues(geometry:RoomGeometry):RoomIssue[]{
+ return [geometry.bedFitValid,geometry.mirrorFitValid,geometry.lightingFitValid]
+  .filter((x):x is RoomIssue=>x.status!=='valid')
 }
 /**
  * New immutable metadata section only. Existing source prompt sections and
