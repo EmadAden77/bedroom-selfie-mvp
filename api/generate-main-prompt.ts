@@ -7,6 +7,7 @@ export const MAX_SCENE_BRIEF_CHARS=12000 // Only used by independent legacy scen
 export const MAX_SCENE_REQUEST_BYTES=190000
 const MAX_UNITS=96
 type SceneMode='front'|'mirror'|'rear'|'timer'
+type ShotContext={mode:string;lighting:string}
 type ImagePromptTarget='gemini'|'chatgpt'|'flux'|'midjourney'
 type SceneUnit={id:string;text:string;authority:string;immutable:true}
 type SceneSpec={
