@@ -21,6 +21,7 @@ import { CompilationContext } from '../domain/types'
 import { compilePrompt } from '../compiler'
 import {evaluatePhysicalReality} from '../engine/physical-reality'
 import {BodyMechanicsSelector} from '../features/body-mechanics/BodyMechanicsSelector'
+import {BeddingPhysicsSelector} from '../features/bedding-physics/BeddingPhysicsSelector'
 
 const defaultContext: CompilationContext = {
   hairVariantId: 'reference_natural_dry',
@@ -52,6 +53,7 @@ const defaultContext: CompilationContext = {
   bodySupportChoice: 'auto',
   bodyFreeHandTask: 'auto',
   bodyFeetVisibility: 'unknown',
+  beddingSelection: {sheet:'reference',pillow:'reference',blanket:'reference'},
   faceDirectionId: 'toward_camera',
   lampSideId: 'left',
   bedroomShotId: ''
@@ -112,6 +114,7 @@ export const App: React.FC = () => {
         {physical.warnings.map(w=><p key={w} style={{fontSize:11,color:'var(--muted)'}}>{w}</p>)}
       </section>
       <BodyMechanicsSelector ctx={ctxWithImage} onChange={handleContextChange}/>
+      <BeddingPhysicsSelector ctx={ctxWithImage} onChange={handleContextChange}/>
       <NightLightingSelector shotId={ctx.bedroomShotId} selectedId={ctx.nightLightingId || 'phone_screen_only'} windowUncovered={!!ctx.windowUncovered} onSelect={id=>handleContextChange({ nightLightingId:id })} onWindowChange={open=>handleContextChange({ windowUncovered:open })}/>
       <LightGeometrySelector poseId={ctx.poseId || 'seated_bed'} faceDirectionId={ctx.faceDirectionId || 'toward_camera'} lampSideId={ctx.lampSideId || 'left'} onChange={patch=>handleContextChange(patch)}/>
       <BedroomShotsSelector value={ctx.bedroomShotId || ''} onChange={id=>handleContextChange({bedroomShotId:id})}/>
