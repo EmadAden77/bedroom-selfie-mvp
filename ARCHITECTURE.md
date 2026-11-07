@@ -76,8 +76,8 @@ These modules have different responsibilities; semantically similar *rendering d
 | Rule owner | Purpose | Regression coverage |
 |---|---|---|
 | `shared/body-shot-postures.ts` | One canonical shot-to-posture mapping for browser/server | `src/tests/gemini-main.test.ts`, body mechanics suites |
-| `shared/body-mechanics.ts` and `src/engine/body-mechanics.ts` adapter | Canonical support/contact/hand occupancy state and user option normalization | `src/tests/body-mechanics.test.ts` |
-| `shared/bedding-physics.ts` and `src/engine/bedding-physics.ts` adapter | Canonical body-contact-to-bedding response | `src/tests/bedding-physics.test.ts` |
+| `shared/body-mechanics.ts` and `src/engine/body-mechanics.ts` adapter | Canonical support/contact/hand occupancy state and user option normalization | `src/tests/body-mechanics-v21.test.ts` |
+| `shared/bedding-physics.ts` and `src/engine/bedding-physics.ts` adapter | Canonical body-contact-to-bedding response | `src/tests/bedding-physics-v22.test.ts` |
 | `shared/lighting-decision.ts` | Normal/exclusive active light and inactive saved preference | `src/tests/lighting-option-b-pr2.test.tsx` |
 | `shared/capture-lighting-rules.ts` | Three exact capture/light compatibility predicates CL-1–CL-3 | `src/tests/capture-lighting-rules-pr5.test.ts`, plus existing preflight and server suites |
 | `src/engine/physical-reality.ts` | Active physical emitter calculation and exclusive-mode consistency | `src/tests/physical-reality.test.ts` |
