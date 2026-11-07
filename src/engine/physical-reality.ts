@@ -4,9 +4,8 @@
  */
 import type {CompilationContext,ValidationResult} from '../domain/types'
 import {bedroomShots,getShotPosture} from '../data/bedroom-shots'
-import {captureLightingIssues} from '../data/scene-consistency'
-import {validateMirrorControls} from '../data/mirror-controls'
-import {validateRoomPhysicalState,ROOM_ZONES} from '../data/room-physical-state'
+import {ROOM_ZONES} from '../data/room-physical-state'
+import {inspectSharedScene} from '../../shared/physical-reality-core.mjs'
 import type {RoomPhysicalState} from '../data/room-physical-state'
 import {nightLightingPresets} from '../data/night-lighting'
 import {hairVariants} from '../data/hair'
@@ -100,20 +99,27 @@ export function affectedFields(changed:readonly Field[]):Field[]{
  }
  return [...affected]
 }
+/** The same normalized scene payload is used by the constrained Gemini server preflight. */
+export function toSharedScene(ctx:CompilationContext){
+ const shot=bedroomShots.find(x=>x.id===ctx.bedroomShotId)
+ const lower=garmentRecords.find(x=>x.id===ctx.lowerGarmentId)
+ return {
+  mode:shot?.mode||'front',shotId:ctx.bedroomShotId||'',
+  nightLightingId:ctx.nightLightingId||'phone_screen_only',windowUncovered:!!ctx.windowUncovered,
+  upperGarmentId:ctx.upperGarmentId,materialId:ctx.materialId,fitId:ctx.fitId,
+  stateId:ctx.stateId,color:ctx.color,surface:ctx.surface,
+  lowerGarmentId:ctx.lowerGarmentId||'',lowerMaterialId:ctx.lowerMaterialId||lower?.defaultMaterial||'',
+  lowerSurface:ctx.lowerSurface||lower?.defaultSurface||'',
+  mirrorMovementId:ctx.mirrorMovementId||'',mirrorPhoneHeightId:ctx.mirrorPhoneHeightId||'',
+  mirrorDistanceId:ctx.mirrorDistanceId||'',mirrorFramingId:ctx.mirrorFramingId||'',
+  mirrorGazeId:ctx.mirrorGazeId||'',roomPhysicalState:ctx.roomPhysicalState||null
+ }
+}
 type Rule={id:string;fields:readonly Field[];run:(ctx:CompilationContext)=>RealityFinding[]}
 const finding=(id:string,status:RealityFinding['status'],category:RealityCategory,fields:Field[],reason:string,repair:string):RealityFinding=>({id,status,category,fields,reason,repair})
 const rules:readonly Rule[]=[
- {id:'capture-light',fields:['bedroomShotId','nightLightingId'],run:ctx=>
-  captureLightingIssues(ctx)
-   .map((reason,i)=>finding('capture-light-'+i,'CONFLICT','lighting',['bedroomShotId','nightLightingId'],reason,
-    'اختر وضع إضاءة يطابق نوع الكاميرا واللقطة، أو غيّر اللقطة صراحةً.'))},
- {id:'mirror-controls',fields:['bedroomShotId','mirrorMovementId','mirrorPhoneHeightId','mirrorDistanceId','mirrorFramingId','mirrorGazeId'],
-  run:ctx=>validateMirrorControls(ctx).map((reason,i)=>finding('mirror-controls-'+i,'CONFLICT','geometry',
-   ['bedroomShotId','mirrorMovementId','mirrorPhoneHeightId','mirrorDistanceId','mirrorFramingId','mirrorGazeId'],reason,
-   'أعد الضبط المتعارض إلى «كما تقتضي الوضعية» مع الإبقاء على اللقطة المختارة.'))},
- {id:'room-state',fields:['roomPhysicalState'],run:ctx=>ctx.roomPhysicalState
-  ?validateRoomPhysicalState(ctx.roomPhysicalState).map((reason,i)=>finding('room-state-'+i,'CONFLICT','room',['roomPhysicalState'],reason,
-   'راجع القيم المسموحة ومناطق الغرفة المحددة، دون تغيير مواقع الأثاث.')):[]},
+ {id:'shared-physical-constraints',fields:['bedroomShotId','nightLightingId','windowUncovered','upperGarmentId','materialId','fitId','stateId','color','surface','lowerGarmentId','lowerMaterialId','lowerSurface','mirrorMovementId','mirrorPhoneHeightId','mirrorDistanceId','mirrorFramingId','mirrorGazeId','roomPhysicalState'],
+  run:ctx=>inspectSharedScene(toSharedScene(ctx)) as RealityFinding[]},
  {id:'shot-posture',fields:['bedroomShotId','poseId'],run:ctx=>{
    if(!ctx.bedroomShotId)return []
    const matched=getShotPosture(ctx.bedroomShotId)
