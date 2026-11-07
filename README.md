@@ -61,6 +61,12 @@ Each is permanently labeled **Advisory Output — Non-Authoritative**. Their gen
 
 A local prompt can become authoritative only after `/api/authorize-final-prompt` succeeds. **Offline or when that endpoint fails, the local preview remains visible but is not promoted to Final Prompt.** Similarly, a Gemini edit that fails validation cannot be promoted as free text. API failures are not silently accepted.
 
+## Measurements — documented data only (PR7a)
+
+`shared/room-measurements.ts` inventories measurements **without changing generation or validation**. The bed is documented as **160 × 200 cm** in `src/data/bedroom-shots.ts`. The current wardrobe mirror width and all eight canonical pose footprints are **unmeasured** and explicitly `null`; their source is `unmeasured`, not a guessed estimate. Downstream geometry rules must return `unknown` instead of inferring dimensions. Each constant has source provenance, checked by `src/tests/room-measurements-pr7a.test.ts`.
+
+The existing prompts contain approximate **3 m person-to-bed** and **5 m optional sofa** depth cues, sourced to `src/data/mirror-room-geometry.ts` and `src/data/mirror-optics-mechanics.ts`. These are **not surveyed room dimensions**, do not establish a sofa's existence, and have **not** been adjusted. A PR7a regression test asserts that both cues remain in the actual compiled mirror prompt. Any relative-distance redesign belongs to a separately approved PR8; room-size presets, RG rules, UI controls and `SceneSpecification.roomGeometry` are **not part of PR7a**.
+
 ## Physical constraints and limitations
 
 The application models selections and consistency **as explicit rules, not a true 3D ray tracer or measured-body simulation**. It covers real camera grip/support, lens/mirror orientation, light emitters and their physical sources, approximate room geometry, bedding contact, furniture continuity and natural phone-camera exposure. Unsupported measurements and unseen objects must remain unknown. The user-provided person photo defines person identity; the separate room photo, when supplied to a downstream image generator, defines room appearance. The **main text-editing Gemini endpoint receives no reference image pixels**.
