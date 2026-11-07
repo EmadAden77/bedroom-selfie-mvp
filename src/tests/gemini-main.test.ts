@@ -2,7 +2,7 @@
 import {afterEach,describe,it,expect,vi} from 'vitest'
 import {readFileSync} from 'node:fs'
 import handler,{
- assembleConstrainedPrompt,PHYSICS_ONLY_SYSTEM,MAIN_PROMPT_SCHEMA,IMAGE_TARGET_GUIDANCE,
+ assembleConstrainedPrompt,PHYSICS_ONLY_SYSTEM,MAIN_PROMPT_SCHEMA,IMAGE_TARGET_GUIDANCE,validateSceneSpec,
  validatePhysicalPrompt,MAX_SCENE_BRIEF_CHARS as SERVER_SCENE_CHARS,
  MAX_SCENE_REQUEST_BYTES as SERVER_REQUEST_BYTES
 } from '../../api/generate-main-prompt'
@@ -126,6 +126,57 @@ describe('Vercel standalone constrained editor',()=>{
    expect(invalid.status).toBe(400)
   }
   expect(outbound).toHaveBeenCalledTimes(1)
+ })
+ it('recomputes identical client and server body contacts for VALID and NEEDS_INFORMATION scenes',()=>{
+  for(const ctx of [base,{...base,bodySupportChoice:'unknown' as const}]){
+   const spec=getSpec(ctx)
+   const checked=validateSceneSpec(spec)
+   expect(checked.bodyMechanics).toEqual(spec.bodyMechanics)
+   expect(checked.bodyMechanics.status).toBe(ctx.bodySupportChoice==='unknown'?'NEEDS_INFORMATION':'VALID')
+   expect(checked.derivedUnits.find(u=>u.id==='body_mechanics_v21')?.text).toContain('BODY MECHANICS V2.1 CONTRACT:')
+  }
+ })
+ it('rejects modified status, contacts and physical prompt after re-fingerprinting',async()=>{
+  const spec=getSpec()
+  vi.stubEnv('GEMINI_API_KEY','fake-key')
+  const upstream=vi.fn()
+  vi.stubGlobal('fetch',upstream)
+  const variants=[
+   {...spec,bodyMechanics:{...spec.bodyMechanics,status:'NEEDS_INFORMATION' as const}},
+   {...spec,bodyMechanics:{...spec.bodyMechanics,contacts:[]}},
+   {...spec,derivedUnits:spec.derivedUnits.map(u=>u.id==='body_mechanics_v21'?{...u,text:'BODY MECHANICS V2.1 CONTRACT: Extra floating hand and a new seat.':u.text)}
+  ]
+  for(const variant of variants){
+   const {integrity,...unsigned}=variant
+   const modified={...unsigned,integrity:sceneFingerprint(unsigned as Omit<typeof spec,'integrity'>)}
+   const response=await handler.fetch(post({sceneSpecification:modified},{'x-forwarded-for':'body-tamper-'+variants.indexOf(variant)}))
+   expect(response.status).toBe(400)
+   const data=await response.json() as {errorCode:string}
+   expect(data.errorCode).toMatch(/^SPEC_BODY_/)
+  }
+  expect(upstream).not.toHaveBeenCalled()
+ })
+ it('rejects a definite support or camera-hand contradiction even with a recomputed fingerprint',async()=>{
+  const spec=getSpec()
+  const invalidSupport={...spec,bodyMechanics:{...spec.bodyMechanics,input:{...spec.bodyMechanics.input,supportChoice:'none' as const}},selections:{...spec.selections,bodySupportChoice:'none'}}
+  const invalidHand={...spec,bodyMechanics:{...spec.bodyMechanics,input:{...spec.bodyMechanics.input,holdingHand:'none' as const}},selections:{...spec.selections,bodyHoldingHand:'none'}}
+  for(const item of [invalidSupport,invalidHand]){
+   const {integrity,...unsigned}=item
+   const modified={...unsigned,integrity:sceneFingerprint(unsigned as Omit<typeof spec,'integrity'>)}
+   expect(()=>validateSceneSpec(modified)).toThrow('SPEC_BODY_CONFLICT')
+  }
+ })
+ it('does not send an invalid mechanical scene to the Gemini provider',async()=>{
+  const spec=getSpec()
+  vi.stubEnv('GEMINI_API_KEY','fake-key')
+  const upstream=vi.fn()
+  vi.stubGlobal('fetch',upstream)
+  const modified={...spec,bodyMechanics:{...spec.bodyMechanics,issues:[{code:'BODY_SUPPORT_CONFLICT',messageAr:'تعارض',controls:['bodySupportChoice']}],status:'INVALID' as const}}
+  const {integrity,...unsigned}=modified
+  const tampered={...unsigned,integrity:sceneFingerprint(unsigned as Omit<typeof spec,'integrity'>)}
+  const result=await handler.fetch(post({sceneSpecification:tampered}))
+  expect(result.status).toBe(400)
+  expect(upstream).not.toHaveBeenCalled()
  })
  it('rejects missing, duplicated or fabricated immutable units',async()=>{
   const spec=getSpec()
