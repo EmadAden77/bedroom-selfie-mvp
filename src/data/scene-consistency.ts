@@ -18,12 +18,7 @@ export function captureLightingIssues(ctx:Pick<CompilationContext,'bedroomShotId
  return issues
 }
 
-/** Preserve explicit user lighting choices, except incompatible flash-pose lock. */
+/** Preserve all selections: conflict resolution requires an explicit UI action. */
 export function reconcileCaptureSelection(previous:CompilationContext,patch:Partial<CompilationContext>):CompilationContext{
- const next={...previous,...patch}
- if('nightLightingId' in patch&&previous.bedroomShotId==='mirror_rear_flash'&&next.nightLightingId!=='rear_flash'&&!('bedroomShotId' in patch)){
-  next.bedroomShotId='mirror_wardrobe'
-  next.poseId='standing'
- }
- return next
+ return {...previous,...patch}
 }
