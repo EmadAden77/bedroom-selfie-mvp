@@ -196,7 +196,7 @@ describe('Physical Reality Engine V2.1 — deterministic body contacts and mecha
  it('36 free hand contacts selected clothing without replacing the garment',()=>{
   const x=body({shotId:'edge_shirt_hem',posture:'seated_bed',capture:'front'})
   expect(x.contacts).toContainEqual(expect.objectContaining({actorId:'subject.free_hand',targetId:'selected.shirt_hem'}))
-  expect(renderBodyMechanics(x)).toContain('actually selected shirt hem')
+  expect(renderBodyMechanics(x)).toContain('actual selected shirt hem')
  })
  it('32 support input validation rejects malformed enum values',()=>{
   expect(()=>body({supportChoice:'chair' as any})).toThrow('BODY_INPUT_INVALID')
