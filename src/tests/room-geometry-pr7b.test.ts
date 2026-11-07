@@ -105,6 +105,11 @@ describe('PR7b: explicit dimensions and strict tri-state room authority',()=>{
   const medium=deriveRoomGeometry({roomSizePreset:'medium_bedroom',roomSizeConfirmed:true},'standing','rear_flash',true)!
   expect(small.bedFitValid).toEqual({status:'unknown',reason:'implicit distances pending PR8'})
   expect(medium.bedFitValid).toEqual({status:'unknown',reason:'implicit distances pending PR8'})
+  // Even 5.5m cannot establish the simultaneous 3m/5m cue geometry:
+  // positions are approximate, with no shared measured coordinate system.
+  const large=deriveRoomGeometry({roomSizePreset:'large_bedroom',roomSizeConfirmed:true},
+   'standing','rear_flash',true)!
+  expect(large.bedFitValid).toEqual({status:'unknown',reason:'implicit distances pending PR8'})
   expect(small.mirrorFitValid.status).toBe('unknown')
  })
  it('g: unknown still compiles protected content but cannot be promoted, even after room confirmation',async()=>{
