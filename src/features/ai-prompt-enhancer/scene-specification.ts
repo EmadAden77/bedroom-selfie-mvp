@@ -8,6 +8,7 @@ import {deriveBodyScene} from '../../engine/body-mechanics'
 import type {BodyMechanicalState} from '../../../shared/body-mechanics'
 import {deriveBeddingScene} from '../../engine/bedding-physics'
 import {DEFAULT_BEDDING_SELECTION,type BeddingState,type BeddingSelection} from '../../../shared/bedding-physics'
+import {digestEditorialText,validateEditorialProposal,type OpeningLineSelection} from '../../../shared/editorial-contract'
 
 export type SceneCapture={mode:'front'|'mirror'|'rear'|'timer';shotId:string;posture:string;lighting:string;target:'gemini'|'chatgpt'|'flux'|'midjourney'}
 export type SceneUnit={id:string;text:string;authority:'user_selection'|'reference_scope'|'local_physics';immutable:true}
@@ -38,11 +39,15 @@ export type SceneSpecification={
 }
 export type ConstrainedEditorReply={
  prompt:string
- orderedUnitIds:string[]
- opening:string
+ promptDigest:string
+ sectionCount:number
+ protectedUnitDigests:{id:string;digest:string}[]
+ sectionOrder:string[]
+ openingLineSelection:OpeningLineSelection
  integrity:string
  source:'gemini-editor'
- editorStyle:'spaced'|'compact'
+ validated:true
+ model?:string
 }
 export const MAX_SCENE_SPEC_REQUEST_BYTES=MAX_SCENE_REQUEST_BYTES
 
@@ -124,43 +129,35 @@ export function buildSceneSpecification(ctx:CompilationContext,result:Compilatio
  return {...unsigned,integrity:sceneFingerprint(unsigned)}
 }
 
-const functionWords=new Set([
- 'a','an','the','of','on','in','at','by','to','from','with','while','and','as','is','are','be',
- 'this','that','these','those','its','their','for','then','also','therefore','clearly','each',
- 'one','every','under','through','about','using','via','has','have','where','when','into'
-])
-const keywords=(s:string)=>(s.toLowerCase().match(/[a-z0-9]+/g)||[])
- .filter(t=>!functionWords.has(t))
-/** Semantic guard for a limited editorial opening. Immutable scene sections are never rewritten. */
-export function editorialOpeningIsSafe(approved:string,edited:string):boolean{
- if(!edited||edited.length>approved.length+240||edited.length>1800)return false
- const a=keywords(approved),b=keywords(edited)
- if(a.length!==b.length||a.some((t,i)=>t!==b[i]))return false
- const numbers=(s:string)=>(s.match(/\b\d+(?:\.\d+)?\b/g)||[]).sort().join(',')
- if(numbers(approved)!==numbers(edited))return false
- if(/\b(?:extra|additional|unknown|imaginary|new|second)\s+(?:person|window|lamp|camera|mirror|bed|sofa)\b/i.test(edited))return false
- return true
-}
-/** Structural validation plus fail-closed local reconstruction; never trust model-authored final prose. */
-export function validateConstrainedEditorReply(spec:SceneSpecification,reply:unknown):ConstrainedEditorReply{
+/**
+ * Client-side verification only: never reassemble or rewrite the final prompt here.
+ * Check the server's structured order claim, section count, and SHA-256 digests
+ * against the client's already-validated immutable source units.
+ * Digests detect accidental or transport corruption; they are not signatures.
+ */
+export async function validateConstrainedEditorReply(spec:SceneSpecification,reply:unknown):Promise<ConstrainedEditorReply>{
  if(!reply||typeof reply!=='object'||Array.isArray(reply))throw Error('EDITOR_SCHEMA')
  const data=reply as Record<string,unknown>
  if(data.source!=='gemini-editor'||data.integrity!==spec.integrity)throw Error('EDITOR_INTEGRITY')
- if(data.editorStyle!=='spaced'&&data.editorStyle!=='compact')throw Error('EDITOR_STYLE')
- if(!Array.isArray(data.orderedUnitIds)||data.orderedUnitIds.length!==spec.derivedUnits.length||
-  data.orderedUnitIds.some(id=>typeof id!=='string')||
-  new Set(data.orderedUnitIds).size!==spec.derivedUnits.length||
-  data.orderedUnitIds.some(id=>!spec.mandatoryUnitIds.includes(id)))throw Error('EDITOR_MISSING_UNITS')
- if(data.orderedUnitIds[0]!=='reference_identity'&&spec.derivedUnits[0]?.id==='reference_identity')
-  throw Error('EDITOR_IDENTITY_PRIORITY')
- if(typeof data.opening!=='string'||!editorialOpeningIsSafe(spec.opening,data.opening))
-  throw Error('EDITOR_UNSAFE_EDIT')
- if(typeof data.prompt!=='string')throw Error('EDITOR_SCHEMA')
- const canonical=composeApprovedPrompt(spec,data.orderedUnitIds,data.opening,data.editorStyle as 'spaced'|'compact')
- if(data.prompt!==canonical)throw Error('EDITOR_PROMPT_TAMPERED')
+ if(data.validated!==true)throw Error('EDITOR_NOT_VALIDATED')
+ validateEditorialProposal(spec,{
+  sectionOrder:data.sectionOrder,
+  openingLineSelection:data.openingLineSelection
+ })
+ if(typeof data.prompt!=='string'||typeof data.promptDigest!=='string'||!(/^[a-f0-9]{64}$/).test(data.promptDigest))
+  throw Error('EDITOR_DIGEST_SCHEMA')
+ if(data.sectionCount!==spec.derivedUnits.length)throw Error('EDITOR_SECTION_COUNT')
+ if(!Array.isArray(data.protectedUnitDigests)||data.protectedUnitDigests.length!==spec.derivedUnits.length)
+  throw Error('EDITOR_SECTION_DIGESTS')
+ const digests=await Promise.all([
+  digestEditorialText(data.prompt),
+  ...spec.derivedUnits.map(unit=>digestEditorialText(unit.text))
+ ])
+ if(digests[0]!==data.promptDigest)throw Error('EDITOR_PROMPT_TAMPERED')
+ for(let i=0;i<spec.derivedUnits.length;i++){
+  const received=data.protectedUnitDigests[i] as {id?:unknown;digest?:unknown}|null
+  if(!received||received.id!==spec.derivedUnits[i].id||received.digest!==digests[i+1])
+   throw Error('EDITOR_SECTION_INTEGRITY')
+ }
  return data as ConstrainedEditorReply
-}
-export function composeApprovedPrompt(spec:SceneSpecification,order:string[],opening:string,style:'spaced'|'compact'):string{
- const units=new Map(spec.derivedUnits.map(u=>[u.id,u.text]))
- return [opening.trim(),...order.map(id=>units.get(id)||'')].filter(Boolean).join(style==='compact'?'\n':'\n\n')
 }

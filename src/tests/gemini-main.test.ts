@@ -2,7 +2,7 @@
 import {afterEach,describe,it,expect,vi} from 'vitest'
 import {readFileSync} from 'node:fs'
 import handler,{
- assembleConstrainedPrompt,PHYSICS_ONLY_SYSTEM,MAIN_PROMPT_SCHEMA,IMAGE_TARGET_GUIDANCE,validateSceneSpec,
+ assembleConstrainedPrompt,EDITORIAL_INSTRUCTIONS,MAIN_PROMPT_SCHEMA,IMAGE_TARGET_GUIDANCE,validateSceneSpec,
  validatePhysicalPrompt,MAX_SCENE_BRIEF_CHARS as SERVER_SCENE_CHARS,
  MAX_SCENE_REQUEST_BYTES as SERVER_REQUEST_BYTES
 } from '../../api/generate-main-prompt'
@@ -10,7 +10,8 @@ import {buildCreativeSceneBrief} from '../features/ai-prompt-enhancer/buildCreat
 import {buildHairCreativeBrief} from '../data/hair-creative'
 import {hairVariants} from '../data/hair'
 import {compilePrompt} from '../compiler'
-import {buildSceneSpecification,sceneFingerprint,validateConstrainedEditorReply,composeApprovedPrompt} from '../features/ai-prompt-enhancer/scene-specification'
+import {buildSceneSpecification,sceneFingerprint,validateConstrainedEditorReply} from '../features/ai-prompt-enhancer/scene-specification'
+import {assembleEditorialPrompt} from '../../shared/editorial-contract'
 import type {CompilationContext} from '../domain/types'
 import {MAX_SCENE_BRIEF_CHARS,MAX_SCENE_REQUEST_BYTES} from '../features/ai-prompt-enhancer/scene-request-limits'
 
@@ -34,7 +35,7 @@ const post=(data:unknown,headers:Record<string,string>={})=>new Request(endpoint
  method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(data)
 })
 const editorReply=(spec:ReturnType<typeof getSpec>,patch:Record<string,unknown>={})=>({
- orderedUnitIds:[...spec.mandatoryUnitIds],opening:spec.opening,editorStyle:'spaced',...patch
+ sectionOrder:[...spec.mandatoryUnitIds],openingLineSelection:'canonical',...patch
 })
 const provider=(spec:ReturnType<typeof getSpec>,patch:Record<string,unknown>={},status=200)=>new Response(JSON.stringify({
  candidates:[{content:{parts:[{text:JSON.stringify(editorReply(spec,patch))}]}}]
@@ -62,27 +63,30 @@ describe('Vercel standalone constrained editor',()=>{
   vi.stubGlobal('fetch',vi.fn(async(_url:string,o:{body:string})=>{outgoing=JSON.parse(o.body);return provider(spec)}))
   const response=await handler.fetch(post({sceneSpecification:spec},{'x-forwarded-for':'scene-editor-success'}))
   expect(response.status).toBe(200)
-  const body=await response.json() as {prompt:string;source:string;validated:boolean;integrity:string;orderedUnitIds:string[];opening:string;editorStyle:'spaced'}
+  const body=await response.json() as {prompt:string;source:string;validated:boolean;integrity:string;sectionOrder:string[];openingLineSelection:'canonical'|'concise'}
   expect(body.source).toBe('gemini-editor')
   expect(body.validated).toBe(true)
   expect(body.integrity).toBe(spec.integrity)
-  expect(body.orderedUnitIds).toEqual(spec.mandatoryUnitIds)
+  expect(body.sectionOrder).toEqual(spec.mandatoryUnitIds)
   expect(body.prompt).toContain('MIRROR OPTICS AND BIOMECHANICS CONTRACT:')
   expect(body.prompt).toContain('Xiaomi 15 Ultra')
   expect(body.prompt).toContain('natural')
   expect(body.prompt).toContain('The person reference defines identity')
   expect(body.prompt).toContain(spec.derivedUnits.find(x=>x.id==='bedroom_environment_lock')!.text)
-  expect(body.prompt).toBe(composeApprovedPrompt(spec,body.orderedUnitIds,body.opening,'spaced'))
-  expect(validateConstrainedEditorReply(spec,body).prompt).toBe(body.prompt)
+  expect(body.prompt).toBe(assembleEditorialPrompt(spec,{sectionOrder:body.sectionOrder,openingLineSelection:body.openingLineSelection}).prompt)
+  expect((await validateConstrainedEditorReply(spec,body)).prompt).toBe(body.prompt)
+  expect(body).toHaveProperty('promptDigest')
+  expect(body).toHaveProperty('protectedUnitDigests')
+  expect(body).toHaveProperty('sectionCount',spec.derivedUnits.length)
   const data=JSON.parse(outgoing.contents[0].parts[0].text)
-  expect(data.approvedUnitIds).toEqual(spec.mandatoryUnitIds)
-  expect(data.opening).toBe(spec.opening)
-  expect(data.target).toBe(spec.capture.target)
-  expect(data).not.toHaveProperty('sceneSpecification')
+  expect(Object.keys(data).sort()).toEqual(['editorialInstructions','spec'])
+  expect(data.spec).toEqual(spec)
+  expect(data.editorialInstructions).toBe(EDITORIAL_INSTRUCTIONS)
+  expect(data.spec).not.toHaveProperty('inlineData')
   expect(outgoing.generationConfig.maxOutputTokens).toBeGreaterThanOrEqual(8192)
   expect(outgoing.generationConfig.temperature).toBeLessThan(0.2)
   expect(outgoing.generationConfig.responseFormat.text.schema).toEqual(MAIN_PROMPT_SCHEMA)
-  expect(outgoing.systemInstruction.parts[0].text).toContain(PHYSICS_ONLY_SYSTEM)
+  expect(outgoing.systemInstruction.parts[0].text).toBe(EDITORIAL_INSTRUCTIONS)
   expect(JSON.stringify(outgoing)).not.toContain('inlineData')
  })
  it('checks phone-only capture and emitter contract on the server before calling Gemini',async()=>{
@@ -245,17 +249,17 @@ describe('Vercel standalone constrained editor',()=>{
   const spec=getSpec()
   vi.stubEnv('GEMINI_API_KEY','fake-key')
   for(const [name,patch] of [
-   ['missing',{orderedUnitIds:spec.mandatoryUnitIds.slice(1)}],
-   ['duplicate',{orderedUnitIds:[...spec.mandatoryUnitIds.slice(0,-1),spec.mandatoryUnitIds[0]]}],
-   ['invented',{orderedUnitIds:[...spec.mandatoryUnitIds.slice(0,-1),'new_studio_light']}],
-   ['wrong-first',{orderedUnitIds:[spec.mandatoryUnitIds[1],spec.mandatoryUnitIds[0],...spec.mandatoryUnitIds.slice(2)]}],
-   ['invented light',{opening:spec.opening+' Add a new lamp'}],
-   ['garment swap',{opening:spec.opening.replace('charcoal','yellow')}]
+   ['missing',{sectionOrder:spec.mandatoryUnitIds.slice(1)}],
+   ['duplicate',{sectionOrder:[...spec.mandatoryUnitIds.slice(0,-1),spec.mandatoryUnitIds[0]]}],
+   ['invented',{sectionOrder:[...spec.mandatoryUnitIds.slice(0,-1),'new_studio_light']}],
+   ['wrong-first',{sectionOrder:[spec.mandatoryUnitIds[1],spec.mandatoryUnitIds[0],...spec.mandatoryUnitIds.slice(2)]}],
+   ['invented light',{openingLineSelection:'new-lamp'}],
+   ['garment swap',{sectionBody:'Change the shirt to yellow'}]
   ] as const){
    vi.stubGlobal('fetch',vi.fn(async()=>provider(spec,patch)))
    const r=await handler.fetch(post({sceneSpecification:spec},{'x-forwarded-for':'reject-'+name}))
    expect(r.status,name).toBe(422)
-   expect((await r.json() as {errorCode:string}).errorCode).toBe('GEMINI_EDITOR_REJECTED')
+   expect((await r.json() as {errorCode:string}).errorCode).toMatch(/^EDITOR_/)
   }
  })
  it('rejects client tampering, unsupported light and room-state conflicts before provider call',async()=>{
@@ -290,10 +294,11 @@ describe('Vercel standalone constrained editor',()=>{
   r=await handler.fetch(post({sceneSpecification:spec},{'x-forwarded-for':'constrained-bad-json'}))
   expect(r.status).toBe(422)
  })
- it('accepts an unchanged compliant opening and rejects modified negation scope',()=>{
+ it('accepts a local opening template and rejects model-authored replacement prose',()=>{
   const spec=getSpec()
   expect(assembleConstrainedPrompt(JSON.stringify(editorReply(spec)),spec).prompt).toContain('MIRROR CAPTURE:')
-  expect(()=>assembleConstrainedPrompt(JSON.stringify(editorReply(spec,{opening:spec.opening+' New window'})),spec)).toThrow('EDITOR_UNSAFE_EDIT')
+  expect(()=>assembleConstrainedPrompt(JSON.stringify(editorReply(spec,{opening:spec.opening+' New window'})),spec)).toThrow('EDITOR_EXTRA_FIELDS')
+  expect(assembleConstrainedPrompt(JSON.stringify(editorReply(spec,{openingLineSelection:'concise'})),spec).prompt.startsWith('Everyday bedroom photograph.')).toBe(true)
   expect(sceneFingerprint((({integrity,...rest})=>rest)(spec))).toBe(spec.integrity)
  })
  it('maintains immutable shot posture and furniture anchors between mirror views',()=>{
@@ -323,9 +328,9 @@ describe('Vercel standalone constrained editor',()=>{
    body:JSON.stringify({sceneSpecification:spec,extra:'x'.repeat(MAX_SCENE_REQUEST_BYTES+1)})
   }))
   expect(r.status).toBe(413)
-  expect(MAIN_PROMPT_SCHEMA.required).toEqual(['orderedUnitIds','opening','editorStyle'])
-  expect(PHYSICS_ONLY_SYSTEM).toContain('CONSTRAINED PROMPT EDITOR')
-  expect(PHYSICS_ONLY_SYSTEM).not.toContain('creative freedom over composition')
+  expect(MAIN_PROMPT_SCHEMA.required).toEqual(['sectionOrder','openingLineSelection'])
+  expect(EDITORIAL_INSTRUCTIONS).toContain('constrained text editor')
+  expect(EDITORIAL_INSTRUCTIONS).not.toContain('creative freedom over composition')
  })
  it('keeps physical contradiction checks for explicit mirror and screen lighting errors',()=>{
   expect(()=>validatePhysicalPrompt('Floating camera beside the person with the wardrobe mirror visible.',{mode:'mirror',lighting:'ceiling_neutral'})).toThrow('mechanically_impossible')
@@ -416,7 +421,7 @@ describe('Selected hairstyle genuinely reaches ChatGPT via Gemini',()=>{
   expect(compiled.result.promptText).not.toContain('Never alter facial identity, hairstyle')
  })
  it('the Gemini system and ChatGPT target rules explicitly prioritize visible styling',()=>{
-  expect(PHYSICS_ONLY_SYSTEM).toContain('APPLY means deliberately restyle')
+  expect(EDITORIAL_INSTRUCTIONS).not.toContain('APPLY means deliberately restyle')
   expect(IMAGE_TARGET_GUIDANCE.chatgpt).toContain('visibly different from the reference hairstyle')
   expect(IMAGE_TARGET_GUIDANCE.chatgpt).toContain('When PRESERVE is selected')
  })

@@ -3,7 +3,8 @@ import {afterEach,describe,it,expect,vi} from 'vitest'
 import {cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react'
 import {AiPromptEnhancer} from '../features/ai-prompt-enhancer/AiPromptEnhancer'
 import {compilePrompt} from '../compiler'
-import {buildSceneSpecification,composeApprovedPrompt} from '../features/ai-prompt-enhancer/scene-specification'
+import {buildSceneSpecification} from '../features/ai-prompt-enhancer/scene-specification'
+import {assembleEditorialPrompt,digestEditorialText} from '../../shared/editorial-contract'
 import type {CompilationContext} from '../domain/types'
 afterEach(()=>{cleanup();vi.unstubAllGlobals()})
 
@@ -22,17 +23,24 @@ const build=(ctx:CompilationContext=base)=>{
  return {spec,...compiled}
 }
 const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:{'content-type':'application/json'}})
-const approved=(spec:ReturnType<typeof build>['spec'])=>{
- const orderedUnitIds=spec.mandatoryUnitIds
- const opening=spec.opening
- const editorStyle='spaced' as const
- return {prompt:composeApprovedPrompt(spec,orderedUnitIds,opening,editorStyle),orderedUnitIds,opening,editorStyle,integrity:spec.integrity,source:'gemini-editor',validated:true}
+const approved=async(spec:ReturnType<typeof build>['spec'])=>{
+ const sectionOrder=[...spec.mandatoryUnitIds]
+ const openingLineSelection='canonical' as const
+ const prompt=assembleEditorialPrompt(spec,{sectionOrder,openingLineSelection}).prompt
+ const promptDigest=await digestEditorialText(prompt)
+ const protectedUnitDigests=await Promise.all(spec.derivedUnits.map(async unit=>({
+  id:unit.id,digest:await digestEditorialText(unit.text)
+ })))
+ return {prompt,sectionOrder,openingLineSelection,integrity:spec.integrity,
+  promptDigest,sectionCount:spec.derivedUnits.length,protectedUnitDigests,
+  source:'gemini-editor',validated:true}
 }
 
 describe('Main Gemini constrained prompt editor interface',()=>{
  it('sends the approved structured local specification and never just a creative scene brief',async()=>{
   const {spec,result,validation}=build()
-  const fetcher=vi.fn(async()=>json(approved(spec)))
+  const accepted=await approved(spec)
+  const fetcher=vi.fn(async()=>json(accepted))
   const onPromptReady=vi.fn()
   vi.stubGlobal('fetch',fetcher)
   render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady}/>)
@@ -45,13 +53,14 @@ describe('Main Gemini constrained prompt editor interface',()=>{
   expect(body.sceneSpecification).toEqual(spec)
   expect(body).not.toHaveProperty('sceneBrief')
   expect(body.sceneSpecification.references.pixelsAvailableToEditor).toBe(false)
-  expect(onPromptReady).toHaveBeenCalledWith(approved(spec).prompt)
+  expect(onPromptReady).toHaveBeenCalledWith(accepted.prompt)
  })
  it('falls back automatically when Gemini returns a plausible-looking prompt missing physical constraints',async()=>{
   const {spec,result,validation}=build()
   const onPromptReady=vi.fn()
+  const accepted=await approved(spec)
   vi.stubGlobal('fetch',vi.fn(async()=>json({
-   ...approved(spec),prompt:'A stylish studio photo with a different model and an invented window.'
+   ...accepted,prompt:'A stylish studio photo with a different model and an invented window.'
   })))
   render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
