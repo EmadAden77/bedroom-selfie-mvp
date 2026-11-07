@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useRef } from 'react'
 import { Header } from '../components/Header'
 import { RoomReferenceSection } from '../features/reference-room/RoomReferenceSection'
 import { PhysicalRoomStateSelector } from '../features/room-clutter/PhysicalRoomStateSelector'
@@ -19,7 +19,8 @@ import { useReferenceImage } from '../hooks/useReferenceImage'
 import { CompilationContext } from '../domain/types'
 import { compilePrompt } from '../compiler'
 import {reconcileCaptureSelection} from '../data/scene-consistency'
-import {evaluatePhysicalReality,includeCompilerFindings} from '../engine/physical-reality'
+import {evaluatePhysicalReality,updatePhysicalReality,includeCompilerFindings} from '../engine/physical-reality'
+import type {RealityReport} from '../engine/physical-reality'
 import {PhysicalRealityPanel} from '../features/physical-reality/PhysicalRealityPanel'
 
 const defaultContext: CompilationContext = {
@@ -68,7 +69,19 @@ export const App: React.FC = () => {
     return compilePrompt(ctxWithImage)
   }, [ctxWithImage])
 
-  const physicalReality = useMemo(() => includeCompilerFindings(evaluatePhysicalReality(ctxWithImage),validation), [ctxWithImage,validation])
+  const previousReality=useRef<{ctx:CompilationContext;report:RealityReport}|null>(null)
+  const reality=useMemo(()=>{
+    const previous=previousReality.current
+    const changed=previous
+      ? (Object.keys(ctxWithImage) as (keyof CompilationContext)[]).filter(key=>previous.ctx[key]!==ctxWithImage[key])
+      : []
+    const report=previous
+      ? changed.length?updatePhysicalReality(previous.report,ctxWithImage,changed):previous.report
+      : evaluatePhysicalReality(ctxWithImage)
+    previousReality.current={ctx:ctxWithImage,report}
+    return report
+  },[ctxWithImage])
+  const physicalReality=useMemo(()=>includeCompilerFindings(reality,validation),[reality,validation])
 
   const handleContextChange = useCallback((patch: Partial<CompilationContext>) => {
     setCtx(prev => reconcileCaptureSelection(prev,patch))
