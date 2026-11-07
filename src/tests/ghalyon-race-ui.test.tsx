@@ -49,11 +49,16 @@ describe('Cancelled Gemini requests never overwrite newer UI state',()=>{
   render(<AiPromptEnhancer ctx={ctx} result={result} validation={validation} onReset={vi.fn()} onPromptReady={ready} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
   await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(1))
-  fireEvent.click(screen.getByRole('button',{name:'اعتماد البرومبت المحلي'}))
-  await waitFor(()=>expect(ready).toHaveBeenCalledWith(local))
+  // PR7b Category 1: the old local FINAL promotion is now display-only
+  // because the default room is unconfirmed and RG-1/2 measurements unknown.
+  // Retain the race test: an older Gemini response must NOT overwrite this draft.
+  fireEvent.click(screen.getByRole('button',{name:'عرض البرومبت المحلي (غير معتمد)'}))
+  await waitFor(()=>expect(screen.getByText('البرومبت المحلي — للعرض فقط، غير معتمد')).toBeTruthy())
+  expect(ready).not.toHaveBeenCalledWith(local)
+  expect(ready).toHaveBeenCalledWith('')
   await act(async()=>{release(new Response(JSON.stringify({prompt:photo}),{status:200,headers:{'content-type':'application/json'}}));await Promise.resolve()})
-  expect(ready).toHaveBeenCalledWith(local)
+  expect(screen.getByText('البرومبت المحلي — للعرض فقط، غير معتمد')).toBeTruthy()
   expect(screen.queryByText(photo)).toBeNull()
-  expect(ready).toHaveBeenCalledWith(local)
+  expect(ready).not.toHaveBeenCalledWith(local)
  })
 })

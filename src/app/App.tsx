@@ -22,6 +22,7 @@ import { compilePrompt } from '../compiler'
 import {evaluatePhysicalReality} from '../engine/physical-reality'
 import {BodyMechanicsSelector} from '../features/body-mechanics/BodyMechanicsSelector'
 import {BeddingPhysicsSelector} from '../features/bedding-physics/BeddingPhysicsSelector'
+import {RoomSizeSelector} from '../features/room-geometry/RoomSizeSelector'
 
 const defaultContext: CompilationContext = {
   hairVariantId: 'reference_natural_dry',
@@ -44,7 +45,9 @@ const defaultContext: CompilationContext = {
   referenceImagePresent: false,
   roomReferencePresent: false,
   bedroomClutterId: 'reference',
-  roomPhysicalState: {...DEFAULT_ROOM_PHYSICAL_STATE,zones:[...DEFAULT_ROOM_PHYSICAL_STATE.zones]}, 
+  roomPhysicalState: {...DEFAULT_ROOM_PHYSICAL_STATE,zones:[...DEFAULT_ROOM_PHYSICAL_STATE.zones]},
+  roomSizePreset:'medium_bedroom',
+  roomSizeConfirmed:false, 
   nightLightingId: 'phone_screen_only',
   phoneOnlyIlluminationMode:'OFF',
   windowUncovered: false,
@@ -95,6 +98,9 @@ export const App: React.FC = () => {
       <ReferenceImageSection meta={meta} error={imageError} loading={imageLoading} onFile={handleFile} onRemove={removeImage} />
       <RoomReferenceSection meta={room.meta} loading={room.loading} error={room.error} onFile={room.handleFile} onRemove={room.removeImage} />
       <PhysicalRoomStateSelector value={ctx.roomPhysicalState||DEFAULT_ROOM_PHYSICAL_STATE} roomReferencePresent={!!room.meta} onChange={roomPhysicalState=>handleContextChange({roomPhysicalState})} />
+      <RoomSizeSelector ctx={ctxWithImage}
+        posture={getShotPosture(ctx.bedroomShotId||'')||ctx.poseId||'seated_bed'}
+        activeLighting={physical.effectiveLightingId} onChange={handleContextChange}/>
       <HairSelector direction={ctx.hairDirection || 'auto'} volume={ctx.hairVolume || 'auto'} texture={ctx.hairTexture || 'auto'} onAdvancedChange={handleContextChange} selectedId={ctx.hairVariantId} mode={ctx.hairstyleMode || 'preserve'} onModeChange={mode=>handleContextChange({hairstyleMode:mode})} onSelect={(id) => handleContextChange({ hairVariantId: id, hairstyleMode: id==='reference_natural_dry'?'preserve':'apply' })} />
       <ExpressionSelector selectedId={ctx.expressionVariantId} gaze={ctx.gazeId || 'auto'} micro={ctx.microExpressionId || 'none'} onAdvancedChange={handleContextChange} onSelect={(id) => handleContextChange({ expressionVariantId: id })} />
       <ClothingSelector ctx={ctxWithImage} onChange={handleContextChange} />

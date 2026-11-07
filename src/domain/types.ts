@@ -125,6 +125,13 @@ export type CompilationContext = {
   roomReferencePresent?: boolean
   bedroomClutterId?: 'reference' | 'lived_in_messy'
   roomPhysicalState?:RoomPhysicalState
+  // PR7b: explicit user-declared room size. Missing legacy options mean
+  // the visible medium preset is assumed, NOT confirmed.
+  roomSizePreset?:'small_bedroom'|'medium_bedroom'|'large_bedroom'|'custom'
+  roomSizeConfirmed?:boolean
+  roomCustomWidthMeters?:number|null
+  roomCustomDepthMeters?:number|null
+  roomCustomHeightMeters?:number|null
   beddingSelection?:BeddingSelection
   phoneOnlyIlluminationMode?: 'OFF' | 'DARK_ROOM_REAR_FLASH_ONLY' | 'DARK_ROOM_FRONT_SCREEN_ONLY'
   nightLightingId?: string

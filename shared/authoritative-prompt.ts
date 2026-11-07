@@ -4,6 +4,7 @@
  * Advisory text is never a final prompt, even when it is well-formed or persuasive.
  */
 import {assembleEditorialPrompt,type EditableSceneSpec,type EditorialProposal} from './editorial-contract.ts'
+import {roomGeometryIssues,type RoomGeometry} from './room-geometry-rules.ts'
 
 export type FinalPromptSource='local'|'gemini-editor'
 export type AuthoritativeCandidate={
@@ -14,7 +15,21 @@ export type AuthoritativeCandidate={
 }
 export type FinalAuthorization={source:FinalPromptSource;prompt:string;validated:true}
 
-export function assertAuthoritative(spec:EditableSceneSpec,candidate:unknown):FinalAuthorization{
+/**
+ * PR7b extends (does not replace) the PR4 final authority policy.
+ * Preserve the original provenance/exact-byte tests, then deny promotion
+ * until the room is explicitly confirmed and all RG rules are valid.
+ */
+function assertRoomAuthority(room:RoomGeometry|undefined):void{
+ if(!room)throw Error('FINAL_ROOM_MISSING')
+ if(!room.userConfirmed)throw Error('FINAL_ROOM_UNCONFIRMED')
+ const issues=roomGeometryIssues(room)
+ if(issues.some(x=>x.status==='invalid'))throw Error('FINAL_ROOM_INVALID')
+ if(issues.some(x=>x.status==='unknown'))throw Error('FINAL_ROOM_UNVERIFIED')
+}
+export function assertAuthoritative(
+ spec:EditableSceneSpec&{roomGeometry?:RoomGeometry},candidate:unknown
+):FinalAuthorization{
  if(!candidate||typeof candidate!=='object'||Array.isArray(candidate))
   throw Error('FINAL_CANDIDATE_REQUIRED')
  const c=candidate as Record<string,unknown>
@@ -28,9 +43,10 @@ export function assertAuthoritative(spec:EditableSceneSpec,candidate:unknown):Fi
   // Local compiler's exact approved (not editor-added) section sequence.
   // 'natural_scene_director' is spec-only metadata not included by compilePrompt.
   const original=spec.derivedUnits
-   .filter(u=>u.id!=='natural_scene_director')
+   .filter(u=>u.id!=='natural_scene_director'&&u.id!=='room_geometry')
    .map(u=>u.text).join('\n\n')
   if(c.prompt!==original)throw Error('FINAL_LOCAL_MISMATCH')
+  assertRoomAuthority(spec.roomGeometry)
   return {source:'local',prompt:c.prompt,validated:true}
  }
  if(Object.keys(c).sort().join(',')!=='openingLineSelection,prompt,sectionOrder,source')
@@ -40,5 +56,6 @@ export function assertAuthoritative(spec:EditableSceneSpec,candidate:unknown):Fi
   openingLineSelection:c.openingLineSelection
  } as EditorialProposal)
  if(c.prompt!==editorial.prompt)throw Error('FINAL_EDITOR_MISMATCH')
+ assertRoomAuthority(spec.roomGeometry)
  return {source:'gemini-editor',prompt:c.prompt,validated:true}
 }

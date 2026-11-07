@@ -28,13 +28,16 @@ describe('PR4 unified server-side Final Prompt authority gate',()=>{
  it('server accepts exactly the approved local compiler output, independently of React state',async()=>{
   const {spec,prompt}=getReady()
   const result=await endpoint.fetch(post({sceneSpecification:spec,candidate:{source:'local',prompt}}))
-  expect(result.status).toBe(200)
-  const body=await result.json() as {source:string;prompt:string;validated:boolean;integrity:string;promptDigest:string}
-  expect(body.source).toBe('local')
-  expect(body.validated).toBe(true)
-  expect(body.prompt).toBe(prompt)
-  expect(body.integrity).toBe(spec.integrity)
-  expect(body.promptDigest).toMatch(/^[a-f0-9]{64}$/)
+  // PR7b Category 1 (former success): userConfirmed=false for the declared
+  // medium preset. The exact local compiler bytes remain valid, but the PR4
+  // final authority gate MUST now refuse promotion (FINAL_ROOM_UNCONFIRMED).
+  expect(spec.roomGeometry.userConfirmed).toBe(false)
+  expect(prompt).toBe(spec.derivedUnits
+   .filter(u=>u.id!=='natural_scene_director'&&u.id!=='room_geometry')
+   .map(u=>u.text).join('\n\n'))
+  expect(result.status).toBe(400)
+  expect((await result.json() as {errorCode:string}).errorCode).toBe('FINAL_ROOM_UNCONFIRMED')
+  expect(()=>assertAuthoritative(spec,{source:'local',prompt})).toThrow('FINAL_ROOM_UNCONFIRMED')
  })
  it.each(['ghalyon','auditor-v8'])('server HTTP 403 refuses a %s advisory draft as active final prompt',async source=>{
   const {spec,prompt}=getReady()
@@ -70,9 +73,13 @@ describe('PR4 unified server-side Final Prompt authority gate',()=>{
   const prompt=assembleEditorialPrompt(spec,{sectionOrder:order,openingLineSelection:'canonical'}).prompt
   const candidate={source:'gemini-editor',prompt,sectionOrder:order,openingLineSelection:'canonical'}
   const response=await endpoint.fetch(post({sceneSpecification:spec,candidate}))
-  expect(response.status).toBe(200)
-  expect((await response.json() as {source:string}).source).toBe('gemini-editor')
-  expect(assertAuthoritative(spec,candidate).validated).toBe(true)
+  // PR7b Category 1: editorial assembly is STILL exact but an unconfirmed
+  // room (and RG-1/2 unknown measurements) cannot gain PR4 authority.
+  expect(prompt).toBe(assembleEditorialPrompt(spec,{sectionOrder:order,openingLineSelection:'canonical'}).prompt)
+  expect(spec.roomGeometry.userConfirmed).toBe(false)
+  expect(response.status).toBe(400)
+  expect((await response.json() as {errorCode:string}).errorCode).toBe('FINAL_ROOM_UNCONFIRMED')
+  expect(()=>assertAuthoritative(spec,candidate)).toThrow('FINAL_ROOM_UNCONFIRMED')
  })
  it('server rejects an altered or extra body in a forged editor response',async()=>{
   const {spec}=getReady()
