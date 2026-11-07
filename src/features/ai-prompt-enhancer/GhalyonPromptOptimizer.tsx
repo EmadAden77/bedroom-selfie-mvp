@@ -1,10 +1,11 @@
 import React,{useEffect,useRef,useState} from 'react'
 import type {GhalyonMode,GhalyonTarget} from './ghalyon-config'
+import {explicitUnauthorizedEmitter,type PhoneOnlyMode} from '../../engine/physical-reality'
 
 type Reply={status:'questions'|'complete';questions:string[];optimizedPrompt:string;improvements:string[];proTip:string;error?:string;errorCode?:string}
-type Props={sourcePrompt:string;scenePrompt?:string;initialTarget?:GhalyonTarget;onPromptReady:(prompt:string)=>void}
+type Props={sourcePrompt:string;scenePrompt?:string;initialTarget?:GhalyonTarget;phoneOnlyMode?:PhoneOnlyMode;onPromptReady:(prompt:string)=>void}
 
-export const GhalyonPromptOptimizer:React.FC<Props>=({sourcePrompt,scenePrompt='',initialTarget='gemini',onPromptReady})=>{
+export const GhalyonPromptOptimizer:React.FC<Props>=({sourcePrompt,scenePrompt='',initialTarget='gemini',phoneOnlyMode='OFF',onPromptReady})=>{
  const [idea,setIdea]=useState('')
  const [mode,setMode]=useState<GhalyonMode>('auto')
  const [target,setTarget]=useState<GhalyonTarget>(initialTarget)
@@ -52,6 +53,8 @@ export const GhalyonPromptOptimizer:React.FC<Props>=({sourcePrompt,scenePrompt='
    if(data.status==='questions'&&data.questions.length>0&&data.questions.length<=3){
     setQuestions(data.questions);setAnswers(data.questions.map(() => ''));setResult(null)
    }else if(data.status==='complete'&&data.optimizedPrompt){
+    const forbidden=explicitUnauthorizedEmitter(data.optimizedPrompt,phoneOnlyMode)
+    if(forbidden)throw Error('رفضت إضاءة غير مصرّح بها في نتيجة غليون: '+forbidden)
     setResult(data);setQuestions([]);setAnswers([])
    }else throw Error('استجابة غير صالحة من المحرك.')
   }catch(e){if(current())setError(e instanceof Error?e.message:'تعذر الاتصال بـ Gemini.')}

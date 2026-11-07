@@ -84,3 +84,20 @@ export function renderPhysicalReality(ctx:CompilationContext):string{
  return ['PHYSICAL REALITY ENGINE V1:', 'Active physical emitters: '+on.map(e=>e.id+' at '+e.origin).join(', ')+'.',
   ...state.effects, 'No exact ray tracing, force values, geometry measurements and unseen furniture are asserted.'].join(' ')
 }
+
+/** A bounded safety check for free-form AI output. Does not claim full semantic verification. */
+export function explicitUnauthorizedEmitter(text:string,mode:PhoneOnlyMode):string|null{
+ if(mode==='OFF')return null
+ const sources=/\b(?:ceiling lights?|ceiling leds?|ceiling fixtures?|bedside lamps?|room lamps?|window daylight|window light|streetlights?|laptop screens?|television screens?|decorative leds?|ring lights?|studio lights?|studio fill|ambient fill|hidden fill)\b/gi
+ for(const hit of text.matchAll(sources)){
+  const at=hit.index
+  const prefix=text.slice(Math.max(0,at-55),at).split(/[.!?;\n]/).pop()||''
+  const suffix=text.slice(at+hit[0].length,at+hit[0].length+65).split(/[.!?;\n]/)[0]
+  if(/\b(?:no|without|not|exclude|forbid|never|off|inactive|disabled|unlit)\b/i.test(prefix)||
+     /^\s*(?:is|are|remain|stay|switched|turned)?\s*(?:off|inactive|disabled|unlit|forbidden|excluded)\b/i.test(suffix))continue
+  if(/\b(?:with|under|from|by|plus|using|and)\s+(?:an?\s+|the\s+)?$/i.test(prefix)||
+     /^\s*(?:(?:is|are)\s+)?(?:on|active|lit|glowing|illuminating|illuminates|casts|shines|emits|provides|switched on|turned on)\b/i.test(suffix)||
+     /\b(?:lit|illuminated|brightened)\s+by\s*$/i.test(prefix))return hit[0]
+ }
+ return null
+}

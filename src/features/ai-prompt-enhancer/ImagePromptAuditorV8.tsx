@@ -1,7 +1,7 @@
 import React,{useEffect,useRef,useState} from 'react'
 import type {CompilationContext} from '../../domain/types'
 import {bedroomShots} from '../../data/bedroom-shots'
-import {evaluatePhysicalReality} from '../../engine/physical-reality'
+import {evaluatePhysicalReality,explicitUnauthorizedEmitter} from '../../engine/physical-reality'
 
 type Result={
  repairNotes:string[]
@@ -72,6 +72,8 @@ export const ImagePromptAuditorV8:React.FC<Props>=({ctx,sourcePrompt,sceneBrief,
    if(!Array.isArray(data.repairNotes)||typeof data.sceneCameraSurfaceDetails!=='string'||
       typeof data.finalImagePrompt!=='string'||!data.finalImagePrompt.trim())
     throw Error('مدقق v8 أعاد بيانات غير مكتملة.')
+   const forbidden=explicitUnauthorizedEmitter(data.finalImagePrompt,ctx.phoneOnlyIlluminationMode||'OFF')
+   if(forbidden)throw Error('رفضت إضاءة غير مصرّح بها في نتيجة التدقيق: '+forbidden)
    setResult(data)
   }catch(reason){
    if(isCurrent())setError(reason instanceof Error?reason.message:'تعذر الاتصال بمدقق v8.')

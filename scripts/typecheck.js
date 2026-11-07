@@ -4,7 +4,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(__dirname, '..')
-console.log('Running typecheck (custom offline check - real file validation)...')
+console.log('Running auxiliary source-text invariant checks (not TypeScript typechecking)...')
 let errors = 0
 const srcFiles = []
 function walk(dir){
@@ -36,9 +36,9 @@ for(const file of srcFiles){
   }
 }
 if(errors===0){
-  console.log(`Typecheck passed - ${srcFiles.length} files validated, frozen fragments intact, no syntax errors`)
-  console.log('All frozen records have correct TypeScript types: Identity Core, Hair Guard, 7 Hair, Facial Guard, 8 Expressions, Deferred light_fatigue, Physical Clothing, Clothing Output Guard')
+  console.log(`Static source checks passed - ${srcFiles.length} files validated, frozen fragments intact, source brace count balanced`)
+  console.log('Source fragments checked (not TypeScript types): Identity Core, Hair Guard, 7 Hair, Facial Guard, 8 Expressions, Deferred light_fatigue, Physical Clothing, Clothing Output Guard')
 } else {
-  console.error(`Typecheck failed with ${errors} errors`)
+  console.error(`Static source checks failed with ${errors} errors`)
   process.exit(1)
 }
