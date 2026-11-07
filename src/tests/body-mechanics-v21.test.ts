@@ -207,6 +207,17 @@ describe('Physical Reality Engine V2.1 — deterministic body contacts and mecha
    expect(getCanonicalShotPosture(shot.id)).toBeTruthy()
   }
  })
+ it('38 phone occluding a mirror face is visual overlap, not anatomical contact',()=>{
+  const x=body({shotId:'mirror_face_phone'})
+  expect(x.visualRelations).toContainEqual(expect.objectContaining({occluderId:'phone',occludedId:'subject.reflected_face',relation:'occludes'}))
+  expect(x.contacts.some(c=>c.targetId==='subject.reflected_face')).toBe(false)
+  expect(renderBodyMechanics(x)).toContain('visual overlap is not physical face contact')
+ })
+ it('39 outside-crop feet are tracked visually without removing ground support',()=>{
+  const x=body({feetVisibility:'outside_crop'})
+  expect(x.visualRelations).toContainEqual(expect.objectContaining({occluderId:'camera.frame',occludedId:'subject.feet',relation:'outside_crop'}))
+  expect(x.contacts.some(c=>c.targetId==='room.floor')).toBe(true)
+ })
  it('32 support input validation rejects malformed enum values',()=>{
   expect(()=>body({supportChoice:'chair' as any})).toThrow('BODY_INPUT_INVALID')
  })
