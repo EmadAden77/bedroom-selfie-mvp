@@ -12,7 +12,7 @@ describe('Ghalyon direct scene controls',()=>{
  it('can optimize the selected selfie scene without generating another prompt or filling the textbox',async()=>{
   const fetcher=vi.fn(async()=>data(complete))
   vi.stubGlobal('fetch',fetcher)
-  render(<GhalyonPromptOptimizer sourcePrompt="" scenePrompt={scene} initialTarget="chatgpt" onPromptReady={vi.fn()}/>)
+  render(<GhalyonPromptOptimizer sourcePrompt="" scenePrompt={scene} initialTarget="chatgpt" onAdvisoryReady={vi.fn()}/>)
   expect(screen.getByRole('button',{name:'تحسين البرومبت'}).hasAttribute('disabled')).toBe(false)
   fireEvent.click(screen.getByRole('button',{name:/تحسين مشهد السيلفي الحالي مباشرةً/}))
   await waitFor(()=>expect(screen.getByText(complete.optimizedPrompt)).toBeTruthy())
@@ -25,7 +25,7 @@ describe('Ghalyon direct scene controls',()=>{
  it('primary optimize button uses scene context automatically if the user left idea blank',async()=>{
   const fetcher=vi.fn(async()=>data(complete))
   vi.stubGlobal('fetch',fetcher)
-  render(<GhalyonPromptOptimizer sourcePrompt="" scenePrompt={scene} onPromptReady={vi.fn()}/>)
+  render(<GhalyonPromptOptimizer sourcePrompt="" scenePrompt={scene} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحسين البرومبت'}))
   await waitFor(()=>expect(fetcher).toHaveBeenCalledTimes(1))
   const [,opts]=fetcher.mock.calls[0] as unknown as [string,{body:string}]
@@ -37,7 +37,7 @@ describe('Ghalyon direct scene controls',()=>{
    .mockResolvedValueOnce(data(questions))
    .mockResolvedValueOnce(data(complete))
   vi.stubGlobal('fetch',fetcher)
-  render(<GhalyonPromptOptimizer sourcePrompt="" scenePrompt={scene} onPromptReady={vi.fn()}/>)
+  render(<GhalyonPromptOptimizer sourcePrompt="" scenePrompt={scene} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:/تحسين مشهد السيلفي الحالي مباشرةً/}))
   await waitFor(()=>expect(screen.getByText(/كيف تريد تأطير المشهد/)).toBeTruthy())
   fireEvent.click(screen.getByRole('button',{name:'توليد البرومبت بالإجابات'}))
@@ -48,13 +48,13 @@ describe('Ghalyon direct scene controls',()=>{
  })
  it('explains a non-JSON server crash rather than silently failing',async()=>{
   vi.stubGlobal('fetch',vi.fn(async()=>new Response('<html>server failure</html>',{status:500,headers:{'content-type':'text/html'}})))
-  render(<GhalyonPromptOptimizer sourcePrompt="" scenePrompt={scene} onPromptReady={vi.fn()}/>)
+  render(<GhalyonPromptOptimizer sourcePrompt="" scenePrompt={scene} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحسين البرومبت'}))
   await waitFor(()=>expect(screen.getByRole('alert').textContent).toContain('GHALYON_NON_JSON'))
  })
  it('exposes the provider error code safely for troubleshooting',async()=>{
   vi.stubGlobal('fetch',vi.fn(async()=>data({error:'نموذج Gemini غير متاح',errorCode:'GEMINI_MODEL'},502)))
-  render(<GhalyonPromptOptimizer sourcePrompt="" scenePrompt={scene} onPromptReady={vi.fn()}/>)
+  render(<GhalyonPromptOptimizer sourcePrompt="" scenePrompt={scene} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحسين البرومبت'}))
   await waitFor(()=>expect(screen.getByRole('alert').textContent).toContain('GEMINI_MODEL'))
  })
