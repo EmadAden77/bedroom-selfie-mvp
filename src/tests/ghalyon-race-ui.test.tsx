@@ -16,7 +16,7 @@ describe('Cancelled Gemini requests never overwrite newer UI state',()=>{
   let release:(response:Response)=>void=()=>{}
   vi.stubGlobal('fetch',vi.fn(()=>new Promise<Response>(resolve=>{release=resolve})))
   const ready=vi.fn()
-  render(<GhalyonPromptOptimizer sourcePrompt="" onPromptReady={ready}/>)
+  render(<GhalyonPromptOptimizer sourcePrompt="" onAdvisoryReady={ready}/>)
   const input=screen.getByPlaceholderText('اكتب فكرة أو الصق برومبت...')
   fireEvent.change(input,{target:{value:'Create a realistic selfie in a bedroom.'}})
   fireEvent.click(screen.getByRole('button',{name:'تحسين البرومبت'}))
@@ -41,7 +41,7 @@ describe('Cancelled Gemini requests never overwrite newer UI state',()=>{
   const {result,validation}=compilePrompt(ctx)
   expect(validation.isValid).toBe(true)
   const local=result.promptText
-  render(<AiPromptEnhancer ctx={ctx} result={result} validation={validation} onReset={vi.fn()} onPromptReady={ready}/>)
+  render(<AiPromptEnhancer ctx={ctx} result={result} validation={validation} onReset={vi.fn()} onPromptReady={ready} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
   await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(1))
   fireEvent.click(screen.getByRole('button',{name:'اعتماد البرومبت المحلي'}))
