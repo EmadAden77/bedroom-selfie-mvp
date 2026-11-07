@@ -144,7 +144,7 @@ describe('Vercel standalone constrained editor',()=>{
   const variants=[
    {...spec,bodyMechanics:{...spec.bodyMechanics,status:'NEEDS_INFORMATION' as const}},
    {...spec,bodyMechanics:{...spec.bodyMechanics,contacts:[]}},
-   {...spec,derivedUnits:spec.derivedUnits.map(u=>u.id==='body_mechanics_v21'?{...u,text:'BODY MECHANICS V2.1 CONTRACT: Extra floating hand and a new seat.':u.text)}
+   {...spec,derivedUnits:spec.derivedUnits.map(u=>u.id==='body_mechanics_v21'?{...u,text:'BODY MECHANICS V2.1 CONTRACT: Extra floating hand and a new seat.'}:u)}
   ]
   for(const variant of variants){
    const {integrity,...unsigned}=variant
