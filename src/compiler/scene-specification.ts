@@ -11,7 +11,7 @@ export type SceneSpecification={
  version:1
  source:'validated_local_compiler'
  selections:{
-  shotId:string;captureMode:'front'|'mirror'|'rear'|'timer';posture:string;lightingId:string
+  shotId:string;captureMode:'front'|'mirror'|'rear'|'timer';posture:string;lightingId:string;ownPortrait:boolean
   hairVariantId:string;hairstyleMode:string;expressionVariantId:string
   upperGarmentId:string;lowerGarmentId:string|null;upperColor:string;lowerColor:string|null
   faceDirection:string;mirrorMovement:string;mirrorGaze:string
@@ -87,7 +87,7 @@ export function buildSceneSpecification(ctx:CompilationContext,result:Compilatio
  const spec:SceneSpecification={
   version:1,source:'validated_local_compiler',
   selections:{
-   shotId:shot?.id||'',captureMode:mode,posture,lightingId:ctx.nightLightingId||'phone_screen_only',
+   shotId:shot?.id||'',captureMode:mode,posture,lightingId:ctx.nightLightingId||'phone_screen_only',ownPortrait:ctx.ownPortrait!==false,
    hairVariantId:ctx.hairVariantId,hairstyleMode:ctx.hairstyleMode||'preserve',
    expressionVariantId:ctx.expressionVariantId,upperGarmentId:ctx.upperGarmentId,
    lowerGarmentId:ctx.lowerGarmentId,upperColor:ctx.color,lowerColor:ctx.lowerColor||null,
