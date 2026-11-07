@@ -3,7 +3,7 @@
  * Gemini can only return a section permutation and an editorial opening: final content
  * is reconstructed here exclusively from immutable local scene units.
  */
-import {evaluateBodyMechanics,renderBodyMechanics,type BodyMechanicalState} from '../shared/body-mechanics'
+import {evaluateBodyMechanics,renderBodyMechanics,type BodyMechanicalState} from '../shared/body-mechanics.ts'
 
 export const MAX_SCENE_BRIEF_CHARS=12000 // Only used by independent legacy scene-summary consumers.
 export const MAX_SCENE_REQUEST_BYTES=190000
@@ -74,7 +74,7 @@ function safeOpening(approved:string,edited:string):boolean{
  if(/\b(?:extra|additional|unknown|imaginary|new|second)\s+(?:person|window|lamp|camera|mirror|bed|sofa)\b/i.test(edited))return false
  return true
 }
-function validateSceneSpec(v:unknown):SceneSpec{
+export function validateSceneSpec(v:unknown):SceneSpec{
  if(!v||typeof v!=='object'||Array.isArray(v))throw Error('SPEC_SCHEMA')
  const s=v as SceneSpec
  if(s.version!==1||!s.capture||!s.references||!s.selections||!Array.isArray(s.derivedUnits)||
