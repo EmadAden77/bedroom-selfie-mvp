@@ -99,9 +99,9 @@ function validateSceneSpec(v:unknown):SceneSpec{
   p.shotPosture!==cap.posture||p.referenceImagePresent!==s.references.personDeclared||
   p.roomReferencePresent!==s.references.roomDeclared||p.promptTarget!==cap.target||
   p.hairVariantId!==s.selections.hairVariantId||p.hairstyleMode!==s.selections.hairstyleMode||
-  p.hairDirection!==s.selections.hairDirection||p.hairVolume!==s.selections.hairVolume||
-  p.hairTexture!==s.selections.hairTexture||p.expressionVariantId!==s.selections.expressionVariantId||
-  p.gazeId!==s.selections.gazeId||p.microExpressionId!==s.selections.microExpressionId||
+  p.hairDirection!==(s.selections.hairDirection||'auto')||p.hairVolume!==(s.selections.hairVolume||'auto')||
+  p.hairTexture!==(s.selections.hairTexture||'auto')||p.expressionVariantId!==s.selections.expressionVariantId||
+  p.gazeId!==(s.selections.gazeId||'auto')||p.microExpressionId!==(s.selections.microExpressionId||'none')||
   p.mirrorMovementId!==s.selections.mirrorMovementId||p.mirrorPhoneHeightId!==s.selections.mirrorPhoneHeightId||
   p.mirrorDistanceId!==s.selections.mirrorDistanceId||p.mirrorFramingId!==s.selections.mirrorFramingId||
   p.mirrorGazeId!==s.selections.mirrorGazeId||
