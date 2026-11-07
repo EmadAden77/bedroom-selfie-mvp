@@ -30,7 +30,7 @@ Starting `main`: `1a1e998a097416c01cf267ce44972f70c8d2d922` (V2.1 PR #51). Its G
 | Selected blanket contact with body | Supported draping and mild local folds |
 | Pillow/blanket explicitly absent in a contact-requiring shot | Stable error and an explicit UI correction requiring approval |
 
-The frame and the fixed bedroom anchors never relocate or deform to resolve a pose. The existing 98-shot posture mapping remains the single body-mode source. No new pillows, sheets, cushions or blankets are created by an unconfirmed photo reference. Unknown geometry, cloth placement and unseen surfaces remain unknown.
+A pillow held against the chest is **not** assumed to rest on the mattress. The pillow-to-mattress support link is derived only for selected bed-anchored pillow shots; otherwise its physical anchor remains unconfirmed. The frame and the fixed bedroom anchors never relocate or deform to resolve a pose. The existing 98-shot posture mapping remains the single body-mode source. No new pillows, sheets, cushions or blankets are created by an unconfirmed photo reference. Unknown geometry, cloth placement and unseen surfaces remain unknown.
 
 ## V1/V2.1 non-regression
 
