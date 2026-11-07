@@ -257,11 +257,13 @@ export default {
   const payload={
    systemInstruction:{parts:[{text:PHYSICS_ONLY_SYSTEM+'\n\n'+IMAGE_TARGET_GUIDANCE[spec.capture.target]}]},
    contents:[{role:'user',parts:[{text:JSON.stringify({
-    sceneSpecification:spec,
-    instruction:'Reorder the exact approved section IDs and linguistically polish only the supplied opening without changing any factual content. Leave it unchanged if any nuance is uncertain.'
+    approvedUnitIds:spec.mandatoryUnitIds,
+    opening:spec.opening,
+    target:spec.capture.target,
+    instruction:'Return every approved ID exactly once (first ID stays first), leave opening unchanged, and choose spaced or compact. Return ONLY the schema JSON. No scene rewriting.'
    })}]}],
    generationConfig:{
-    temperature:0.1,maxOutputTokens:2300,
+    temperature:0.1,maxOutputTokens:8192,
     responseFormat:{text:{mimeType:'APPLICATION_JSON',schema:MAIN_PROMPT_SCHEMA}}
    }
   }
@@ -277,8 +279,17 @@ export default {
     if(response.status===404)return fail('GEMINI_MODEL','نموذج Gemini غير متاح.')
     return fail('GEMINI_UPSTREAM','تعذر تنفيذ تحرير Gemini.')
    }
-   const data=await response.json() as {candidates?:Array<{content?:{parts?:Array<{text?:string}>}}>}
-   const raw=data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||''
+   const data=await response.json() as {candidates?:Array<{finishReason?:string;content?:{parts?:Array<{text?:string}>}}>;promptFeedback?:{blockReason?:string}}
+   const candidate=data.candidates?.[0]
+   const raw=candidate?.content?.parts?.map(p=>p.text||'').join('')||''
+   if(!raw.trim()){
+    console.warn('[Gemini constrained editor] empty candidate',candidate?.finishReason||data.promptFeedback?.blockReason||'UNKNOWN')
+    return fail('GEMINI_EDITOR_EMPTY','لم يُرجع Gemini نصًا صالحًا؛ تم الاحتفاظ بالبرومبت المحلي.',502)
+   }
+   if(candidate?.finishReason&&candidate.finishReason!=='STOP'){
+    console.warn('[Gemini constrained editor] incomplete candidate',candidate.finishReason)
+    return fail('GEMINI_EDITOR_INCOMPLETE','لم يُكمل Gemini النتيجة؛ تم الاحتفاظ بالبرومبت المحلي.',502)
+   }
    let output:ReturnType<typeof assembleConstrainedPrompt>
    try{output=assembleConstrainedPrompt(raw,spec)}
    catch(error){
