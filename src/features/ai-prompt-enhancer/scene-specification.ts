@@ -3,6 +3,7 @@ import {bedroomShots,getShotPosture} from '../../data/bedroom-shots'
 import {buildNaturalSceneDirection} from './natural-scene-director'
 import {MAX_SCENE_REQUEST_BYTES} from './scene-request-limits'
 import {evaluatePhysicalReality} from '../../engine/physical-reality'
+import {deriveLightingDecision,isLightingPresetId,type LightingDecision} from '../../../shared/lighting-decision'
 import {deriveBodyScene} from '../../engine/body-mechanics'
 import type {BodyMechanicalState} from '../../../shared/body-mechanics'
 import {deriveBeddingScene} from '../../engine/bedding-physics'
@@ -13,6 +14,7 @@ export type SceneUnit={id:string;text:string;authority:'user_selection'|'referen
 export type SceneSpecification={
  version:1
  capture:SceneCapture
+ lighting:LightingDecision
  selections:{
   hairstyleMode:string;hairVariantId:string;hairDirection:string;hairVolume:string;hairTexture:string
   expressionVariantId:string;gazeId:string;microExpressionId:string
@@ -63,6 +65,10 @@ const unitAuthority=(id:string):SceneUnit['authority']=>{
 const code=(v:string|undefined)=>v||''
 const garmentColor=(v:string)=>v||'as observed in reference'
 export function buildSceneSpecification(ctx:CompilationContext,result:CompilationResult,validation:ValidationResult):SceneSpecification{
+ // Invalid saved IDs already block compilation. Keep the UI stable while reporting
+ // those errors; only validated scenes can carry an authoritative lighting block.
+ const savedForInvalidScene=ctx.nightLightingId&&!isLightingPresetId(ctx.nightLightingId)?undefined:ctx.nightLightingId
+ const lighting=deriveLightingDecision(savedForInvalidScene,ctx.phoneOnlyIlluminationMode||'OFF')
  const shot=bedroomShots.find(item=>item.id===ctx.bedroomShotId)
  const capture:SceneCapture={
   mode:shot?.mode||'front',shotId:shot?.id||'',
@@ -112,7 +118,7 @@ export function buildSceneSpecification(ctx:CompilationContext,result:Compilatio
   'The person reference defines identity and the room reference defines photographed architecture only when actually provided to the image generator.'
  ].filter(Boolean).join(' ')
  const unsigned:Omit<SceneSpecification,'integrity'>={
-  version:1,capture,selections,references,bodyMechanics:deriveBodyScene(ctx),beddingPhysics:deriveBeddingScene(ctx),derivedUnits,
+  version:1,capture,lighting,selections,references,bodyMechanics:deriveBodyScene(ctx),beddingPhysics:deriveBeddingScene(ctx),derivedUnits,
   mandatoryUnitIds:derivedUnits.map(s=>s.id),unspecified,conflicts,opening
  }
  return {...unsigned,integrity:sceneFingerprint(unsigned)}
