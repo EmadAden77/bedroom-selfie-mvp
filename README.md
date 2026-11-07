@@ -94,3 +94,18 @@ The main Gemini endpoint no longer writes scene content creatively. Its mandator
 - **Backward compatibility:** Ghalyon remains an independent freeform text optimizer; Image Prompt Auditor v8 and the Photo Result Audit remain independent. Neither implicitly changes the selected scene context. The PWA, physical room state and standalone local fallback retain their own workflows.
 
 The main UI now includes collapsible viewing of the validated local prompt and clearly distinguishes the final Gemini-edited, validated composition from fallback. The previous independent creative Gemini author path was intentionally replaced; no silent legacy unstructured request mode remains.
+
+## Physical Reality Engine V1 — Phone-only illumination and explicit scene choices
+
+The application now has a deterministic emitter registry in `src/engine/physical-reality.ts` and a **Physical Reality Engine V1** selector. This keeps the stored `nightLightingId` intact while deriving a temporary effective lighting context for compilation and Gemini scene specifications.
+
+- **OFF** uses the previously selected lighting preset.
+- **DARK_ROOM_REAR_FLASH_ONLY** requires the actual `mirror_rear_flash` rear-camera wardrobe-mirror shot. The rear phone LED is the sole active physical emitter. Flash propagation follows plausible camera, glass, reflection, surface and occlusion relationships; there is no extra room fill.
+- **DARK_ROOM_FRONT_SCREEN_ONLY** requires a front-camera selfie. The front phone display is the sole active emitter, producing weak close-range illumination with natural falloff, not a room-wide fill. The rear LED is off.
+- Active physical emitters and effects are separate data. Physically reflected light from the single permitted phone emitter is allowed without counting as a new lamp. Unknown geometry and actual phone screen emission are not measured.
+- Changing the strict mode never overwrites the previous lighting preset. Turning it off uses the previous selection, even if it becomes incompatible with the current shot; that incompatibility must be resolved explicitly.
+- The UI shows physical issues and explicit correction actions. User changes to shot and light no longer silently substitute a different scene. Local compilation rejects unresolved contradictions and the serverless Gemini editor checks strict capture/light selection plus an immutable physical-reality unit.
+- The concise Ghalyon scene brief and optional V8 prompt auditor receive effective lighting. Their freely authored AI text remains advisory and is not a verified physical simulator or a proof of photorealism.
+
+**Limits:** This is rules-based causal validation, not calibrated 3D geometry, measured spectral intensity, real ray tracing, verified force simulation, or a guarantee that an image model obeys every constraint. Existing body, wardrobe mirror, garment and room-state modules remain responsible for their established constraints. The new strict lighting modes do not fabricate room dimensions, new fixtures or lighting measurements.
+
