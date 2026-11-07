@@ -4,6 +4,7 @@
  * is reconstructed here exclusively from immutable local scene units.
  */
 import {evaluateBodyMechanics,renderBodyMechanics,type BodyMechanicalState} from '../shared/body-mechanics.ts'
+import {getCanonicalShotPosture} from '../shared/body-shot-postures.ts'
 
 export const MAX_SCENE_BRIEF_CHARS=12000 // Only used by independent legacy scene-summary consumers.
 export const MAX_SCENE_REQUEST_BYTES=190000
@@ -93,6 +94,7 @@ export function validateSceneSpec(v:unknown):SceneSpec{
   s.derivedUnits.some(u=>u.immutable!==true||!['user_selection','reference_scope','local_physics'].includes(u.authority)||
    typeof u.text!=='string'||u.text.trim().length<8||u.text.length>15000))throw Error('SPEC_UNITS')
  if(s.mandatoryUnitIds.length!==ids.length||s.mandatoryUnitIds.some((id,i)=>id!==ids[i]))throw Error('SPEC_MANDATORY')
+ if(cap.shotId&&getCanonicalShotPosture(cap.shotId)!==cap.posture)throw Error('SPEC_BODY_POSTURE')
  // Server independently recomputes the shared mechanical contract from normalized
  // user selections. Never trust status, contacts, deformability or compiler prose.
  let canonicalBody:BodyMechanicalState
