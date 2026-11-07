@@ -46,8 +46,8 @@ describe('Physical reality portable runtime contract',()=>{
     ...spec,physicalScene:{...spec.physicalScene,color:'white'},selections:{...spec.selections,upperColor:'white'}
    }),
    (spec:ReturnType<typeof buildSceneSpecification>)=>({
-    ...spec,physicalScene:{...spec.physicalScene,roomPhysicalState:{order:'bad',surface:'dust',zones:['bed'],sessionLocked:true}},
-    selections:{...spec.selections,roomPhysicalState:{order:'bad',surface:'dust',zones:['bed'],sessionLocked:true}}
+    ...spec,physicalScene:{...spec.physicalScene,roomPhysicalState:{order:'bad' as 'clear',surface:'dust' as const,zones:['bed' as const],sessionLocked:true}},
+    selections:{...spec.selections,roomPhysicalState:{order:'bad' as 'clear',surface:'dust' as const,zones:['bed' as const],sessionLocked:true}}
    }),
    (spec:ReturnType<typeof buildSceneSpecification>)=>({
     ...spec,physicalScene:{...spec.physicalScene,mirrorMovementId:'bad'},
