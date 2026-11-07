@@ -124,9 +124,14 @@ describe('PR2 Option B: authoritative active source and inactive saved preferenc
  })
  it.each(crossProducts)('%s + saved %s: accepted with inactive preference; deterministic', (kind,saved)=>{
   const ctx=kind==='rear flash'?mirror(saved):front(saved)
-  const first=getSpec(ctx).spec
+  const {spec:first,result}=getSpec(ctx)
   const second=getSpec(structuredClone(ctx)).spec
   const active=kind==='rear flash'?'rear_flash':'phone_screen_only'
+  const singleEmitter=kind==='rear flash'?'phone_rear_led':'phone_display'
+  expect(evaluatePhysicalReality(ctx).emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual([singleEmitter])
+  expect(result.sections.filter(x=>x.id.startsWith('night_lighting_')).map(x=>x.id))
+   .toEqual(['night_lighting_'+active])
+  expect(result.promptText).toContain('Active physical emitters: '+singleEmitter+' at ')
   expect(first.lighting).toEqual({
    activeLightSource:active,
    savedLightingPreference:saved,
