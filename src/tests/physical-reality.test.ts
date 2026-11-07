@@ -70,7 +70,7 @@ describe('Physical Reality Engine constraint graph',()=>{
  })
  it('flags mirror hand occupancy conflicts without secretly repairing user choice',()=>{
   const ctx={...base,bedroomShotId:'mirror_floor',poseId:'seated_floor',nightLightingId:'ceiling_neutral',mirrorMovementId:'wave'}
-  expect(evaluatePhysicalReality(ctx).findings.some(x=>x.id.startsWith('mirror-controls')&&x.status==='CONFLICT')).toBe(true)
+  expect(evaluatePhysicalReality(ctx).findings.some(x=>x.id==='mirror-free-hand'&&x.status==='CONFLICT')).toBe(true)
   expect(ctx.mirrorMovementId).toBe('wave')
   expect(compilePrompt(ctx).validation.isValid).toBe(false)
  })
