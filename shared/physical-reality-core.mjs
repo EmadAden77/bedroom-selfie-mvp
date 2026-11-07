@@ -1,3 +1,5 @@
+import {PHYSICAL_OPTION_IDS,PHYSICAL_SHOT_MODES,PHYSICAL_SHOT_POSTURES,PHYSICAL_GARMENTS,DEFERRED_EXPRESSION_IDS} from './physical-choice-catalog.mjs'
+
 /** Deterministic camera/light compatibility contract shared by the browser and Vercel.
  * Standalone ESM with no transitive source imports, Node polyfills or network access.
  * Return only established contradictions. Missing dimensions remain UNKNOWN elsewhere.
@@ -36,6 +38,53 @@ export function inspectSharedScene(s){
  const out=[]
  const add=(id,category,fields,reason,repair)=>out.push({id,status:'CONFLICT',category,fields,reason,repair})
  const mode=s.mode||'front',shot=s.shotId||'',light=s.nightLightingId||'phone_screen_only'
+ const required=new Set(['hairVariantId','expressionVariantId','upperGarmentId','materialId','fitId','stateId'])
+ for(const [field,available] of Object.entries(PHYSICAL_OPTION_IDS)){
+  const value=field==='bedroomShotId'?shot:field==='nightLightingId'?light:s[field]
+  if(value===undefined||value===null||value===''){
+   if(required.has(field))
+    add('required-'+field,'clothing',[field],
+     field==='upperGarmentId'?'القطعة العلوية مطلوبة - Upper garment is required':field+' required',
+     'اختر قيمة مطلوبة من القائمة.')
+  }else if(!available.includes(value)){
+   const messages={
+    hairVariantId:'Hair variant invalid: '+value,
+    expressionVariantId:'Expression variant invalid: '+value,
+    upperGarmentId:'Upper garment invalid: '+value,
+    lowerGarmentId:'Lower garment must be category lower: '+value,
+    fitId:'Fit invalid: '+value,
+    stateId:'State invalid: '+value,
+    nightLightingId:'Night lighting preset invalid',
+    poseId:'Invalid pose geometry',faceDirectionId:'Invalid face direction',
+    lampSideId:'Invalid lamp side',bedroomShotId:'Unknown bedroom shot'
+   }
+   add('option-'+field,'capture',[field],messages[field]||'Invalid '+field+' selection: '+value,
+    'اختر قيمة من الخيارات المعرّفة أو عدل السجل المركزي قبل إضافتها.')
+  }
+ }
+ if(DEFERRED_EXPRESSION_IDS.includes(s.expressionVariantId))
+  add('deferred-expression','biomechanics',['expressionVariantId'],
+   'Expression '+s.expressionVariantId+' is Deferred Composite State and not selectable - light_fatigue is not available in pure expressions',
+   'اختر تعبيرًا متاحًا.')
+ if(shot&&PHYSICAL_SHOT_MODES[shot]&&mode!==PHYSICAL_SHOT_MODES[shot])
+  add('shot-mode','geometry',['bedroomShotId'],'Shot capture mode does not match its registered camera','استخدم وضع الكاميرا المسجل لهذه اللقطة.')
+ if(shot&&PHYSICAL_SHOT_POSTURES[shot]&&s.shotPosture!==PHYSICAL_SHOT_POSTURES[shot])
+  add('shot-support','biomechanics',['bedroomShotId','poseId'],'Selected shot posture does not match its registered anatomical support','استخدم الوضعية المعرّفة للّقطة.')
+ const upperRule=PHYSICAL_GARMENTS[s.upperGarmentId]
+ if(upperRule&&upperRule.category==='upper'&&s.materialId&&!upperRule.allowedMaterials.includes(s.materialId))
+  out.push({id:'upper-material-compatibility',status:'WARNING',category:'clothing',
+   fields:['upperGarmentId','materialId'],
+   reason:'Material '+s.materialId+' may not be compatible with '+s.upperGarmentId,
+   repair:'اختر خامة معتمدة لهذه القطعة أو راجع مادتها الفعلية قبل اعتماد المشهد.'})
+ if(s.stateId==='slept_in'||s.stateId==='lightly_damp')
+  out.push({id:'upper-state-evidence',status:'WARNING',category:'clothing',fields:['stateId'],
+   reason:s.stateId==='slept_in'?'حالة slept_in تتطلب سياق نوم صريح':'حالة lightly_damp تتطلب طلب صريح',
+   repair:'استخدم حالة تتطابق مع السياق الذي اخترته بالفعل.'})
+ if(mode==='mirror'&&light==='phone_screen_only')
+  out.push({id:'mirror-underexposure',status:'WARNING',category:'lighting',
+   fields:['bedroomShotId','nightLightingId'],
+   reason:'Mirror selfie may be severely underexposed with phone screen only',
+   repair:'يمكن إبقاء المشهد مظلمًا؛ لا تضف إضاءة مخفية.'})
  for(const [i,reason] of captureLightingIssuesCore(shot,mode,light).entries())
   add('capture-light-'+i,'lighting',['bedroomShotId','nightLightingId'],reason,'غيّر الإضاءة أو اللقطة صراحةً.')
  if(shot.startsWith('mirror_')&&mode!=='mirror')
