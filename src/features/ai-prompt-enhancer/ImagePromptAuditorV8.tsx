@@ -22,6 +22,7 @@ export const MAX_V8_SCENE=12000
 export const ImagePromptAuditorV8:React.FC<Props>=({ctx,sourcePrompt,sceneBrief,onPromptReady})=>{
  const [draft,setDraft]=useState('')
  const [ownPortrait,setOwnPortrait]=useState(true)
+ const [promptOnly,setPromptOnly]=useState(false)
  const [result,setResult]=useState<Result|null>(null)
  const [loading,setLoading]=useState(false)
  const [error,setError]=useState('')
@@ -103,18 +104,22 @@ export const ImagePromptAuditorV8:React.FC<Props>=({ctx,sourcePrompt,sceneBrief,
    <input type="checkbox" checked={ownPortrait} onChange={e=>{reset();setOwnPortrait(e.target.checked)}}/>
    <span>الصورة تخصني؛ طبّق بنية 193 سم / 83 كجم دون تغيير الهوية. <small style={{display:'block',color:'var(--muted)'}}>ألغِها عند تدقيق صورة شخص آخر.</small></span>
   </label>
+  <label style={{display:'flex',alignItems:'center',gap:8,fontSize:12,margin:'12px 0'}}>
+   <input type="checkbox" checked={promptOnly} onChange={e=>setPromptOnly(e.target.checked)}/>
+   البرومبت فقط — إخفاء ملاحظات الإصلاح والتفاصيل العربية
+  </label>
   {tooLong&&<p role="alert" style={{fontSize:12,color:'#b91c1c'}}>النص أو وصف المشهد طويل جدًا. اختصر الوصف إلى الحدود المسموحة.</p>}
   <button type="button" className="btn" disabled={!ready||loading} onClick={()=>void audit()}>
    {loading?'جارٍ التدقيق الفيزيائي…':'تدقيق وإصلاح البرومبت — v8'}
   </button>
   {error&&<p role="alert" style={{fontSize:12,color:'#b91c1c',lineHeight:1.7}}>{error}</p>}
   {result&&<div style={{marginTop:14}}>
-   <h3 style={{fontSize:13}}>A — ملاحظات الإصلاح</h3>
+   {!promptOnly&&<><h3 style={{fontSize:13}}>A — ملاحظات الإصلاح</h3>
    {result.repairNotes.length>0
     ? <ul style={{paddingRight:20,fontSize:12,lineHeight:1.9}}>{result.repairNotes.map((item,i)=><li key={i}>{item}</li>)}</ul>
     : <p style={{fontSize:12}}>لم يرصد المدقق تناقضًا نصيًا يستوجب الإصلاح.</p>}
    <h3 style={{fontSize:13}}>B — المشهد والكاميرا والأسطح</h3>
-   <p style={{fontSize:12,lineHeight:1.8,whiteSpace:'pre-wrap'}}>{result.sceneCameraSurfaceDetails}</p>
+   <p style={{fontSize:12,lineHeight:1.8,whiteSpace:'pre-wrap'}}>{result.sceneCameraSurfaceDetails}</p></>}
    <h3 style={{fontSize:13}}>C — البرومبت الإنجليزي النهائي</h3>
    <pre className="preview-box" dir="ltr" style={{textAlign:'left',whiteSpace:'pre-wrap',overflowWrap:'anywhere',maxHeight:520,overflowY:'auto'}}>
     <code>{result.finalImagePrompt}</code>
