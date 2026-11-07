@@ -65,7 +65,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
     body:JSON.stringify({sceneSpecification:spec})
    })
    if(!(response.headers.get('content-type')||'').includes('application/json'))
-    throw Error('محرر Gemini أعاد ردًا غير متوقع (EDITOR_NON_JSON).')
+    throw Error('تعذر تشغيل خدمة Gemini على الخادم (HTTP '+response.status+'، EDITOR_NON_JSON). البرومبت المحلي محفوظ.')
    const payload=await response.json() as MainReply
    if(!current())return
    if(!response.ok)throw Error((payload.error||'تعذر تحرير البرومبت عبر Gemini.')+(payload.errorCode?' ('+payload.errorCode+')':''))
