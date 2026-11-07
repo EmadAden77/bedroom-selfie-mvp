@@ -127,9 +127,13 @@ export function toSharedScene(ctx:CompilationContext){
 }
 type Rule={id:string;fields:readonly Field[];run:(ctx:CompilationContext)=>RealityFinding[]}
 const finding=(id:string,status:RealityFinding['status'],category:RealityCategory,fields:Field[],reason:string,repair:string):RealityFinding=>({id,status,category,fields,reason,repair})
+const presentationFields:Field[]=['promptTarget','realismIntensity']
+const physicalFields=fields.filter(field=>!presentationFields.includes(field))
 const rules:readonly Rule[]=[
- {id:'shared-physical-constraints',fields,
-  run:ctx=>inspectSharedScene(toSharedScene(ctx)) as RealityFinding[]}
+ {id:'shared-physical-constraints',fields:physicalFields,
+  run:ctx=>inspectSharedScene(toSharedScene(ctx),'physical') as RealityFinding[]},
+ {id:'presentation-choices',fields:presentationFields,
+  run:ctx=>inspectSharedScene(toSharedScene(ctx),'presentation') as RealityFinding[]}
 ]
 export type RealityReport={status:RealityStatus;findings:RealityFinding[];evaluatedRules:string[];findingsByRule:Record<string,RealityFinding[]>;recomputedRules?:string[]}
 const summarize=(findings:RealityFinding[]):RealityStatus=>
