@@ -11,7 +11,7 @@ import {
 type Props={ctx:CompilationContext;result:CompilationResult;validation:ValidationResult;onReset:()=>void;onPromptReady:(prompt:string)=>void}
 type MainReply={
  prompt?:string;source?:string;model?:string;error?:string;errorCode?:string
- orderedUnitIds?:string[];opening?:string;integrity?:string;editorStyle?:'compact'|'spaced'
+ sectionOrder?:string[];openingLineSelection?:'canonical'|'concise';integrity?:string
  validated?:boolean
 }
 
@@ -93,7 +93,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
  return <section className="card" aria-label="المحرك الرئيسي لتوليد البرومبت">
   <div style={{fontSize:16,fontWeight:750,marginBottom:10}}>✨ Gemini — محرر البرومبت المقيّد</div>
   <p style={{fontSize:12,color:'var(--muted)',lineHeight:1.8,margin:'0 0 12px'}}>
-   <strong>اختياراتك ومحركات القواعد المحلية تحدد المشهد بالكامل.</strong> يقتصر دور Gemini على ترتيب التعليمات وتحسين افتتاحية البرومبت لغويًا من دون تغيير الهوية أو الملابس أو هندسة الغرفة أو الكاميرا أو الإضاءة. لا تُعتمد النتيجة إلا بعد مطابقتها برمجيًا مع المواصفات المحلية.
+   <strong>اختياراتك ومحركات القواعد المحلية تحدد المشهد بالكامل.</strong> يقتصر دور Gemini على ترتيب الأقسام واختيار افتتاحية من قوالب لغوية محلية معتمدة من دون تغيير الهوية أو الملابس أو هندسة الغرفة أو الكاميرا أو الإضاءة. لا تُعتمد النتيجة إلا بعد مطابقتها برمجيًا مع المواصفات المحلية.
   </p>
   <p style={{fontSize:11,color:'var(--muted)',lineHeight:1.75,margin:'0 0 10px'}}>
    تُرسل إلى Gemini مواصفات المشهد النصية المنظمة من محرك التطبيق، دون ملفات صور الوجه والغرفة. يحتفظ غَليون ومدقق v8 بمساريهما المستقلين ولا يغيران اختياراتك تلقائيًا. الهدف: {selectedTarget}.
