@@ -22,7 +22,7 @@ import { useReferenceImage } from '../hooks/useReferenceImage'
 import { CompilationContext } from '../domain/types'
 import { compilePrompt } from '../compiler'
 import {reconcileCaptureSelection} from '../data/scene-consistency'
-import {evaluatePhysicalReality} from '../engine/physical-reality'
+import {evaluatePhysicalReality,includeCompilerFindings} from '../engine/physical-reality'
 import {PhysicalRealityPanel} from '../features/physical-reality/PhysicalRealityPanel'
 
 const defaultContext: CompilationContext = {
@@ -71,7 +71,7 @@ export const App: React.FC = () => {
     return compilePrompt(ctxWithImage)
   }, [ctxWithImage])
 
-  const physicalReality = useMemo(() => evaluatePhysicalReality(ctxWithImage), [ctxWithImage])
+  const physicalReality = useMemo(() => includeCompilerFindings(evaluatePhysicalReality(ctxWithImage),validation), [ctxWithImage,validation])
 
   const handleContextChange = useCallback((patch: Partial<CompilationContext>) => {
     setCtx(prev => reconcileCaptureSelection(prev,patch))
