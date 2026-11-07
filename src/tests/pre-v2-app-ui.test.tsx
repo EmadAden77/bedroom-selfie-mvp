@@ -31,9 +31,14 @@ describe('App V1 strict-light UI regression',()=>{
   fireEvent.change(mode,{target:{value:'OFF'}})
   expect(screen.getByText(/المصادر الفعالة: bedside/)).toBeTruthy()
   expect(screen.getByText(/الإضاءة المحفوظة: bedside_warm — الإضاءة المستخدمة: bedside_warm/)).toBeTruthy()
-  const localButton=screen.getByRole('button',{name:'اعتماد البرومبت المحلي'}) as HTMLButtonElement
+  // PR7b Category 1: light-mode and reset behavior remain unchanged.
+  // The default room is unconfirmed, so the formerly-authoritative local
+  // button is now preview-only and must NOT call the server authority route.
+  expect(screen.getByText('Room size assumed as medium. Confirm for accuracy.')).toBeTruthy()
+  const localButton=screen.getByRole('button',{name:'عرض البرومبت المحلي (غير معتمد)'}) as HTMLButtonElement
   fireEvent.click(localButton)
-  await waitFor(()=>expect(fetch).toHaveBeenCalled())
+  await waitFor(()=>expect(screen.getByText('البرومبت المحلي — للعرض فقط، غير معتمد')).toBeTruthy())
+  expect(fetch).not.toHaveBeenCalled()
   await waitFor(()=>expect(screen.getByRole('button',{name:'إعادة تعيين الخيارات'})).toBeTruthy())
   fireEvent.click(screen.getByRole('button',{name:'إعادة تعيين الخيارات'}))
   expect((screen.getByLabelText('وضع إضاءة الهاتف') as HTMLSelectElement).value).toBe('OFF')
