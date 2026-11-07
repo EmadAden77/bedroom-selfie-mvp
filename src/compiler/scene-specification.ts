@@ -43,7 +43,7 @@ export function sceneCategory(id:string):SceneCategory{
  if(id.includes('hair'))return 'hair'
  if(id.includes('expression')||id.includes('gaze'))return 'expression'
  if(id.startsWith('upper_')||id.startsWith('lower_')||id.includes('clothing'))return 'clothing'
- if(id.includes('shot_')||id.includes('body_pose')||id==='pose_interaction'||id.includes('laptop_selfie'))return 'action'
+ if(id==='local_natural_scene_director'||id.includes('shot_')||id.includes('body_pose')||id==='pose_interaction'||id.includes('laptop_selfie'))return 'action'
  if(id.includes('bedroom_environment')||id.includes('background_continuity')||id.includes('room_state')||id.includes('clutter'))return 'room'
  if(id.includes('mirror'))return 'mirror'
  if(id.includes('light'))return 'lighting'
