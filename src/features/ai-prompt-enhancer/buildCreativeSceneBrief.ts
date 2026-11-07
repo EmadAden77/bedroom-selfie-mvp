@@ -15,12 +15,14 @@ import {buildMirrorFlashGeminiBrief} from '../../data/mirror-flash-physics'
 import {buildBedroomClutterGeminiBrief} from '../../data/bedroom-clutter'
 import {buildLaptopGeminiBrief} from '../../data/laptop-selfie-physics'
 import {buildNaturalSceneDirection} from './natural-scene-director'
+import {effectivePhysicalContext,renderPhysicalReality} from '../../engine/physical-reality'
 
 const isSelectedLaptop=(id:string)=>id.startsWith('laptop_')&&id!=='laptop_reflection'
 const selected=<T extends {id:string}>(items:readonly T[],id:string|undefined)=>items.find(x=>x.id===id)
 const plain=(id:string|undefined)=>id?.replace(/_/g,' ')||''
 
-export function buildCreativeSceneBrief(ctx:CompilationContext):string{
+export function buildCreativeSceneBrief(selectedContext:CompilationContext):string{
+ const ctx=effectivePhysicalContext(selectedContext)
  const shot=selected(bedroomShots,ctx.bedroomShotId)
  const face=selected(expressionVariants,ctx.expressionVariantId)
  const upper=selected(garmentRecords,ctx.upperGarmentId)
@@ -56,6 +58,7 @@ export function buildCreativeSceneBrief(ctx:CompilationContext):string{
     (lower?'; '+(lowerMaterial?.englishName||'')+'; '+(lowerFit?.englishName||'')+
       '; '+(lowerState?.englishName?.replace(/_/g,' ')||'')+
       '; color '+(ctx.lowerColor||'as selected')+'; fabric '+(ctx.lowerSurface||'natural'):'')+'.',
+  ...(ctx.phoneOnlyIlluminationMode&&ctx.phoneOnlyIlluminationMode!=='OFF'?[renderPhysicalReality(ctx)]:[]),
   'Real-world illumination choice: '+(light?.id||'natural')+
     '. '+(light?.description||'Only plausible real room light sources.')+'.',
   ...(shot?.mode==='mirror'
