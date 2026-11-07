@@ -48,41 +48,6 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
     if (!upper) {
       errors.push(`Upper garment invalid: ${ctx.upperGarmentId}`)
     } else {
-      // reference_garment_preserved locked
-      if (upper.id === 'reference_garment_preserved') {
-        if (ctx.materialId !== upper.defaultMaterial) {
-          errors.push('reference_garment_preserved cannot change material - locked to observed material')
-        }
-        if (ctx.fitId !== upper.defaultFit) {
-          errors.push('reference_garment_preserved cannot change fit - locked to observed fit')
-        }
-        if (ctx.color !== upper.defaultColor) {
-          errors.push('reference_garment_preserved cannot change color - locked to observed color')
-        }
-        if (ctx.stateId !== upper.defaultState) {
-          errors.push('reference_garment_preserved must be observed_natural_state')
-        }
-        if (ctx.surface !== upper.defaultSurface) {
-          errors.push('reference_garment_preserved cannot change surface - locked')
-        }
-      }
-
-      // Ribbed requires rib_knit
-      if (ctx.surface === 'ribbed' && ctx.materialId !== 'rib_knit') {
-        errors.push('Ribbed surface requires rib_knit material')
-      }
-      if (ctx.lowerGarmentId && ctx.lowerSurface === 'ribbed' && (ctx.lowerMaterialId || garmentRecords.find(g => g.id === ctx.lowerGarmentId)?.defaultMaterial) !== 'rib_knit') {
-        errors.push('Ribbed lower surface requires rib_knit material')
-      }
-
-      // Fitted and oversized not in same garment
-      if ((upper.id === 'oversized_sleep_tshirt' && ctx.fitId === 'fitted') ||
-          (upper.id === 'fitted_stretch_tshirt' && ctx.fitId === 'oversized') ||
-          (upper.defaultFit === 'oversized' && ctx.fitId === 'fitted') ||
-          (upper.defaultFit === 'fitted' && ctx.fitId === 'oversized')) {
-        errors.push('Fitted و Oversized لا يجتمعان في قطعة واحدة')
-      }
-
       // Compatibility of material with garment
       if (upper.allowedMaterials && !upper.allowedMaterials.includes(ctx.materialId) && upper.id !== 'reference_garment_preserved') {
         warnings.push(`Material ${ctx.materialId} may not be compatible with ${upper.id}`)
@@ -118,7 +83,6 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
 
   const lighting = nightLightingPresets.find(p => p.id === (ctx.nightLightingId || 'phone_screen_only'))
   if (!lighting) errors.push('Night lighting preset invalid')
-  if (lighting?.requiresOpenWindow && !ctx.windowUncovered) errors.push('Streetlight requires an uncovered window and open curtains')
 
   if (!poseOptions.some(p=>p.id===(ctx.poseId || 'seated_bed'))) errors.push('Invalid pose geometry')
   if (!faceOptions.some(p=>p.id===(ctx.faceDirectionId || 'toward_camera'))) errors.push('Invalid face direction')
@@ -127,10 +91,6 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
   if (ctx.bedroomShotId) {
     const shot=bedroomShots.find(s=>s.id===ctx.bedroomShotId)
     if (!shot) errors.push('Unknown bedroom shot')
-    if (shot?.requires==='openCurtains' && !ctx.windowUncovered) errors.push('Curtain shadow shot requires uncovered window')
-    if (shot?.requires==='sideLight' && !['bedside_warm','lamp_and_screen','hallway_spill','window_streetlight'].includes(ctx.nightLightingId||'phone_screen_only')) errors.push('Half-lit face requires an actual off-axis source')
-    if (shot?.id==='mirror_rear_flash' && ctx.nightLightingId!=='rear_flash') errors.push('Rear flash mirror shot requires rear_flash lighting')
-    if (shot?.id==='silhouette' && !['bedside_warm','television_screen','sunset_projector'].includes(ctx.nightLightingId||'phone_screen_only')) errors.push('Silhouette needs an actual brighter source behind the subject')
     if (shot?.mode==='mirror' && ctx.nightLightingId==='phone_screen_only') warnings.push('Mirror selfie may be severely underexposed with phone screen only')
   }
 
