@@ -26,7 +26,7 @@ describe('Physical Reality Engine constraint graph',()=>{
   }
  })
  it('indexes all current shot, mirror and lighting option values from actual catalogues',()=>{
-  expect(OPTION_REGISTRY.bedroomShotId.values).toEqual(bedroomShots.map(x=>x.id))
+  expect(OPTION_REGISTRY.bedroomShotId.values).toEqual(['',...bedroomShots.map(x=>x.id)])
   expect(OPTION_REGISTRY.nightLightingId.values).toEqual(nightLightingPresets.map(x=>x.id))
   for(const x of mirrorMovements)expect(OPTION_REGISTRY.mirrorMovementId.values).toContain(x.id)
   for(const x of mirrorDistances)expect(OPTION_REGISTRY.mirrorDistanceId.values).toContain(x.id)
