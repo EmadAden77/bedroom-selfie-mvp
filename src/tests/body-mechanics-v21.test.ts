@@ -4,6 +4,8 @@ import {deriveBodyScene} from '../engine/body-mechanics'
 import {compilePrompt} from '../compiler'
 import {buildSceneSpecification} from '../features/ai-prompt-enhancer/scene-specification'
 import {evaluatePhysicalReality} from '../engine/physical-reality'
+import {bedroomShots,getShotPosture} from '../data/bedroom-shots'
+import {getCanonicalShotPosture} from '../../shared/body-shot-postures'
 import type {CompilationContext} from '../domain/types'
 
 const basic:BodyMechanicalInput={
@@ -197,6 +199,13 @@ describe('Physical Reality Engine V2.1 — deterministic body contacts and mecha
   const x=body({shotId:'edge_shirt_hem',posture:'seated_bed',capture:'front'})
   expect(x.contacts).toContainEqual(expect.objectContaining({actorId:'subject.free_hand',targetId:'selected.shirt_hem'}))
   expect(renderBodyMechanics(x)).toContain('actual selected shirt hem')
+ })
+ it('37 all 98 existing bedroom shot postures share one canonical client/server map',()=>{
+  expect(bedroomShots).toHaveLength(98)
+  for(const shot of bedroomShots){
+   expect(getCanonicalShotPosture(shot.id)).toBe(getShotPosture(shot.id))
+   expect(getCanonicalShotPosture(shot.id)).toBeTruthy()
+  }
  })
  it('32 support input validation rejects malformed enum values',()=>{
   expect(()=>body({supportChoice:'chair' as any})).toThrow('BODY_INPUT_INVALID')
