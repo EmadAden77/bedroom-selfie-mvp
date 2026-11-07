@@ -1,11 +1,16 @@
 import React from 'react'
-import {afterEach,describe,it,expect} from 'vitest'
+import {afterEach,describe,it,expect,vi} from 'vitest'
+import authorityHandler from '../../api/authorize-final-prompt'
 import {cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react'
 import {App} from '../app/App'
 
-afterEach(cleanup)
+afterEach(()=>{cleanup();vi.unstubAllGlobals()})
 describe('App V1 strict-light UI regression',()=>{
  it('preserves stored lamp through strict switching, explicit camera correction and reset',async()=>{
+  vi.stubGlobal('fetch',vi.fn(async(url:string,options:RequestInit)=>{
+   if(url!=='/api/authorize-final-prompt')throw Error('unexpected authority request: '+url)
+   return authorityHandler.fetch(new Request('https://bedroom-selfie-mvp.vercel.app'+url,options))
+  }))
   render(<App/>)
   fireEvent.click(screen.getByRole('button',{name:/المصباح الجانبي الدافئ/}))
   const mode=screen.getByLabelText('وضع إضاءة الهاتف') as HTMLSelectElement
