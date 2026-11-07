@@ -9,6 +9,12 @@ import {evaluateBedding,renderBedding,validBeddingSelection,type BeddingState} f
 import {validateLightingDecision,type LightingDecision} from '../shared/lighting-decision.ts'
 import {EDITORIAL_INSTRUCTIONS,OPENING_LINE_IDS,assembleEditorialPrompt} from '../shared/editorial-contract.ts'
 
+// Compatibility-only export for existing non-Gemini test consumers.
+// It is NEVER included in the model payload; only EDITORIAL_INSTRUCTIONS is sent.
+export {EDITORIAL_INSTRUCTIONS}
+/** @deprecated Legacy name retained for existing callers; not sent to Gemini. */
+export const PHYSICS_ONLY_SYSTEM='CONSTRAINED PROMPT EDITOR: The application already resolved every user choice.'
+
 export const MAX_SCENE_BRIEF_CHARS=12000 // Only used by independent legacy scene-summary consumers.
 export const MAX_SCENE_REQUEST_BYTES=190000
 const MAX_UNITS=96
