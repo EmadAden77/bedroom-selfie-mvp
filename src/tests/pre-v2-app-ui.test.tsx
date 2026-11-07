@@ -30,7 +30,10 @@ describe('App V1 strict-light UI regression',()=>{
   fireEvent.change(mode,{target:{value:'OFF'}})
   expect(screen.getByText(/المصادر الفعالة: bedside/)).toBeTruthy()
   expect(screen.getByText(/الإضاءة المحفوظة: bedside_warm — الإضاءة المستخدمة: bedside_warm/)).toBeTruthy()
-  fireEvent.click(screen.getByRole('button',{name:'اعتماد البرومبت المحلي'}))
+  const localButton=screen.getByRole('button',{name:'اعتماد البرومبت المحلي'}) as HTMLButtonElement
+  console.info('PR4_APP_BUTTON_DIAG',JSON.stringify({disabled:localButton.disabled,alerts:screen.queryAllByRole('alert').map(x=>x.textContent?.slice(0,100))}))
+  fireEvent.click(localButton)
+  await waitFor(()=>expect(fetch).toHaveBeenCalled())
   await waitFor(()=>expect(screen.getByRole('button',{name:'إعادة تعيين الخيارات'})).toBeTruthy())
   fireEvent.click(screen.getByRole('button',{name:'إعادة تعيين الخيارات'}))
   expect((screen.getByLabelText('وضع إضاءة الهاتف') as HTMLSelectElement).value).toBe('OFF')
