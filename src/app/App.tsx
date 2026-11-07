@@ -107,7 +107,7 @@ export const App: React.FC = () => {
           </select>
         </label>
         <p style={{fontSize:12}}>المصادر الفعالة: {physical.emitters.filter(e=>e.enabled).map(e=>e.id).join('، ')||'لا يوجد مصدر محدد'}</p>
-        <p style={{fontSize:11,color:'var(--muted)'}}>الإضاءة المحفوظة: {ctx.nightLightingId} — الإضاءة المستخدمة: {physical.effectiveLightingId}. الانعكاسات ليست مصادر ضوء مستقلة.</p>
+        <p style={{fontSize:11,color:'var(--muted)'}}>الإضاءة المحفوظة: {ctx.nightLightingId||'phone_screen_only'}{physical.mode!=='OFF'&&<strong> (inactive: {physical.mode==='DARK_ROOM_REAR_FLASH_ONLY'?'mirror flash mode':'front screen mode'})</strong>} — الإضاءة المستخدمة: {physical.effectiveLightingId}. الانعكاسات ليست مصادر ضوء مستقلة.</p>
         {physical.issues.map(i=><div key={i.code} role="alert" style={{fontSize:12,color:'var(--error)',marginBottom:8}}>{i.message}
           {i.corrections.map(c=><button type="button" key={c.label} className="option" style={{display:'block',marginTop:6}} onClick={()=>handleContextChange(c.patch)}>{c.label} (بعد موافقتك)</button>)}
         </div>)}
@@ -115,7 +115,7 @@ export const App: React.FC = () => {
       </section>
       <BodyMechanicsSelector ctx={ctxWithImage} onChange={handleContextChange}/>
       <BeddingPhysicsSelector ctx={ctxWithImage} onChange={handleContextChange}/>
-      <NightLightingSelector shotId={ctx.bedroomShotId} selectedId={ctx.nightLightingId || 'phone_screen_only'} windowUncovered={!!ctx.windowUncovered} onSelect={id=>handleContextChange({ nightLightingId:id })} onWindowChange={open=>handleContextChange({ windowUncovered:open })}/>
+      <NightLightingSelector shotId={ctx.bedroomShotId} selectedId={ctx.nightLightingId || 'phone_screen_only'} exclusiveMode={physical.mode} windowUncovered={!!ctx.windowUncovered} onSelect={id=>handleContextChange({ nightLightingId:id })} onWindowChange={open=>handleContextChange({ windowUncovered:open })}/>
       <LightGeometrySelector poseId={ctx.poseId || 'seated_bed'} faceDirectionId={ctx.faceDirectionId || 'toward_camera'} lampSideId={ctx.lampSideId || 'left'} onChange={patch=>handleContextChange(patch)}/>
       <BedroomShotsSelector value={ctx.bedroomShotId || ''} onChange={id=>handleContextChange({bedroomShotId:id})}/>
       <MirrorSelfieSelector ctx={ctxWithImage} onChange={handleContextChange} onShotChange={id=>handleContextChange({bedroomShotId:id})}/>

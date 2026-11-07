@@ -6,6 +6,7 @@
 import {evaluateBodyMechanics,renderBodyMechanics,type BodyMechanicalState} from '../shared/body-mechanics.ts'
 import {getCanonicalShotPosture} from '../shared/body-shot-postures.ts'
 import {evaluateBedding,renderBedding,validBeddingSelection,type BeddingState} from '../shared/bedding-physics.ts'
+import {validateLightingDecision,type LightingDecision} from '../shared/lighting-decision.ts'
 
 export const MAX_SCENE_BRIEF_CHARS=12000 // Only used by independent legacy scene-summary consumers.
 export const MAX_SCENE_REQUEST_BYTES=190000
@@ -17,6 +18,7 @@ type SceneUnit={id:string;text:string;authority:string;immutable:true}
 type SceneSpec={
  version:1
  capture:{mode:SceneMode;shotId:string;posture:string;lighting:string;target:ImagePromptTarget}
+ lighting:LightingDecision
  selections:Record<string,unknown>
  references:{personDeclared:boolean;roomDeclared:boolean;pixelsAvailableToEditor:false;userConfirmedLayout:string[]}
  bodyMechanics:BodyMechanicalState
@@ -80,7 +82,7 @@ function safeOpening(approved:string,edited:string):boolean{
 export function validateSceneSpec(v:unknown):SceneSpec{
  if(!v||typeof v!=='object'||Array.isArray(v))throw Error('SPEC_SCHEMA')
  const s=v as SceneSpec
- if(s.version!==1||!s.capture||!s.references||!s.selections||!Array.isArray(s.derivedUnits)||
+ if(s.version!==1||!s.capture||!s.lighting||!s.references||!s.selections||!Array.isArray(s.derivedUnits)||
   !s.bodyMechanics||!s.beddingPhysics||!Array.isArray(s.mandatoryUnitIds)||!Array.isArray(s.unspecified)||!Array.isArray(s.conflicts)||
   typeof s.opening!=='string'||typeof s.integrity!=='string')throw Error('SPEC_SCHEMA')
  const cap=s.capture
@@ -132,6 +134,8 @@ export function validateSceneSpec(v:unknown):SceneSpec{
  if(cap.lighting==='phone_screen_only'&&cap.mode==='rear')throw Error('SPEC_LIGHT')
  const phoneMode=s.selections.phoneOnlyIlluminationMode||'OFF'
  if(!['OFF','DARK_ROOM_REAR_FLASH_ONLY','DARK_ROOM_FRONT_SCREEN_ONLY'].includes(String(phoneMode)))throw Error('SPEC_PHONE_MODE')
+ // Input validation only: Gemini never resolves lighting decisions.
+ validateLightingDecision(s.lighting,phoneMode,cap.lighting)
  if(phoneMode!=='OFF'){
   if(!ids.includes('physical_reality'))throw Error('SPEC_PHYSICAL_REALITY')
   const expected=phoneMode==='DARK_ROOM_REAR_FLASH_ONLY'?'phone_rear_led':'phone_display'

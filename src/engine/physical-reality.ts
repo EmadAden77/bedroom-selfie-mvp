@@ -1,6 +1,7 @@
 import type {CompilationContext} from '../domain/types'
 import {bedroomShots} from '../data/bedroom-shots'
 import {isLaptopSelfieShot} from '../data/laptop-selfie-physics'
+import {isLightingPresetId} from '../../shared/lighting-decision'
 
 export type PhoneOnlyMode='OFF'|'DARK_ROOM_REAR_FLASH_ONLY'|'DARK_ROOM_FRONT_SCREEN_ONLY'
 export type EmitterId='window'|'ceiling'|'bedside'|'hallway'|'streetlight'|'laptop'|'television'|'decorative_led'|'projector'|'phone_rear_led'|'phone_display'|'ambient_leakage'
@@ -42,6 +43,9 @@ export function evaluatePhysicalReality(ctx:CompilationContext):PhysicalReality{
  const lighting=ctx.nightLightingId||'phone_screen_only'
  const issues:PhysicalIssue[]=[]
  const warnings:string[]=[]
+ // A malformed saved preference must not disappear behind the exclusive-mode override.
+ if(ctx.nightLightingId&&!isLightingPresetId(ctx.nightLightingId))
+  issues.push(issue('UNKNOWN_LIGHTING_PREFERENCE','تفضيل الإضاءة المحفوظ غير معروف؛ لا يمكن اعتماد المشهد.'))
  if(!['OFF','DARK_ROOM_REAR_FLASH_ONLY','DARK_ROOM_FRONT_SCREEN_ONLY'].includes(mode))
   issues.push(issue('INVALID_PHONE_MODE','وضع إضاءة الهاتف غير معروف.'))
  if(mode==='DARK_ROOM_REAR_FLASH_ONLY'&&(camera!=='mirror'||ctx.bedroomShotId!=='mirror_rear_flash'))
@@ -76,6 +80,8 @@ export function evaluatePhysicalReality(ctx:CompilationContext):PhysicalReality{
 /** Derived effective context: original user selections and stored lighting remain unchanged. */
 export function effectivePhysicalContext(ctx:CompilationContext):CompilationContext{
  const result=evaluatePhysicalReality(ctx)
+ // Keep an unknown original ID visible to the compiler's existing invalid-preset guard.
+ if(ctx.nightLightingId&&!isLightingPresetId(ctx.nightLightingId))return {...ctx}
  return {...ctx,nightLightingId:result.effectiveLightingId}
 }
 export function renderPhysicalReality(ctx:CompilationContext):string{
