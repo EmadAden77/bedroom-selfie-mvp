@@ -60,3 +60,21 @@ All 15 wardrobe-mirror shots now share the same deterministic optical and mechan
 Crucially, the floor-seated selfie has real pelvis support on the rug/floor, the bed-edge selfie compresses the mattress at actual pressure points, and standing shots rely on feet on the floor. Mirror distance presets no longer force a seated person to stand. The originally described approximately 3 m bed and 5 m sofa cues do **not** move reference furniture or override real reflected field of view; a cropped scene may simply omit distant features. The separate original dresser mirror is not a second recording surface. The rear LED stays off unless flash was explicitly selected; screen-only shots can remain underexposed rather than being automatically filled by fictional light.
 
 These are *prompt and selection consistency* rules, not a geometric ray tracer or visual image proof. Gemini's prompt-writing route does not receive the original photo pixels and actual generated results still need visual review against the photo references. No software prompt can guarantee realism in every generated pixel or defeat image provenance/detection systems.
+
+
+## IMAGE PROMPT AUDITOR & PHOTOGRAPHIC REALISM ENGINE · v8
+
+The **🔬 IMAGE PROMPT AUDITOR — v8** section follows Gemini and Ghalyon. It performs a separate opt-in, **text-only** audit before any image generation; it does not replace or secretly modify the main writer, Ghalyon, or the independent local compiler.
+
+**Workflow:** select current scene and room-state options, generate a prompt using Gemini/local/Ghalyon if desired, and click **تدقيق وإصلاح البرومبت — v8**. You can paste a different source prompt or leave the field empty to audit the current result or selected scene. The ChatGPT Images-targeted result contains:
+1. Up to 5 concise Arabic repair notes identifying *textual* contradictions, their physical causes and specific corrections (can be empty when no conflict is established).
+2. One or two lines in Arabic explaining the scene, camera profile and material/dirt assumptions.
+3. One self-contained English image prompt (maximum 500 words), displayed as a code block; copy or adopt it for the existing Photo Result Audit.
+
+Select **البرومبت فقط** to show only section C; deselect **الصورة تخصني** when auditing another person's portrait to ensure the local personal body-size defaults are never transferred to them.
+
+**Audit order (L1–L10):** scene intent/reference scope; face, hair and body identity; anatomy and support mechanics; mutually exclusive front/mirror/supported camera profiles; light transport and corneal reflections; one physically coherent camera pipeline; skin/textile/material optics; causal dirt, surface wear and physical disorder; selective room-specific details; final conflict, crop and visibility check.
+
+**Privacy and implementation:** `/api/audit-image-prompt` is a standalone Vercel text-only Gemini API function with origin/content-type/byte/rate checks and structured output validation. The function receives the prompt text, selected scene description, camera mode, light selection, and only booleans indicating whether face and room references were provided. It **does not** receive image pixels or claim to have inspected them. The user's own 193 cm / 83 kg body defaults are conditional on explicit own-portrait selection. The portrait and bedroom references outrank generic defaults; user-selected `roomPhysicalState` and fixed mirror/hand/lighting physics remain authoritative. A model reply exceeding 500 words or failing the A/B/C schema is rejected rather than silently treated as validated.
+
+Text auditing cannot verify photographic pixels, guarantee identity, or guarantee an AI image is unrecognizable as generated. Use the existing post-generation image audit to evaluate the actual image separately.
