@@ -8,14 +8,14 @@ import {
  buildSceneSpecification,validateConstrainedEditorReply,MAX_SCENE_SPEC_REQUEST_BYTES
 } from './scene-specification'
 
-type Props={ctx:CompilationContext;result:CompilationResult;validation:ValidationResult;onReset:()=>void;onPromptReady:(prompt:string)=>void}
+type Props={ctx:CompilationContext;result:CompilationResult;validation:ValidationResult;onReset:()=>void;onPromptReady:(prompt:string)=>void;onAdvisoryReady:(draft:string)=>void}
 type MainReply={
  prompt?:string;source?:string;model?:string;error?:string;errorCode?:string
  sectionOrder?:string[];openingLineSelection?:'canonical'|'concise';integrity?:string;promptDigest?:string;sectionCount?:number;protectedUnitDigests?:{id:string;digest:string}[]
  validated?:boolean
 }
 
-export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,onPromptReady})=>{
+export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,onPromptReady,onAdvisoryReady})=>{
  const [generated,setGenerated]=useState('')
  const [auditorSource,setAuditorSource]=useState('')
  const [engine,setEngine]=useState<'gemini'|'local'|''>('')
@@ -43,7 +43,8 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
   requestRef.current=null
   setGenerated('');setAuditorSource('');setEngine('');setError('');setLoading(false);setCopied(false)
   onPromptReady('')
- },[spec.integrity,prompt,sceneBrief,ctx.promptTarget,onPromptReady])
+  onAdvisoryReady('')
+ },[spec.integrity,prompt,sceneBrief,ctx.promptTarget,onPromptReady,onAdvisoryReady])
  useEffect(()=>()=>{requestVersion.current++;requestRef.current?.abort()},[])
 
  function acceptLocal(reason=''){
@@ -127,7 +128,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
     <button type="button" className="btn btn-secondary" onClick={onReset}>إعادة تعيين الخيارات</button>
    </div>
   </div>}
-  <GhalyonPromptOptimizer sourcePrompt={generated} scenePrompt={sceneBrief} phoneOnlyMode={ctx.phoneOnlyIlluminationMode||'OFF'} initialTarget={ctx.promptTarget==='chatgpt'?'chatgpt':'gemini'} onPromptReady={text=>{setAuditorSource(text);onPromptReady(text)}}/>
-  <ImagePromptAuditorV8 ctx={ctx} sourcePrompt={auditorSource||generated} sceneBrief={sceneBrief} onPromptReady={onPromptReady}/>
+  <GhalyonPromptOptimizer sourcePrompt={generated} scenePrompt={sceneBrief} phoneOnlyMode={ctx.phoneOnlyIlluminationMode||'OFF'} initialTarget={ctx.promptTarget==='chatgpt'?'chatgpt':'gemini'} onAdvisoryReady={text=>{setAuditorSource(text);onAdvisoryReady(text)}}/>
+  <ImagePromptAuditorV8 ctx={ctx} sourcePrompt={auditorSource||generated} sceneBrief={sceneBrief} onAdvisoryReady={onAdvisoryReady}/>
  </section>
 }
