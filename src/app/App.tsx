@@ -107,7 +107,7 @@ export const App: React.FC = () => {
         {physical.warnings.map(w=><p key={w} style={{fontSize:11,color:'var(--muted)'}}>{w}</p>)}
       </section>
       <NightLightingSelector shotId={ctx.bedroomShotId} selectedId={ctx.nightLightingId || 'phone_screen_only'} windowUncovered={!!ctx.windowUncovered} onSelect={id=>handleContextChange({ nightLightingId:id })} onWindowChange={open=>handleContextChange({ windowUncovered:open })}/>
-      <LightGeometrySelector poseId={ctx.poseId || 'seated_bed'} faceDirectionId={ctx.faceDirectionId || 'toward_camera'} lampSideId={ctx.lampSideId || 'left'} onChange={patch=>handleContextChange({ ...patch, ...(patch.poseId ? {bedroomShotId:''} : {}) })}/>
+      <LightGeometrySelector poseId={ctx.poseId || 'seated_bed'} faceDirectionId={ctx.faceDirectionId || 'toward_camera'} lampSideId={ctx.lampSideId || 'left'} onChange={patch=>handleContextChange(patch)}/>
       <BedroomShotsSelector value={ctx.bedroomShotId || ''} onChange={id=>handleContextChange({bedroomShotId:id})}/>
       <MirrorSelfieSelector ctx={ctxWithImage} onChange={handleContextChange} onShotChange={id=>handleContextChange({bedroomShotId:id})}/>
       <div className="card">
@@ -124,7 +124,7 @@ export const App: React.FC = () => {
             onClick={()=>handleContextChange({promptTarget:id})}>{label}</button>)}
         </div>
         <div style={{fontSize:'11px',color:'var(--muted)',marginTop:'8px',lineHeight:1.7}}>
-          Gemini هو كاتب البرومبت المستقل في كل الحالات. يختار تفاصيل اللقطة بحرية وفق إعداداتك، بشرط أن تكون الإضاءة والكاميرا والحركة والتلامس واقعية فيزيائيًا وميكانيكيًا.
+          Gemini محرر لغوي مقيد فقط. كل تفاصيل اللقطة والفيزياء والكاميرا والإضاءة تأتي من اختياراتك والمحرك المحلي.
           لا تُضاف معاملات Midjourney مثل --ar دون اختيارها بشكل صريح.
         </div>
       </div>
