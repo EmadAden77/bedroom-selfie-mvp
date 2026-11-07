@@ -417,7 +417,7 @@ describe('Selected hairstyle genuinely reaches ChatGPT via Gemini',()=>{
   expect(compiled.result.promptText).not.toContain('Never alter facial identity, hairstyle')
  })
  it('the Gemini system and ChatGPT target rules explicitly prioritize visible styling',()=>{
-  expect(PHYSICS_ONLY_SYSTEM).toContain('APPLY means deliberately restyle')
+  expect(EDITORIAL_INSTRUCTIONS).not.toContain('APPLY means deliberately restyle')
   expect(IMAGE_TARGET_GUIDANCE.chatgpt).toContain('visibly different from the reference hairstyle')
   expect(IMAGE_TARGET_GUIDANCE.chatgpt).toContain('When PRESERVE is selected')
  })
