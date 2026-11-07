@@ -61,6 +61,7 @@ describe('Physical Reality Engine V2.2 — causal bedding',()=>{
  it('10 hugging a pillow produces only hand-related pillow compression',()=>{
   const s=bedding({shotId:'hug_pillow'})
   expect(s.responses.filter(r=>r.targetId==='bed.pillow').map(r=>r.region)).toEqual(['hand'])
+  expect(s.contacts.some(c=>c.actorId==='bed.pillow'&&c.targetId==='bed.mattress')).toBe(false)
  })
  it('11 an untouched but confirmed pillow has no fabricated compression',()=>{
   const s=bedding({shotId:'bed_edge'}, {sheet:'reference',pillow:'confirmed',blanket:'reference'})
@@ -174,6 +175,11 @@ describe('Physical Reality Engine V2.2 — causal bedding',()=>{
   for(const shot of ['blanket_half_face','duvet_draw_below_knees']){
    expect(errors(bedding({shotId:shot},{sheet:'reference',pillow:'reference',blanket:'spread_on_bed'}))).toContain('BEDDING_COVERAGE_CONFLICT')
   }
+ })
+ it('34 an independently held pillow does not acquire a guessed mattress anchor',()=>{
+  const s=bedding({shotId:'hug_pillow'}, {sheet:'reference',pillow:'confirmed',blanket:'reference'})
+  expect(s.contacts.some(c=>c.actorId==='bed.pillow'&&c.targetId==='bed.mattress')).toBe(false)
+  expect(s.unknowns).toContain('PILLOW_SUPPORT_ANCHOR_NOT_CONFIRMED')
  })
  it('31 strict V1 screen-only remains unchanged by bedding derivation',()=>{
   const c={...ctx,phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY' as const}
