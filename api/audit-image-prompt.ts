@@ -16,7 +16,7 @@ export type AuditV8Reply={
 }
 export const MAX_AUDIT_PROMPT_CHARS=14000
 export const MAX_AUDIT_BRIEF_CHARS=12000
-export const MAX_AUDIT_REQUEST_BYTES=48000
+export const MAX_AUDIT_REQUEST_BYTES=112000
 export const MAX_FINAL_WORDS=500
 
 /** Scene-specific hard constraints plus causally grounded material effects. */
