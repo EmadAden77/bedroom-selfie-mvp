@@ -1,6 +1,7 @@
 import type {CompilationContext,CompilationResult,ValidationResult} from '../../domain/types'
 import {bedroomShots,getShotPosture} from '../../data/bedroom-shots'
 import {buildNaturalSceneDirection} from './natural-scene-director'
+import {MAX_SCENE_REQUEST_BYTES} from './scene-request-limits'
 
 export type SceneCapture={mode:'front'|'mirror'|'rear'|'timer';shotId:string;posture:string;lighting:string;target:'gemini'|'chatgpt'|'flux'|'midjourney'}
 export type SceneUnit={id:string;text:string;authority:'user_selection'|'reference_scope'|'local_physics';immutable:true}
@@ -31,7 +32,7 @@ export type ConstrainedEditorReply={
  source:'gemini-editor'
  editorStyle:'spaced'|'compact'
 }
-export const MAX_SCENE_SPEC_REQUEST_BYTES=190000
+export const MAX_SCENE_SPEC_REQUEST_BYTES=MAX_SCENE_REQUEST_BYTES
 
 /** FNV-1a is a deterministic consistency fingerprint, NOT an authentication signature. */
 export function sceneFingerprint(spec:Omit<SceneSpecification,'integrity'>):string{
