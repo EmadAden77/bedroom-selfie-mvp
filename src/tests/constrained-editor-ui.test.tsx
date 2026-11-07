@@ -73,7 +73,7 @@ describe('Gemini constrained editor UI and local fallback',()=>{
   const {onPromptReady,local}=renderPage()
   fireEvent.click(screen.getByRole('button',{name:'النسخة المحلية الاحتياطية'}))
   expect(local.result.promptText).toContain('MIRROR OPTICS AND BIOMECHANICS CONTRACT')
-  expect(screen.getByText(/البرومبت المحلي المعتمد/)).toBeTruthy()
+  expect(screen.getByText(/✓ البرومبت المحلي المعتمد/)).toBeTruthy()
   expect(onPromptReady).toHaveBeenCalledWith(local.result.promptText)
  })
  it('blocks editor and local export for a contradictory selected flash and camera setup',()=>{
