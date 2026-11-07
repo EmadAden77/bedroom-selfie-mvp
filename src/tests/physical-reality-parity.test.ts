@@ -1,5 +1,6 @@
 // @vitest-environment node
-import {describe,it,expect} from 'vitest'
+import {describe,it,expect,vi,afterEach} from 'vitest'
+afterEach(()=>vi.unstubAllEnvs())
 import {captureLightingIssuesCore,inspectSharedScene} from '../../shared/physical-reality-core.mjs'
 import {captureLightingIssues} from '../data/scene-consistency'
 import {bedroomShots} from '../data/bedroom-shots'
@@ -24,6 +25,30 @@ describe('Physical reality portable runtime contract',()=>{
    const ctx={bedroomShotId:shot.id,nightLightingId:light.id}
    expect(captureLightingIssuesCore(shot.id,shot.mode,light.id)).toEqual(captureLightingIssues(ctx))
   }
+ })
+ it('returns identical structured CONFLICT, WARNING and UNKNOWN outcomes for all shot and lighting combinations',()=>{
+  for(const shot of bedroomShots)for(const preset of nightLightingPresets){
+   const ctx={...base,bedroomShotId:shot.id,nightLightingId:preset.id}
+   expect(evaluatePhysicalReality(ctx).findings).toEqual(inspectSharedScene(toSharedScene(ctx)))
+  }
+  const mirror={...base,bedroomShotId:'mirror_wardrobe',poseId:'seated_bed',roomReferencePresent:false,referenceImagePresent:false}
+  const findings=inspectSharedScene(toSharedScene(mirror))
+  expect(findings.some(f=>f.status==='WARNING'&&f.id==='shot-posture')).toBe(true)
+  expect(findings.some(f=>f.status==='UNKNOWN'&&f.id==='mirror-reference')).toBe(true)
+  expect(evaluatePhysicalReality(mirror).findings).toEqual(findings)
+ })
+ it('accepts UNKNOWN evidence in the server preflight instead of treating it as a conflict',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','')
+  const ctx={...base,referenceImagePresent:false,roomReferencePresent:false}
+  const compiled=compilePrompt(ctx)
+  expect(compiled.validation.isValid).toBe(true)
+  const spec=buildSceneSpecification(ctx,compiled.result,compiled.validation)
+  expect(inspectSharedScene(spec.physicalScene).some(f=>f.status==='UNKNOWN')).toBe(true)
+  const response=await geminiHandler.fetch(new Request('https://bedroom-selfie-mvp.vercel.app/api/generate-main-prompt',{
+   method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sceneSpecification:spec})
+  }))
+  expect(response.status).toBe(503)
+  expect((await response.json() as {errorCode:string}).errorCode).toBe('GEMINI_NOT_CONFIGURED')
  })
  it('reuses identical clothing, mirror and room findings in local engine and the portable core',()=>{
   const scenes:CompilationContext[]=[
