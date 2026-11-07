@@ -178,6 +178,26 @@ describe('Physical Reality Engine V2.1 — deterministic body contacts and mecha
   expect(spec.derivedUnits.find(u=>u.id==='body_mechanics_v21')?.text).toBe(renderBodyMechanics(spec.bodyMechanics))
   expect(spec.mandatoryUnitIds).toContain('body_mechanics_v21')
  })
+ it('33 pillow supported under a free forearm never invents head contact',()=>{
+  const x=body({shotId:'side_pillow_under_arm',posture:'side_lying_right',capture:'front'})
+  expect(x.contacts).toContainEqual(expect.objectContaining({actorId:'subject.free_forearm',targetId:'bed.pillow',cause:'selected_pillow_forearm_contact'}))
+  expect(x.contacts.some(c=>c.actorId==='subject.head_or_back'&&c.targetId==='bed.pillow')).toBe(false)
+  expect(x.deformations.find(d=>d.targetId==='bed.pillow')?.region).toBe('forearm_contact')
+ })
+ it('34 free hand pillow grip is a shot-derived contact, not a second phone grip',()=>{
+  const x=body({shotId:'hug_pillow',posture:'seated_bed',capture:'front'})
+  expect(x.contacts.some(c=>c.actorId==='subject.free_hand'&&c.targetId==='bed.pillow'&&c.contactType==='grip')).toBe(true)
+  expect(x.contacts.filter(c=>c.targetId==='phone'&&c.contactType==='grip')).toHaveLength(1)
+ })
+ it('35 explicit idle free-hand choice conflicting with pillow-hug action is invalid',()=>{
+  const x=body({shotId:'hug_pillow',posture:'seated_bed',capture:'front',freeHandTask:'free'})
+  expect(errorCodes(x)).toContain('BODY_FREE_HAND_TASK_CONFLICT')
+ })
+ it('36 free hand contacts selected clothing without replacing the garment',()=>{
+  const x=body({shotId:'edge_shirt_hem',posture:'seated_bed',capture:'front'})
+  expect(x.contacts).toContainEqual(expect.objectContaining({actorId:'subject.free_hand',targetId:'selected.shirt_hem'}))
+  expect(renderBodyMechanics(x)).toContain('actually selected shirt hem')
+ })
  it('32 support input validation rejects malformed enum values',()=>{
   expect(()=>body({supportChoice:'chair' as any})).toThrow('BODY_INPUT_INVALID')
  })
