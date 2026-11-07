@@ -267,3 +267,28 @@ export const garmentRecords: GarmentRecord[] = [
     compatibleMaterials: ['lightweight_cotton_appearance_jersey']
   }
 ]
+
+/** Shared palette and surface choices used by UI and physical constraints.
+ * Color text inputs remain open to custom values.
+ */
+export const clothingColors=[
+ {id:'white',label:'أبيض',hex:'#FFFFFF'},
+ {id:'black',label:'أسود',hex:'#161616'},
+ {id:'charcoal',label:'فحمي',hex:'#393B3D'},
+ {id:'dark_gray',label:'رمادي غامق',hex:'#595D63'},
+ {id:'light_gray',label:'رمادي فاتح',hex:'#B5B9BE'},
+ {id:'navy',label:'كحلي',hex:'#1D3152'},
+ {id:'beige',label:'بيج',hex:'#D2BD9D'},
+ {id:'olive',label:'زيتي',hex:'#667044'},
+ {id:'brown',label:'بني',hex:'#755440'},
+ {id:'burgundy',label:'عنابي',hex:'#692F3C'},
+ {id:'blue',label:'أزرق',hex:'#447AA5'},
+ {id:'cream',label:'كريمي',hex:'#F3E6CE'}
+] as const
+export const garmentSurfaceChoices=[
+ {id:'solid',label:'سادة - solid'},
+ {id:'subtle heathered',label:'ممزوج خفيف'},
+ {id:'ribbed',label:'مضلع - ribbed (يتطلب rib_knit فقط)'},
+ {id:'subtle weave',label:'نسج خفيف'},
+ {id:'apparent knit-like surface character',label:'ملمس محاك كمرجع'}
+] as const
