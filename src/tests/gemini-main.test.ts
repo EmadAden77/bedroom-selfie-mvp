@@ -294,7 +294,7 @@ describe('Vercel standalone constrained editor',()=>{
   const spec=getSpec()
   expect(assembleConstrainedPrompt(JSON.stringify(editorReply(spec)),spec).prompt).toContain('MIRROR CAPTURE:')
   expect(()=>assembleConstrainedPrompt(JSON.stringify(editorReply(spec,{opening:spec.opening+' New window'})),spec)).toThrow('EDITOR_EXTRA_FIELDS')
-  expect(assembleConstrainedPrompt(JSON.stringify(editorReply(spec,{openingLineSelection:'concise'})),spec).prompt).toMatch(/^Everyday bedroom photograph\\./)
+  expect(assembleConstrainedPrompt(JSON.stringify(editorReply(spec,{openingLineSelection:'concise'})),spec).prompt.startsWith('Everyday bedroom photograph.')).toBe(true)
   expect(sceneFingerprint((({integrity,...rest})=>rest)(spec))).toBe(spec.integrity)
  })
  it('maintains immutable shot posture and furniture anchors between mirror views',()=>{
