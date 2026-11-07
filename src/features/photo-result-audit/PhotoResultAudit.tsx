@@ -4,8 +4,8 @@ import { makeAuditCorrection } from './correction'
 import type { CompilationContext } from '../../domain/types'
 import { formatAuditFeedback, getAuditCriteria, summarizeAudit, type AuditRatings, type AuditStatus } from './audit'
 
-type Props = { ctx: CompilationContext; originalPrompt: string; subjectReferenceUrl?: string; roomReferenceUrl?: string }
-export const PhotoResultAudit: React.FC<Props> = ({ ctx, originalPrompt, subjectReferenceUrl, roomReferenceUrl }) => {
+type Props = { ctx: CompilationContext; originalPrompt: string; advisoryReviewPrompt?: string; subjectReferenceUrl?: string; roomReferenceUrl?: string }
+export const PhotoResultAudit: React.FC<Props> = ({ ctx, originalPrompt, advisoryReviewPrompt='', subjectReferenceUrl, roomReferenceUrl }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [ratings, setRatings] = useState<AuditRatings>({})
   const [notes, setNotes] = useState('')
@@ -47,6 +47,11 @@ export const PhotoResultAudit: React.FC<Props> = ({ ctx, originalPrompt, subject
       <div style={{fontSize:'12px',color:'var(--muted)',marginBottom:'10px'}}>
         ارفع الصورة الناتجة. تستطيع تحليلها عبر Gemini بعد موافقة صريحة، أو مراجعتها يدويًا محليًا دون إرسالها.
       </div>
+      {advisoryReviewPrompt.trim()&&<details aria-label="نص استشاري لمراجعة الصورة" style={{margin:'10px 0',fontSize:12}}>
+       <summary style={{cursor:'pointer',fontWeight:700}}>Advisory Output — Non-Authoritative</summary>
+       <p style={{color:'var(--muted)'}}>هذا اقتراح للمراجعة فقط. لا يحلّ محل البرومبت الأصلي المعتمد المستخدم لتدقيق الصورة.</p>
+       <pre className="preview-box" dir="ltr" style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere',maxHeight:220,overflowY:'auto'}}>{advisoryReviewPrompt}</pre>
+      </details>}
       <label style={{fontSize:'12px',display:'block',marginBottom:'8px'}}>
         الصورة الناتجة (JPG / PNG / WebP)
         <input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>onImage(e.target.files?.[0])} style={{display:'block',marginTop:'6px',maxWidth:'100%'}}/>
