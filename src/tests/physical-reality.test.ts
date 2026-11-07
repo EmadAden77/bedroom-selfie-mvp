@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest'
 import type {CompilationContext} from '../domain/types'
-import {OPTION_REGISTRY,affectedFields,evaluatePhysicalReality,missingRegistrations} from '../engine/physical-reality'
+import {OPTION_REGISTRY,affectedFields,evaluatePhysicalReality,includeCompilerFindings,missingRegistrations} from '../engine/physical-reality'
 import {compilePrompt} from '../compiler'
 import {bedroomShots} from '../data/bedroom-shots'
 import {nightLightingPresets} from '../data/night-lighting'
@@ -73,6 +73,15 @@ describe('Physical Reality Engine constraint graph',()=>{
   const result=evaluatePhysicalReality(ctx,['promptTarget'])
   expect(result.evaluatedRules).toEqual([])
   expect(JSON.stringify(ctx)).toBe(before)
+ })
+ it('includes legacy compiler blockers in live physical diagnostics without rewriting selections',()=>{
+  const ctx={...base,color:'invented emerald'}
+  const validation=compilePrompt(ctx).validation
+  expect(validation.isValid).toBe(false)
+  const diagnostics=includeCompilerFindings(evaluatePhysicalReality(ctx),validation)
+  expect(diagnostics.status).toBe('CONFLICT')
+  expect(diagnostics.findings.some(f=>f.category==='clothing'&&f.status==='CONFLICT')).toBe(true)
+  expect(ctx.color).toBe('invented emerald')
  })
  it('preserves error-on-conflict behavior through sequential changes',()=>{
   const steps:CompilationContext[]=[
