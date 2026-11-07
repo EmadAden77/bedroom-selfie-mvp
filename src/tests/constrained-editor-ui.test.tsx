@@ -70,6 +70,19 @@ describe('Main Gemini constrained prompt editor interface',()=>{
   expect(onPromptReady).toHaveBeenCalledWith(result.promptText)
   expect(screen.getAllByRole('alert').some(x=>x.textContent?.includes('GEMINI_EDITOR_REJECTED'))).toBe(true)
  })
+ it('reports serverless HTML 500 as a server failure and preserves the local validated prompt',async()=>{
+  const {result,validation}=build()
+  const onPromptReady=vi.fn()
+  vi.stubGlobal('fetch',vi.fn(async()=>new Response('<html>FUNCTION_INVOCATION_FAILED</html>',{
+   status:500,headers:{'content-type':'text/html; charset=utf-8'}
+  })))
+  render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady}/>)
+  fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
+  await waitFor(()=>expect(screen.getByText(/البرومبت المحلي — دون اعتماد تحرير Gemini/)).toBeTruthy())
+  expect(screen.getAllByRole('alert').some(x=>x.textContent?.includes('HTTP 500'))).toBe(true)
+  expect(onPromptReady).toHaveBeenCalledWith(result.promptText)
+  expect(onPromptReady).not.toHaveBeenCalledWith(expect.stringContaining('FUNCTION_INVOCATION_FAILED'))
+ })
  it('blocks Gemini entirely when local physics is invalid, but preserves independent tools',()=>{
   const {result,validation}=build()
   const invalid={...validation,isValid:false,errors:['Impossible camera and lighting']}
