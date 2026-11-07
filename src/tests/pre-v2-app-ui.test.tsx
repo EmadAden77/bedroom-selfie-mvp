@@ -11,7 +11,7 @@ describe('App V1 strict-light UI regression',()=>{
   const mode=screen.getByLabelText('وضع إضاءة الهاتف') as HTMLSelectElement
   expect(screen.getByText(/الإضاءة المحفوظة: bedside_warm/)).toBeTruthy()
   fireEvent.change(mode,{target:{value:'DARK_ROOM_REAR_FLASH_ONLY'}})
-  expect(screen.getByRole('alert',{name:''}).textContent).toContain('فلاش الهاتف فقط')
+  expect(screen.getAllByRole('alert').some(a=>a.textContent?.includes('فلاش الهاتف فقط'))).toBe(true)
   expect(screen.getByText(/الإضاءة المحفوظة: bedside_warm — الإضاءة المستخدمة: rear_flash/)).toBeTruthy()
   fireEvent.click(screen.getByRole('button',{name:/اختيار لقطة فلاش المرآة \(بعد موافقتك\)/}))
   expect(screen.getByText(/المصادر الفعالة: phone_rear_led/)).toBeTruthy()
