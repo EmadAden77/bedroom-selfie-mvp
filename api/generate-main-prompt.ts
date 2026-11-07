@@ -7,7 +7,7 @@ import {evaluateBodyMechanics,renderBodyMechanics,type BodyMechanicalState} from
 import {getCanonicalShotPosture} from '../shared/body-shot-postures.ts'
 import {evaluateBedding,renderBedding,validBeddingSelection,type BeddingState} from '../shared/bedding-physics.ts'
 import {validateLightingDecision,type LightingDecision} from '../shared/lighting-decision.ts'
-import {EDITORIAL_INSTRUCTIONS,OPENING_LINE_IDS,assembleEditorialPrompt} from '../shared/editorial-contract.ts'
+import {EDITORIAL_INSTRUCTIONS,OPENING_LINE_IDS,assembleEditorialPrompt,digestEditorialText} from '../shared/editorial-contract.ts'
 
 // Compatibility-only export for existing non-Gemini test consumers.
 // It is NEVER included in the model payload; only EDITORIAL_INSTRUCTIONS is sent.
@@ -276,7 +276,13 @@ export default {
     const reason=error instanceof Error&&/^EDITOR_[A-Z_]+$/.test(error.message)?error.message:'GEMINI_EDITOR_REJECTED'
     return fail(reason,'نتيجة Gemini غير مطابقة لعقد التحرير ('+reason+'). لم تُعتمد.',422)
    }
-   return json({...output,validated:true,model})
+   // Integrity claims are computed by the trusted server, never by Gemini.
+   const promptDigest=await digestEditorialText(output.prompt)
+   const protectedUnitDigests=await Promise.all(spec.derivedUnits.map(async unit=>({
+    id:unit.id,digest:await digestEditorialText(unit.text)
+   })))
+   return json({...output,promptDigest,sectionCount:spec.derivedUnits.length,
+    protectedUnitDigests,validated:true,model})
   }catch(error){
    const timeout=(error as Error)?.name==='TimeoutError'||(error as Error)?.name==='AbortError'
    console.warn('[Gemini constrained editor] request failure',timeout?'TIMEOUT':'NETWORK')
