@@ -63,6 +63,7 @@ export const App: React.FC = () => {
   const { meta, error: imageError, loading: imageLoading, handleFile, removeImage } = useReferenceImage()
   const [ctx, setCtx] = useState<CompilationContext>(defaultContext)
   const [activeGeneratedPrompt, setActiveGeneratedPrompt] = useState('')
+  const [advisoryReviewPrompt, setAdvisoryReviewPrompt] = useState('')
   const room = useReferenceImage()
 
   const ctxWithImage = useMemo(() => ({
@@ -83,6 +84,7 @@ export const App: React.FC = () => {
   const handleReset = useCallback(() => {
     setCtx(defaultContext)
     setActiveGeneratedPrompt('')
+    setAdvisoryReviewPrompt('')
     removeImage()
     room.removeImage()
   }, [removeImage, room.removeImage])
@@ -138,8 +140,8 @@ export const App: React.FC = () => {
         </div>
       </div>
       <RealismIntensitySelector value={ctx.realismIntensity || 'natural'} onChange={value=>handleContextChange({realismIntensity:value})}/>
-      <AiPromptEnhancer ctx={ctxWithImage} result={result} validation={validation} onReset={handleReset} onPromptReady={setActiveGeneratedPrompt} />
-      <PhotoResultAudit ctx={ctxWithImage} originalPrompt={activeGeneratedPrompt || result.promptText} subjectReferenceUrl={meta?.objectUrl} roomReferenceUrl={room.meta?.objectUrl} />
+      <AiPromptEnhancer ctx={ctxWithImage} result={result} validation={validation} onReset={handleReset} onPromptReady={setActiveGeneratedPrompt} onAdvisoryReady={setAdvisoryReviewPrompt} />
+      <PhotoResultAudit ctx={ctxWithImage} originalPrompt={activeGeneratedPrompt || result.promptText} advisoryReviewPrompt={advisoryReviewPrompt} subjectReferenceUrl={meta?.objectUrl} roomReferenceUrl={room.meta?.objectUrl} />
       <footer style={{fontSize:'10px', color:'var(--muted)', textAlign:'center', padding:'20px 0', borderTop:'1px solid var(--border)', marginTop:'20px'}} className="ltr">
         <div>PHYSICAL CLOTHING SYSTEM = APPROVED AND FROZEN</div>
         <div>Gemini independent creative writer + separate optional local fallback; physical and optical plausibility validated</div>
