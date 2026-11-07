@@ -64,7 +64,7 @@ export function evaluatePhysicalReality(ctx:CompilationContext):PhysicalReality{
   'Only the phone display emits light during a front-camera capture; the rear LED is switched off.',
   'Display emission travels outward from the actual screen toward the face. Orientation, brightness, distance and occlusion govern close-range soft light and eye reflections.',
   'Light diminishes rapidly down the neck and torso. Distant room surfaces stay dark unless reached by actual display emission and reflections from existing surfaces.',
-  'Limited exposure, sensor grain and subdued highlights follow weak display illumination; no hidden ambient, ring light, studio source or bright background.'
+  'Limited exposure, sensor grain and subdued highlights follow weak display illumination; no hidden ambient, ring light, studio source and bright background.'
  ]:[
   'Illumination is attributable only to enabled physical emitters and reflections from existing surfaces.',
   'Surface brightness, cast shadows, occlusion, specular response and exposure depend on real placement and material; do not add an independent fill emitter.'
@@ -81,5 +81,5 @@ export function renderPhysicalReality(ctx:CompilationContext):string{
  const state=evaluatePhysicalReality(ctx)
  const on=state.emitters.filter(e=>e.enabled)
  return ['PHYSICAL REALITY ENGINE V1:', 'Active physical emitters: '+on.map(e=>e.id+' at '+e.origin).join(', ')+'.',
-  ...state.effects, 'No exact ray tracing, force values, geometry measurements, or unseen furniture are asserted.'].join(' ')
+  ...state.effects, 'No exact ray tracing, force values, geometry measurements and unseen furniture are asserted.'].join(' ')
 }
