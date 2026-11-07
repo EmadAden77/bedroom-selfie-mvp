@@ -82,6 +82,27 @@ describe('Vercel standalone constrained editor',()=>{
   expect(outgoing.systemInstruction.parts[0].text).toContain(PHYSICS_ONLY_SYSTEM)
   expect(JSON.stringify(outgoing)).not.toContain('inlineData')
  })
+ it('checks phone-only capture and emitter contract on the server before calling Gemini',async()=>{
+  const ctx={...base,bedroomShotId:'mirror_rear_flash',phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY' as const}
+  const spec=getSpec(ctx)
+  vi.stubEnv('GEMINI_API_KEY','fake-key')
+  const providerCall=vi.fn(async()=>provider(spec))
+  vi.stubGlobal('fetch',providerCall)
+  const valid=await handler.fetch(post({sceneSpecification:spec},{'x-forwarded-for':'physical-valid'}))
+  expect(valid.status).toBe(200)
+  expect(providerCall).toHaveBeenCalledTimes(1)
+  for(const tamper of [
+   {...spec,selections:{...spec.selections,phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY'}},
+   {...spec,capture:{...spec.capture,lighting:'phone_screen_only'}},
+   {...spec,derivedUnits:spec.derivedUnits.filter(u=>u.id!=='physical_reality')}
+  ]){
+   const unsigned=(({integrity,...rest})=>rest)(tamper)
+   const modified={...tamper,integrity:sceneFingerprint(unsigned as typeof spec)}
+   const response=await handler.fetch(post({sceneSpecification:modified},{'x-forwarded-for':'physical-reject'}))
+   expect(response.status).toBe(400)
+  }
+  expect(providerCall).toHaveBeenCalledTimes(1)
+ })
  it('rejects missing, duplicated or fabricated immutable units',async()=>{
   const spec=getSpec()
   vi.stubEnv('GEMINI_API_KEY','fake-key')
