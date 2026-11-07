@@ -62,7 +62,8 @@ export const PhotoResultAudit: React.FC<Props> = ({ ctx, originalPrompt, advisor
           <div><button type="button" className="btn btn-secondary" onClick={()=>{setImageUrl(null);setRatings({});setNotes('')}}>إزالة الصورة</button></div>
         </div>
       )}
-      {imageUrl && <AiPhotoAudit imageUrl={imageUrl} ctx={ctx} originalPrompt={originalPrompt} subjectReferenceUrl={subjectReferenceUrl} roomReferenceUrl={roomReferenceUrl}/>}
+      {imageUrl && originalPrompt.trim()&&<AiPhotoAudit imageUrl={imageUrl} ctx={ctx} originalPrompt={originalPrompt} subjectReferenceUrl={subjectReferenceUrl} roomReferenceUrl={roomReferenceUrl}/>}
+      {imageUrl && !originalPrompt.trim()&&<p role="alert" style={{fontSize:12,color:'var(--muted)'}}>لا يبدأ التدقيق الآلي قبل اعتماد البرومبت النهائي عبر الخادم. المراجعة اليدوية متاحة.</p>}
       <div style={{fontSize:'12px',fontWeight:700,marginTop:'16px',marginBottom:'5px'}}>التقييم اليدوي المحلي (بدون رفع الصورة)</div>
       {criteria.map(item=>(
         <div key={item.id} style={{borderTop:'1px solid var(--border)',padding:'10px 0'}}>
