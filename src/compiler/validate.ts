@@ -12,6 +12,7 @@ import { nightLightingPresets } from '../data/night-lighting'
 import { garmentRecords, garmentStates, fitProfiles } from '../data/clothing'
 import {captureLightingIssues} from '../data/scene-consistency'
 import {evaluatePhysicalReality} from '../engine/physical-reality'
+import {mirrorRearFlashNeedsSource} from '../../shared/capture-lighting-rules'
 import {deriveBodyScene} from '../engine/body-mechanics'
 import {deriveBeddingScene} from '../engine/bedding-physics'
 import {validateRoomPhysicalState} from '../data/room-physical-state'
@@ -135,7 +136,7 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
     if (!shot) errors.push('Unknown bedroom shot')
     if (shot?.requires==='openCurtains' && !ctx.windowUncovered) errors.push('Curtain shadow shot requires uncovered window')
     if (shot?.requires==='sideLight' && !['bedside_warm','lamp_and_screen','hallway_spill','window_streetlight'].includes(ctx.nightLightingId||'phone_screen_only')) errors.push('Half-lit face requires an actual off-axis source')
-    if (shot?.id==='mirror_rear_flash' && ctx.nightLightingId!=='rear_flash') errors.push('Rear flash mirror shot requires rear_flash lighting')
+    if (mirrorRearFlashNeedsSource(shot?.id,ctx.nightLightingId||'')) errors.push('Rear flash mirror shot requires rear_flash lighting')
     if (shot?.id==='silhouette' && !['bedside_warm','television_screen','sunset_projector'].includes(ctx.nightLightingId||'phone_screen_only')) errors.push('Silhouette needs an actual brighter source behind the subject')
     if (shot?.mode==='mirror' && ctx.nightLightingId==='phone_screen_only') warnings.push('Mirror selfie may be severely underexposed with phone screen only')
   }
