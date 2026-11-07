@@ -22,13 +22,11 @@ type SceneSpec={
  integrity:string
 }
 export const IMAGE_TARGET_GUIDANCE:Record<ImagePromptTarget,string>={
- gemini:'Write a natural flowing image-generation prompt for Gemini / Imagen.',
- chatgpt:'Write direct, visually clear instructions for ChatGPT / GPT Image. When Hair styling says APPLY, explicitly describe the selected new arrangement of existing strands as visibly different from the reference hairstyle, with unchanged facial identity, true hairline, natural density, length and texture. The reference determines hair identity, not the old strand layout. When PRESERVE is selected, retain the reference strand arrangement.',
- flux:'Write concrete, positive descriptive photography prose for FLUX without synthetic keyword piles.',
- midjourney:'Write coherent photographic prose for Midjourney. Do not invent command-line flags or aspect ratios.'
+ gemini:'Gemini / Imagen: edit paragraph arrangement and grammatical clarity only, preserving all immutable scene units.',
+ chatgpt:'ChatGPT / GPT Image: precise direct language only. When PRESERVE is selected, maintain the reference strand arrangement. APPLY must remain visibly different from the reference hairstyle using the same original hairline and density; never change these user-selected hair requirements.',
+ flux:'FLUX: concise everyday photographic register only, without inventing new visual content.',
+ midjourney:'Midjourney: readable photographic paragraphs only; no command line flags, stylization or new scene decisions.'
 }
-
-
 export const PHYSICS_ONLY_SYSTEM=[
  'You are a CONSTRAINED PROMPT EDITOR, not a scene writer, image director or physical-reasoning authority.',
  'The application already resolved every user choice, photographable motion, camera mechanism, mirror ray, anatomical support, material, room arrangement and light source. You must NOT invent, infer, alter, delete or override any part of that approved scene.',
@@ -62,11 +60,11 @@ const fingerprint=(spec:Omit<SceneSpec,'integrity'>)=>{
  return (hash>>>0).toString(16).padStart(8,'0')
 }
 const stopwords=new Set(['a','an','the','of','on','in','at','by','to','from','with','while','and','as','is','are','be','this','that','these','those','its','their','for','then','also','therefore','clearly','each','one','every','under','through','about','using','via','has','have','where','when','into'])
-const terms=(s:string)=>new Set((s.toLowerCase().match(/[a-z0-9]+/g)||[]).filter(x=>!stopwords.has(x)))
+const terms=(s:string)=>(s.toLowerCase().match(/[a-z0-9]+/g)||[]).filter(x=>!stopwords.has(x))
 function safeOpening(approved:string,edited:string):boolean{
  if(!edited||edited.length>approved.length+240||edited.length>1800)return false
  const a=terms(approved),b=terms(edited)
- if(a.size!==b.size||[...a].some(t=>!b.has(t)))return false
+ if(a.length!==b.length||a.some((t,i)=>t!==b[i]))return false
  const numbers=(s:string)=>(s.match(/\b\d+(?:\.\d+)?\b/g)||[]).sort().join(',')
  if(numbers(approved)!==numbers(edited))return false
  if(/\b(?:extra|additional|unknown|imaginary|new|second)\s+(?:person|window|lamp|camera|mirror|bed|sofa)\b/i.test(edited))return false
