@@ -104,7 +104,7 @@ describe('Server-side natural activity preflight',()=>{
    {shotId:'mirror_rear_flash',mode:'mirror',lighting:'ceiling_neutral'},
    {shotId:'bed_edge',mode:'front',lighting:'laptop_screen_only'}
   ]){
-   const ctx={...base,...selection}
+   const ctx={...base,bedroomShotId:selection.shotId,nightLightingId:selection.lighting}
    const compiled=compilePrompt(ctx)
    expect(compiled.validation.isValid).toBe(false)
    const spec=buildSceneSpecification(ctx,compiled.result,compiled.validation)
