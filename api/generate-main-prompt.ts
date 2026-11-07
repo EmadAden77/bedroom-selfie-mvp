@@ -90,14 +90,16 @@ function validateSceneSpec(v:unknown):SceneSpec{
   ![p.mode,p.shotId,p.nightLightingId,p.upperGarmentId,p.materialId,p.fitId,p.stateId,p.color,p.surface,
     p.lowerGarmentId,p.lowerMaterialId,p.lowerSurface,p.mirrorMovementId,p.mirrorPhoneHeightId,
     p.mirrorDistanceId,p.mirrorFramingId,p.mirrorGazeId].every(x=>typeof x==='string')||
-  typeof p.windowUncovered!=='boolean')throw Error('SPEC_PHYSICS_SCHEMA')
+  typeof p.windowUncovered!=='boolean'||typeof p.poseId!=='string'||typeof p.shotPosture!=='string'||
+  typeof p.referenceImagePresent!=='boolean'||typeof p.roomReferencePresent!=='boolean')throw Error('SPEC_PHYSICS_SCHEMA')
  if(p.mode!==cap.mode||p.shotId!==cap.shotId||p.nightLightingId!==cap.lighting||
-  p.upperGarmentId!==s.selections.upperGarmentId||p.materialId!==s.selections.upperMaterialId||
+  p.shotPosture!==cap.posture||p.referenceImagePresent!==s.references.personDeclared||
+  p.roomReferencePresent!==s.references.roomDeclared||p.upperGarmentId!==s.selections.upperGarmentId||p.materialId!==s.selections.upperMaterialId||
   p.fitId!==s.selections.upperFitId||p.color!==s.selections.upperColor||
   p.lowerGarmentId!==s.selections.lowerGarmentId||
   JSON.stringify(p.roomPhysicalState)!==JSON.stringify(s.selections.roomPhysicalState))
   throw Error('SPEC_PHYSICS_MISMATCH')
- if(inspectSharedScene(p).length)throw Error('SPEC_PHYSICS')
+ if(inspectSharedScene(p).some(x=>x.status==='CONFLICT'))throw Error('SPEC_PHYSICS')
  if(s.references.pixelsAvailableToEditor!==false||typeof s.references.personDeclared!=='boolean'||
   typeof s.references.roomDeclared!=='boolean'||!Array.isArray(s.references.userConfirmedLayout))
   throw Error('SPEC_REFERENCE')
