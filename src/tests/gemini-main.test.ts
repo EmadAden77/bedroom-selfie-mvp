@@ -2,7 +2,7 @@
 import {afterEach,describe,it,expect,vi} from 'vitest'
 import {readFileSync} from 'node:fs'
 import handler,{
- assembleConstrainedPrompt,EDITORIAL_INSTRUCTIONS,MAIN_PROMPT_SCHEMA,validateSceneSpec,
+ assembleConstrainedPrompt,EDITORIAL_INSTRUCTIONS,MAIN_PROMPT_SCHEMA,IMAGE_TARGET_GUIDANCE,validateSceneSpec,
  validatePhysicalPrompt,MAX_SCENE_BRIEF_CHARS as SERVER_SCENE_CHARS,
  MAX_SCENE_REQUEST_BYTES as SERVER_REQUEST_BYTES
 } from '../../api/generate-main-prompt'
