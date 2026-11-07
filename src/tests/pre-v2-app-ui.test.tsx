@@ -16,7 +16,7 @@ describe('App V1 strict-light UI regression',()=>{
   fireEvent.click(screen.getByRole('button',{name:/اختيار لقطة فلاش المرآة \(بعد موافقتك\)/}))
   expect(screen.getByText(/المصادر الفعالة: phone_rear_led/)).toBeTruthy()
   fireEvent.click(screen.getByRole('button',{name:/على البطن مع الكوعين/}))
-  expect(screen.getByText(/فلاش الهاتف فقط يتطلب لقطة المرآة/)).toBeTruthy()
+  expect(screen.getAllByText(/فلاش الهاتف فقط يتطلب لقطة المرآة/).length).toBeGreaterThan(0)
   fireEvent.change(mode,{target:{value:'DARK_ROOM_FRONT_SCREEN_ONLY'}})
   expect(screen.getByText(/المصادر الفعالة: phone_display/)).toBeTruthy()
   expect(screen.getByText(/الإضاءة المحفوظة: bedside_warm — الإضاءة المستخدمة: phone_screen_only/)).toBeTruthy()
