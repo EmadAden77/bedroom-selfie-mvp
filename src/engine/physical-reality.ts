@@ -152,7 +152,7 @@ const rules:readonly Rule[]=[
     'استخدم أوصاف دعم الوزن والتلامس الحالية؛ لا تستنتج قياسات أو قوى رقمية.')
   ]:[]}
 ]
-export type RealityReport={status:RealityStatus;findings:RealityFinding[];evaluatedRules:string[];findingsByRule:Record<string,RealityFinding[]>}
+export type RealityReport={status:RealityStatus;findings:RealityFinding[];evaluatedRules:string[];findingsByRule:Record<string,RealityFinding[]>;recomputedRules?:string[]}
 const summarize=(findings:RealityFinding[]):RealityStatus=>
  findings.some(x=>x.status==='CONFLICT')?'CONFLICT':
  findings.some(x=>x.status==='WARNING')?'WARNING':
@@ -176,7 +176,7 @@ export function updatePhysicalReality(previous:RealityReport,next:CompilationCon
  const findingsByRule={...previous.findingsByRule}
  for(const rule of touched)findingsByRule[rule.id]=rule.run(next)
  const findings=rules.flatMap(rule=>findingsByRule[rule.id])
- return {status:summarize(findings),findings,findingsByRule,evaluatedRules:touched.map(rule=>rule.id)}
+ return {status:summarize(findings),findings,findingsByRule,evaluatedRules:rules.map(rule=>rule.id),recomputedRules:touched.map(rule=>rule.id)}
 }
 /** Verify registry completeness against the actual context of the running app. */
 export function missingRegistrations(ctx:CompilationContext):string[]{
