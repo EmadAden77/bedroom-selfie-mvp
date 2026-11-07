@@ -43,7 +43,7 @@ describe('Main Gemini constrained prompt editor interface',()=>{
   const fetcher=vi.fn(async()=>json(accepted))
   const onPromptReady=vi.fn()
   vi.stubGlobal('fetch',fetcher)
-  render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady}/>)
+  render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady} onAdvisoryReady={vi.fn()}/>)
   expect(screen.getByText(/عرض البرومبت المحلي المعتمد/)).toBeTruthy()
   fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
   await waitFor(()=>expect(screen.getByText(/نتيجة Gemini المحررة والمعتمدة برمجيًا/)).toBeTruthy())
@@ -62,7 +62,7 @@ describe('Main Gemini constrained prompt editor interface',()=>{
   vi.stubGlobal('fetch',vi.fn(async()=>json({
    ...accepted,prompt:'A stylish studio photo with a different model and an invented window.'
   })))
-  render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady}/>)
+  render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
   await waitFor(()=>expect(screen.getByText(/البرومبت المحلي — دون اعتماد تحرير Gemini/)).toBeTruthy())
   expect(screen.getAllByRole('alert').some(x=>x.textContent?.includes('لم يُعتمد تعديل Gemini'))).toBe(true)
@@ -73,7 +73,7 @@ describe('Main Gemini constrained prompt editor interface',()=>{
   const {result,validation}=build()
   const onPromptReady=vi.fn()
   vi.stubGlobal('fetch',vi.fn(async()=>json({errorCode:'GEMINI_EDITOR_REJECTED',error:'مخرجات غير معتمدة'},422)))
-  render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady}/>)
+  render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
   await waitFor(()=>expect(screen.getByText(/البرومبت المحلي — دون اعتماد تحرير Gemini/)).toBeTruthy())
   expect(onPromptReady).toHaveBeenCalledWith(result.promptText)
@@ -85,7 +85,7 @@ describe('Main Gemini constrained prompt editor interface',()=>{
   vi.stubGlobal('fetch',vi.fn(async()=>new Response('<html>FUNCTION_INVOCATION_FAILED</html>',{
    status:500,headers:{'content-type':'text/html; charset=utf-8'}
   })))
-  render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady}/>)
+  render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
   await waitFor(()=>expect(screen.getByText(/البرومبت المحلي — دون اعتماد تحرير Gemini/)).toBeTruthy())
   expect(screen.getAllByRole('alert').some(x=>x.textContent?.includes('HTTP 500'))).toBe(true)
@@ -95,7 +95,7 @@ describe('Main Gemini constrained prompt editor interface',()=>{
  it('blocks Gemini entirely when local physics is invalid, but preserves independent tools',()=>{
   const {result,validation}=build()
   const invalid={...validation,isValid:false,errors:['Impossible camera and lighting']}
-  render(<AiPromptEnhancer ctx={base} result={result} validation={invalid} onReset={vi.fn()} onPromptReady={vi.fn()}/>)
+  render(<AiPromptEnhancer ctx={base} result={result} validation={invalid} onReset={vi.fn()} onPromptReady={vi.fn()} onAdvisoryReady={vi.fn()}/>)
   expect(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}).hasAttribute('disabled')).toBe(true)
   expect(screen.getByText(/لا يمكن تشغيل محرر Gemini قبل اجتياز/)).toBeTruthy()
   expect(screen.getAllByText(/غَليون — مهندس تحسين الأوامر/).length).toBeGreaterThan(0)
