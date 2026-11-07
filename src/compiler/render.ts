@@ -18,6 +18,7 @@ import { renderBedroomClutter } from '../data/bedroom-clutter'
 import {renderRoomPhysicalState} from '../data/room-physical-state'
 import { renderLaptopSelfiePhysics } from '../data/laptop-selfie-physics'
 import { renderLightGeometry } from '../data/light-geometry'
+import {renderPhysicalReality} from '../engine/physical-reality'
 import { bedroomShots,renderBedroomShot } from '../data/bedroom-shots'
 import { nightLightingPresets } from '../data/night-lighting'
 import { garmentRecords, materialProfiles, fitProfiles, garmentStates } from '../data/clothing'
@@ -114,6 +115,7 @@ export function renderSections(ctx: CompilationContext): PromptSection[] {
   if(ctx.roomPhysicalState){sections.push({id:'physical_room_state',content:renderRoomPhysicalState(ctx)})}
   else {const clutter=renderBedroomClutter(ctx)
    if(clutter)sections.push({id:'lived_in_bedroom_clutter',content:clutter})}
+  if(ctx.phoneOnlyIlluminationMode&&ctx.phoneOnlyIlluminationMode!=='OFF')sections.push({id:'physical_reality',content:renderPhysicalReality(ctx)})
   sections.push({ id: 'light_pose_geometry', content: renderLightGeometry(ctx) })
   sections.push({ id: 'body_pose_physics', content: renderBodyPosePhysics(ctx) })
   const interaction=renderPoseInteraction(ctx)
