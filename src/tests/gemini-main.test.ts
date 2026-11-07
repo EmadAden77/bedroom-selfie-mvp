@@ -103,6 +103,30 @@ describe('Vercel standalone constrained editor',()=>{
   }
   expect(providerCall).toHaveBeenCalledTimes(1)
  })
+ it('accepts a front-only screen scene and rejects cross-mode client tampering before Gemini',async()=>{
+  const ctx:CompilationContext={...base,bedroomShotId:'bed_edge',nightLightingId:'bedside_warm',
+   phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY'}
+  const spec=getSpec(ctx)
+  expect(spec.capture.mode).toBe('front')
+  expect(spec.capture.lighting).toBe('phone_screen_only')
+  vi.stubEnv('GEMINI_API_KEY','test-key')
+  const outbound=vi.fn(async()=>provider(spec))
+  vi.stubGlobal('fetch',outbound)
+  const response=await handler.fetch(post({sceneSpecification:spec},{'x-forwarded-for':'front-screen-valid'}))
+  expect(response.status).toBe(200)
+  const tampered=[
+   {...spec,capture:{...spec.capture,mode:'mirror' as const}},
+   {...spec,capture:{...spec.capture,lighting:'rear_flash'}},
+   {...spec,selections:{...spec.selections,phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY'}}
+  ]
+  for(const item of tampered){
+   const {integrity,...rest}=item
+   const candidate={...rest,integrity:sceneFingerprint(rest as Omit<typeof spec,'integrity'>)}
+   const invalid=await handler.fetch(post({sceneSpecification:candidate},{'x-forwarded-for':'front-screen-invalid'}))
+   expect(invalid.status).toBe(400)
+  }
+  expect(outbound).toHaveBeenCalledTimes(1)
+ })
  it('rejects missing, duplicated or fabricated immutable units',async()=>{
   const spec=getSpec()
   vi.stubEnv('GEMINI_API_KEY','fake-key')
