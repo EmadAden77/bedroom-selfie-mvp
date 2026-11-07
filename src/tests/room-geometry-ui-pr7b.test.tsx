@@ -85,4 +85,27 @@ describe('PR7b: room selector warning and non-authoritative draft display',()=>{
   expect(ready).not.toHaveBeenCalledWith(payload.prompt)
   expect(fetcher).toHaveBeenCalledTimes(1)
  })
+ it('fail-closed: even a falsely asserted authoritative server flag cannot promote an unknown room',async()=>{
+  const {spec}=scene()
+  const proposal={sectionOrder:[...spec.mandatoryUnitIds],openingLineSelection:'canonical' as const}
+  const output=assembleEditorialPrompt(spec,proposal)
+  const payload={
+   ...output,source:'gemini-editor',validated:true,authoritative:true,
+   integrity:spec.integrity,promptDigest:await digestEditorialText(output.prompt),
+   sectionCount:spec.derivedUnits.length,
+   protectedUnitDigests:await Promise.all(spec.derivedUnits.map(async u=>({
+    id:u.id,digest:await digestEditorialText(u.text)
+   })))
+  }
+  vi.stubGlobal('fetch',vi.fn(async()=>new Response(JSON.stringify(payload),{
+   status:200,headers:{'content-type':'application/json'}
+  })))
+  const ready=vi.fn()
+  ui(ready)
+  fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
+  await waitFor(()=>expect(screen.getByText(/نتيجة Gemini المحررة — غير معتمدة نهائيًا/)).toBeTruthy())
+  expect(ready).not.toHaveBeenCalledWith(payload.prompt)
+  expect(ready).toHaveBeenCalledWith('')
+ })
+
 })
