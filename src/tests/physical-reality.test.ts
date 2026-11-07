@@ -97,7 +97,7 @@ describe('Physical Reality Engine constraint graph',()=>{
   const ctx={...base}
   const before=JSON.stringify(ctx)
   const result=evaluatePhysicalReality(ctx,['promptTarget'])
-  expect(result.evaluatedRules).toEqual([])
+  expect(result.evaluatedRules).toEqual(['presentation-choices'])
   expect(JSON.stringify(ctx)).toBe(before)
  })
  it('includes legacy compiler blockers in live physical diagnostics without rewriting selections',()=>{
@@ -114,7 +114,7 @@ describe('Physical Reality Engine constraint graph',()=>{
   const full=evaluatePhysicalReality(one)
   const two={...one,promptTarget:'chatgpt' as const}
   const second=updatePhysicalReality(full,two,['promptTarget'])
-  expect(second.recomputedRules).toEqual([])
+  expect(second.recomputedRules).toEqual(['presentation-choices'])
   expect(second.findings).toEqual(evaluatePhysicalReality(two).findings)
   const three={...two,bedroomShotId:'mirror_rear_flash',poseId:'standing',nightLightingId:'ceiling_neutral'}
   const third=updatePhysicalReality(second,three,['bedroomShotId','poseId','nightLightingId'])
