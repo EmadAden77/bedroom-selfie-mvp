@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url'
 import crypto from 'crypto'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(__dirname, '..')
-console.log('Running tests (real file content validation - offline Vitest fallback)...')
+console.log('Running optional source-text invariants (not behavioral tests)...')
 let passed=0
 let failed=0
 function test(name, fn){
@@ -163,4 +163,4 @@ test('20. Identity Core frozen literal', ()=>{
 })
 
 console.log(`\nTest Results: ${passed} passed, ${failed} failed out of ${passed+failed}`)
-if(failed>0){ process.exit(1) } else { console.log('All tests passed - MVP vertical slice verified!') }
+if(failed>0){ process.exit(1) } else { console.log('Source-text invariants passed (behavioral coverage requires npm test)!') }
