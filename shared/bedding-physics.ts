@@ -44,6 +44,8 @@ const pillowShotContacts=new Set([
  'upside_bed_edge','supine_high_phone','side_pillow_under_arm','hug_pillow'
 ])
 const blanketShotContacts=new Set(['blanket_half_face','blanket_cocoon','duvet_draw_below_knees'])
+// Only descriptions that anchor a loaded pillow to the bed support stack.
+const mattressAnchoredPillowShots=new Set(['pillow_stack','cheek_pillow','side_head_at_pillow_corner','laptop_side_bed_open','supine_high_phone'])
 export function validBeddingSelection(value:unknown):value is BeddingSelection{
  if(!value||typeof value!=='object'||Array.isArray(value))return false
  const x=value as Record<string,unknown>
@@ -105,7 +107,9 @@ export function evaluateBedding(body:BodyMechanicalState,selected:BeddingSelecti
   }
  }else if(selection.sheet==='reference')unknowns.push('SHEET_PRESENCE_NOT_CONFIRMED')
  if(pillowPresent&&selection.pillow!=='absent'){
-  add('bed.pillow','bed.mattress','support','estimated','existing_pillow_support','selected_or_shot_pillow')
+  if(mattressAnchoredPillowShots.has(shot))
+   add('bed.pillow','bed.mattress','support','estimated','selected_bed_anchored_pillow','shot_pillow_support')
+  else unknowns.push('PILLOW_SUPPORT_ANCHOR_NOT_CONFIRMED')
   for(const p of pillowContact){
    add(p.actorId,'bed.pillow','pressure',p.certainty,'v21_pillow_contact',p.cause)
    respond('bed.pillow',p.actorId==='subject.free_forearm'?'forearm':
