@@ -91,6 +91,7 @@ export function validateSceneSpec(v:unknown):SceneSpec{
   s.derivedUnits.some(u=>u.immutable!==true||!['user_selection','reference_scope','local_physics'].includes(u.authority)||
    typeof u.text!=='string'||u.text.trim().length<8||u.text.length>15000))throw Error('SPEC_UNITS')
  if(s.mandatoryUnitIds.length!==ids.length||s.mandatoryUnitIds.some((id,i)=>id!==ids[i]))throw Error('SPEC_MANDATORY')
+ if(cap.shotId&&getCanonicalShotPosture(cap.shotId)!==cap.posture)throw Error('SPEC_BODY_POSTURE')
  // PR7b: independently recompute geometry from untrusted user option fields.
  // Invalid values reject BEFORE the upstream Gemini request; unknown remains
  // compilable but is ineligible for authoritative promotion.
@@ -114,7 +115,6 @@ export function validateSceneSpec(v:unknown):SceneSpec{
  const roomUnit=s.derivedUnits.find(u=>u.id==='room_geometry')
  if(!roomUnit||roomUnit.immutable!==true||roomUnit.text!==renderRoomGeometry(canonicalRoom))
   throw Error('SPEC_ROOM_UNIT')
- if(cap.shotId&&getCanonicalShotPosture(cap.shotId)!==cap.posture)throw Error('SPEC_BODY_POSTURE')
  // Server independently recomputes the shared mechanical contract from normalized
  // user selections. Never trust status, contacts, deformability or compiler prose.
  let canonicalBody:BodyMechanicalState
