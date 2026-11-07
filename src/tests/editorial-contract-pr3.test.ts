@@ -36,6 +36,7 @@ describe('PR3 strict editorial-only contract',()=>{
   expect(EDITORIAL_INSTRUCTIONS).toContain('sectionOrder and openingLineSelection')
   expect(Object.keys(MAIN_PROMPT_SCHEMA.properties).sort()).toEqual(['openingLineSelection','sectionOrder'])
   expect(MAIN_PROMPT_SCHEMA.required).toEqual(['sectionOrder','openingLineSelection'])
+  console.info('PR3_REAL_EXAMPLE_BEGIN'+JSON.stringify({input:ctx,geminiStructuredResponse:p,locallyReassembledFinalPrompt:a.prompt})+'PR3_REAL_EXAMPLE_END')
  })
  it('reorders only approved IDs and retains every protected section text byte-for-byte',()=>{
   const s=spec(),p=proposal(s)
