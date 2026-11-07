@@ -21,7 +21,7 @@ export const MAX_V8_SCENE=12000
 /** Optional, text-only final auditor. This does not alter the main Gemini or Ghalyon engines. */
 export const ImagePromptAuditorV8:React.FC<Props>=({ctx,sourcePrompt,sceneBrief,onPromptReady})=>{
  const [draft,setDraft]=useState('')
- const [ownPortrait,setOwnPortrait]=useState(true)
+ const [ownPortrait,setOwnPortrait]=useState(ctx.ownPortrait!==false)
  const [promptOnly,setPromptOnly]=useState(false)
  const [result,setResult]=useState<Result|null>(null)
  const [loading,setLoading]=useState(false)
@@ -44,6 +44,7 @@ export const ImagePromptAuditorV8:React.FC<Props>=({ctx,sourcePrompt,sceneBrief,
   setLoading(false);setResult(null);setError('');setCopied(false)
  },[sourcePrompt,sceneBrief,ctx.bedroomShotId,ctx.nightLightingId])
  useEffect(()=>()=>{version.current++;pending.current?.abort()},[])
+ useEffect(()=>{setOwnPortrait(ctx.ownPortrait!==false)},[ctx.ownPortrait])
 
  async function audit(){
   if(!ready)return
