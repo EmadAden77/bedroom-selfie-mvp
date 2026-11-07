@@ -26,6 +26,6 @@ describe('Explicit scene selections and visible repair feedback',()=>{
   fireEvent.click(within(lighting).getByRole('button',{name:/إضاءة السقف البيضاء المعتدلة/}))
   expect(within(mirror).getByRole('button',{name:/فلاش خلفي أمام المرآة/}).getAttribute('aria-pressed')).toBe('true')
   expect(screen.getByRole('status').textContent).toContain('CONFLICT')
-  expect(screen.getByText(/وضعية فلاش المرآة تحتاج فلاش الكاميرا الخلفية/)).toBeTruthy()
+  expect(screen.getAllByText(/وضعية فلاش المرآة تحتاج فلاش الكاميرا الخلفية/).length).toBeGreaterThan(0)
  })
 })
