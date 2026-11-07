@@ -25,7 +25,7 @@ describe('Physical Reality Engine V2.2 — causal bedding',()=>{
  })
  it('02 derives seat pelvis compression from V2.1 and never invents a depth',()=>{
   const s=bedding()
-  expect(s.responses).toContainEqual(expect.objectContaining({targetId:'bed.mattress',region:'pelvis',degree:'moderate',cause:'v21_contact_body_on_bed'}))
+  expect(s.responses).toContainEqual(expect.objectContaining({targetId:'bed.mattress',region:'pelvis_edge',degree:'moderate',cause:'v21_contact_body_on_bed'}))
   expect(renderBedding(s)).not.toMatch(/\b\d+(?:\.\d+)?\s*(?:cm|mm|Pa|kPa|N)\b/)
  })
  it('03 standing on actual floor cannot deform the mattress',()=>{
@@ -75,7 +75,7 @@ describe('Physical Reality Engine V2.2 — causal bedding',()=>{
  it('13 a confirmed bedsheet follows mattress and local body load',()=>{
   const s=bedding({}, {sheet:'confirmed',pillow:'reference',blanket:'reference'})
   expect(s.contacts).toContainEqual(expect.objectContaining({actorId:'bed.sheet',targetId:'bed.mattress',kind:'support'}))
-  expect(s.responses).toContainEqual(expect.objectContaining({targetId:'bed.sheet',region:'pelvis',effect:'folds'}))
+  expect(s.responses).toContainEqual(expect.objectContaining({targetId:'bed.sheet',region:'pelvis_edge',effect:'folds'}))
  })
  it('14 an absent sheet receives no contact or folds',()=>{
   const s=bedding({}, {sheet:'absent',pillow:'reference',blanket:'reference'})
@@ -164,6 +164,16 @@ describe('Physical Reality Engine V2.2 — causal bedding',()=>{
   deriveBeddingScene(c)
   expect(evaluatePhysicalReality(c).emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual(['phone_rear_led'])
   expect(c.nightLightingId).toBe('ceiling_neutral')
+ })
+ it('32 confirmed bed-edge sheet receives local tension without any frame bending',()=>{
+  const s=bedding({}, {sheet:'confirmed',pillow:'reference',blanket:'reference'})
+  expect(s.responses).toContainEqual(expect.objectContaining({targetId:'bed.sheet',region:'edge_near_contact',effect:'tension'}))
+  expect(s.responses.some(r=>r.targetId==='bed.frame')).toBe(false)
+ })
+ it('33 blanket spread is incompatible with any shot that requires body contact',()=>{
+  for(const shot of ['blanket_half_face','duvet_draw_below_knees']){
+   expect(errors(bedding({shotId:shot},{sheet:'reference',pillow:'reference',blanket:'spread_on_bed'}))).toContain('BEDDING_COVERAGE_CONFLICT')
+  }
  })
  it('31 strict V1 screen-only remains unchanged by bedding derivation',()=>{
   const c={...ctx,phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY' as const}
