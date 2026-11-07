@@ -178,6 +178,32 @@ describe('PR7b: explicit dimensions and strict tri-state room authority',()=>{
   expect(()=>assertAuthoritative(spec,{source:'gemini-editor',prompt:data.prompt,...reply}))
    .toThrow('FINAL_ROOM_UNCONFIRMED')
  })
+ it('Gemini dimension tampering cannot pass the existing exact-byte final validator',()=>{
+  const {spec}=scene()
+  const proposal={sectionOrder:[...spec.mandatoryUnitIds],openingLineSelection:'canonical' as const}
+  const prompt=assembleEditorialPrompt(spec,proposal).prompt
+  expect(prompt).toContain('4.0m × 4.5m × 2.6m')
+  const forgedPrompt=prompt.replace('4.0m × 4.5m × 2.6m','9.0m × 4.5m × 2.6m')
+  expect(forgedPrompt).not.toBe(prompt)
+  expect(()=>assertAuthoritative(spec,{
+   source:'gemini-editor',prompt:forgedPrompt,...proposal
+  })).toThrow('FINAL_EDITOR_MISMATCH')
+ })
+ it('out-of-range custom room inputs are rejected by the server BEFORE any Gemini fetch',async()=>{
+  const {spec}=scene({roomSizePreset:'custom',roomCustomWidthMeters:3,
+   roomCustomDepthMeters:3,roomCustomHeightMeters:2.6})
+  const forged=structuredClone(spec)
+  forged.selections.roomCustomWidthMeters=1.9
+  const {integrity:unused,...unsigned}=forged
+  forged.integrity=sceneFingerprint(unsigned)
+  vi.stubEnv('GEMINI_API_KEY','test-only')
+  const upstream=vi.fn()
+  vi.stubGlobal('fetch',upstream)
+  const response=await handler.fetch(post(editorEndpoint,{sceneSpecification:forged}))
+  expect(response.status).toBe(400)
+  expect((await response.json() as {errorCode:string}).errorCode).toBe('SPEC_ROOM_INPUT')
+  expect(upstream).not.toHaveBeenCalled()
+ })
  it('tampered room dimensions fail canonical server validation even if client recomputes integrity',()=>{
   const {spec}=scene({roomSizePreset:'medium_bedroom',roomSizeConfirmed:true})
   const forged=structuredClone(spec)
