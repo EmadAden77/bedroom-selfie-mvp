@@ -35,7 +35,7 @@ export const BodyMechanicsSelector:React.FC<Props>=({ctx,onChange})=>{
     </select>
    </label>
   </details>
-  <p style={{fontSize:11,color:'var(--muted)'}}>الارتكاز: {state.supportSurface==='mattress'?'المرتبة':state.supportSurface==='floor'?'الأرض':'غير محدد'} · نقاط التلامس: {state.contacts.length} · استجابة الأسطح: {state.deformations.length}. لا توجد محاكاة لقوى أو زوايا مفاصل رقمية.</p>
+  <p style={{fontSize:11,color:'var(--muted)'}}>الارتكاز: {state.supportSurface==='mattress'?'المرتبة':state.supportSurface==='floor'?'الأرض':'غير محدد'} · نقاط التلامس: {state.contacts.length} · استجابة الأسطح: {state.deformations.length} · علاقات الحجب: {state.visualRelations.length}. لا توجد محاكاة لقوى أو زوايا مفاصل رقمية.</p>
   {state.issues.map(item=><div key={item.code} role="alert" style={{fontSize:12,color:'#b91c1c',marginTop:8}}>
    <strong>{item.code}</strong> — {item.messageAr} (إعدادات: {item.controls.join('، ')})
    <button type="button" className="option" style={{display:'block',marginTop:4}} onClick={()=>onChange(item.code==='BODY_SUPPORT_CONFLICT'?{bodySupportChoice:'auto'}:item.code==='BODY_TIMER_HAND_OCCUPIED'||item.code==='BODY_HANDHELD_REQUIRES_GRIP'||item.code==='BODY_FIXED_HAND_CONFLICT'?{bodyHoldingHand:'auto'}:item.code==='BODY_STANDING_FEET_ABSENT'?{bodyFeetVisibility:'unknown'}:{bodyFreeHandTask:'auto'})}>اعتماد تصحيح هذا التعارض</button>
