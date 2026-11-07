@@ -185,6 +185,59 @@ describe('Vercel standalone constrained editor',()=>{
   expect(result.status).toBe(400)
   expect(upstream).not.toHaveBeenCalled()
  })
+ it('validates V2.2 bedding contacts independently and preserves valid unknown textiles',()=>{
+  for(const beddingSelection of [
+   {sheet:'reference',pillow:'reference',blanket:'reference'},
+   {sheet:'confirmed',pillow:'confirmed',blanket:'spread_on_bed'}
+  ] as const){
+   const spec=getSpec({...base,bedroomShotId:'bed_edge',beddingSelection})
+   const checked=validateSceneSpec(spec)
+   expect(checked.beddingPhysics).toEqual(spec.beddingPhysics)
+   expect(checked.derivedUnits.find(u=>u.id==='bedding_physics_v22')?.text).toContain('BEDDING PHYSICS V2.2 CONTRACT:')
+  }
+ })
+ it('rejects forged V2.2 pillow, mattress and fabric responses with recomputed fingerprint',async()=>{
+  const spec=getSpec({...base,bedroomShotId:'bed_edge'})
+  vi.stubEnv('GEMINI_API_KEY','fake-key')
+  const upstream=vi.fn()
+  vi.stubGlobal('fetch',upstream)
+  const variants=[
+   {...spec,beddingPhysics:{...spec.beddingPhysics,responses:[]}},
+   {...spec,beddingPhysics:{...spec.beddingPhysics,status:'NEEDS_INFORMATION' as const}},
+   {...spec,beddingPhysics:{...spec.beddingPhysics,objects:[]}},
+   {...spec,derivedUnits:spec.derivedUnits.map(u=>u.id==='bedding_physics_v22'?{...u,text:'BEDDING PHYSICS V2.2 CONTRACT: A floating blanket magically covers the bed.'}:u)}
+  ]
+  for(const [n,v] of variants.entries()){
+   const {integrity,...unsigned}=v
+   const altered={...unsigned,integrity:sceneFingerprint(unsigned as Omit<typeof spec,'integrity'>)}
+   const response=await handler.fetch(post({sceneSpecification:altered},{'x-forwarded-for':'bedding-tamper-'+n}))
+   expect(response.status).toBe(400)
+   const data=await response.json() as {errorCode:string}
+   expect(data.errorCode).toMatch(/^SPEC_BEDDING_/)
+  }
+  expect(upstream).not.toHaveBeenCalled()
+ })
+ it('rejects conflicting blanket/pillow selections before contacting Gemini',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','fake-key')
+  const upstream=vi.fn()
+  vi.stubGlobal('fetch',upstream)
+  for(const [shot,selection] of [
+   ['blanket_cocoon',{sheet:'reference',pillow:'reference',blanket:'absent'}],
+   ['cheek_pillow',{sheet:'reference',pillow:'absent',blanket:'reference'}]
+  ] as const){
+   const spec=getSpec({...base,bedroomShotId:'bed_edge'})
+   const variant={...spec,
+    capture:{...spec.capture,shotId:shot,posture:shot==='blanket_cocoon'?'seated_bed':'side_lying_right'},
+    selections:{...spec.selections,beddingSelection:selection},
+    beddingPhysics:{...spec.beddingPhysics,selection}
+   }
+   const {integrity,...unsigned}=variant
+   const altered={...unsigned,integrity:sceneFingerprint(unsigned as Omit<typeof spec,'integrity'>)}
+   const response=await handler.fetch(post({sceneSpecification:altered},{'x-forwarded-for':'bedding-invalid-'+shot}))
+   expect(response.status).toBe(400)
+  }
+  expect(upstream).not.toHaveBeenCalled()
+ })
  it('rejects missing, duplicated or fabricated immutable units',async()=>{
   const spec=getSpec()
   vi.stubEnv('GEMINI_API_KEY','fake-key')
