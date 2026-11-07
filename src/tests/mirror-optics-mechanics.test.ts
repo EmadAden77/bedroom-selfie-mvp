@@ -37,7 +37,7 @@ describe('Extreme physical mirror capture consistency',()=>{
    expect(brief).toContain('generic front-selfie gaze is not authoritative')
    expect(brief.length).toBeLessThan(12000)
   }
-  expect(PHYSICS_ONLY_SYSTEM).toContain('MIRROR MECHANICS HARD CONSTRAINT')
+  expect(PHYSICS_ONLY_SYSTEM).toContain('CONSTRAINED PROMPT EDITOR')
  })
  it('resolves pose illumination from the selected shot, never a stale general pose',()=>{
   for(const shot of mirrors){

@@ -2,6 +2,8 @@
 import {describe,expect,it,vi,afterEach} from 'vitest'
 import {buildNaturalSceneDirection,naturalSceneSelectionIssues} from '../features/ai-prompt-enhancer/natural-scene-director'
 import {buildCreativeSceneBrief} from '../features/ai-prompt-enhancer/buildCreativeSceneBrief'
+import {buildSceneSpecification} from '../features/ai-prompt-enhancer/scene-specification'
+import {compilePrompt} from '../compiler'
 import mainHandler,{PHYSICS_ONLY_SYSTEM,validatePhysicalPrompt} from '../../api/generate-main-prompt'
 import {SYSTEM as GHALYON_SYSTEM} from '../../api/optimize-prompt'
 import type {CompilationContext} from '../domain/types'
@@ -14,8 +16,8 @@ const base:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',
  fitId:'regular',
  stateId:'observed_natural_state',
- color:'charcoal',
- surface:'natural',
+ color:'apparent dark charcoal-gray as observed',
+ surface:'apparent knit-like surface character',
  referenceImagePresent:true,
  roomReferencePresent:true,
  bedroomShotId:'bed_edge',
@@ -65,9 +67,13 @@ describe('Natural Scene Director integration',()=>{
   expect(naturalSceneSelectionIssues({...base,bedroomShotId:'bed_edge',nightLightingId:'laptop_screen_only'})).toHaveLength(1)
   expect(naturalSceneSelectionIssues({...base,bedroomShotId:'laptop_cross_legs_trackpad',nightLightingId:'laptop_screen_only'})).toEqual([])
  })
- it('both Gemini author and Ghalyon follow photographic natural activity, not unrelated prompt tasks',()=>{
-  expect(PHYSICS_ONLY_SYSTEM).toContain('NATURAL SCENE DIRECTOR')
-  expect(PHYSICS_ONLY_SYSTEM).toContain('normal unflipped mirror reverses printed text')
+ it('the local spec fixes natural actions while Gemini edits language and Ghalyon stays independent',()=>{
+  const local=compilePrompt(base)
+  expect(local.validation.isValid).toBe(true)
+  const spec=buildSceneSpecification(base,local.result,local.validation)
+  expect(spec.derivedUnits.find(x=>x.id==='natural_scene_director')?.text).toBe(buildNaturalSceneDirection(base))
+  expect(spec.derivedUnits.find(x=>x.id==='natural_scene_director')?.text).toContain('selected bedroom selfie action')
+  expect(PHYSICS_ONLY_SYSTEM).toContain('CONSTRAINED PROMPT EDITOR')
   expect(GHALYON_SYSTEM).toContain('For photographic tasks only')
  })
 })
@@ -94,17 +100,21 @@ describe('Server-side natural activity preflight',()=>{
   const upstream=vi.fn()
   vi.stubGlobal('fetch',upstream)
   const endpoint='https://bedroom-selfie-mvp.vercel.app/api/generate-main-prompt'
-  const sceneBrief='Realistic bedroom selfie in an ordinary room with a physically supported phone, real gravity and light falloff.'
   for(const selection of [
    {shotId:'mirror_rear_flash',mode:'mirror',lighting:'ceiling_neutral'},
    {shotId:'bed_edge',mode:'front',lighting:'laptop_screen_only'}
   ]){
+   const ctx={...base,bedroomShotId:selection.shotId,nightLightingId:selection.lighting}
+   const compiled=compilePrompt(ctx)
+   expect(compiled.validation.isValid).toBe(false)
+   const spec=buildSceneSpecification(ctx,compiled.result,compiled.validation)
+   expect(spec.conflicts.length).toBeGreaterThan(0)
    const response=await mainHandler.fetch(new Request(endpoint,{method:'POST',
     headers:{'content-type':'application/json'},
-    body:JSON.stringify({...selection,sceneBrief,posture:'standing',target:'gemini'})
+    body:JSON.stringify({sceneSpecification:spec})
    }))
    expect(response.status).toBe(400)
-   expect((await response.json() as {errorCode:string}).errorCode).toBe('NATURAL_SCENE_CONFLICT')
+   expect((await response.json() as {errorCode:string}).errorCode).toBe('SPEC_CONFLICT')
   }
   expect(upstream).not.toHaveBeenCalled()
  })
