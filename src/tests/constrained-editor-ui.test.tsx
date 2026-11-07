@@ -23,10 +23,9 @@ const build=(ctx:CompilationContext=base)=>{
 }
 const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:{'content-type':'application/json'}})
 const approved=(spec:ReturnType<typeof build>['spec'])=>{
- const orderedUnitIds=spec.mandatoryUnitIds
- const opening=spec.opening
- const editorStyle='spaced' as const
- return {prompt:composeApprovedPrompt(spec,orderedUnitIds,opening,editorStyle),orderedUnitIds,opening,editorStyle,integrity:spec.integrity,source:'gemini-editor',validated:true}
+ const sectionOrder=[...spec.mandatoryUnitIds]
+ const openingLineSelection='canonical' as const
+ return {prompt:composeApprovedPrompt(spec,sectionOrder,openingLineSelection),sectionOrder,openingLineSelection,integrity:spec.integrity,source:'gemini-editor',validated:true}
 }
 
 describe('Main Gemini constrained prompt editor interface',()=>{
