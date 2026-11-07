@@ -8,7 +8,7 @@ export type {BodyMechanicalState,BodyStatus,BodyIssue,ContactRelation} from '../
 export function normalizeBodyInput(ctx:CompilationContext):BodyMechanicalInput{
  const shot=bedroomShots.find(s=>s.id===ctx.bedroomShotId)
  return {
-  shotId:shot?.id||'',posture:shot?(getShotPosture(shot.id)||''):ctx.poseId||'seated_bed',
+  shotId:shot?.id||'',posture:shot?(getShotPosture(shot.id)||''):ctx.poseId||'',
   capture:shot?.mode||'front',
   holdingHand:ctx.bodyHoldingHand||'auto',
   supportChoice:ctx.bodySupportChoice||'auto',
