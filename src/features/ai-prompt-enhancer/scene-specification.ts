@@ -9,6 +9,7 @@ import type {BodyMechanicalState} from '../../../shared/body-mechanics'
 import {deriveBeddingScene} from '../../engine/bedding-physics'
 import {DEFAULT_BEDDING_SELECTION,type BeddingState,type BeddingSelection} from '../../../shared/bedding-physics'
 import {digestEditorialText,validateEditorialProposal,type OpeningLineSelection} from '../../../shared/editorial-contract'
+import {deriveRoomGeometry,renderRoomGeometry,type RoomGeometry,type RoomSizePreset} from '../../../shared/room-geometry-rules'
 
 export type SceneCapture={mode:'front'|'mirror'|'rear'|'timer';shotId:string;posture:string;lighting:string;target:'gemini'|'chatgpt'|'flux'|'midjourney'}
 export type SceneUnit={id:string;text:string;authority:'user_selection'|'reference_scope'|'local_physics';immutable:true}
@@ -26,10 +27,13 @@ export type SceneSpecification={
   bodyHoldingHand:string;bodySupportChoice:string;bodyFreeHandTask:string;bodyFeetVisibility:string
   roomPhysicalState:CompilationContext['roomPhysicalState']|null
   beddingSelection:BeddingSelection
+  roomSizePreset:RoomSizePreset;roomSizeConfirmed:boolean
+  roomCustomWidthMeters:number|null;roomCustomDepthMeters:number|null;roomCustomHeightMeters:number|null
  }
  references:{personDeclared:boolean;roomDeclared:boolean;pixelsAvailableToEditor:false;userConfirmedLayout:string[]}
  bodyMechanics:BodyMechanicalState
  beddingPhysics:BeddingState
+ roomGeometry:RoomGeometry
  derivedUnits:SceneUnit[]
  mandatoryUnitIds:string[]
  unspecified:string[]
@@ -94,13 +98,23 @@ export function buildSceneSpecification(ctx:CompilationContext,result:Compilatio
   bodyHoldingHand:ctx.bodyHoldingHand||'auto',bodySupportChoice:ctx.bodySupportChoice||'auto',
   bodyFreeHandTask:ctx.bodyFreeHandTask||'auto',bodyFeetVisibility:ctx.bodyFeetVisibility||'unknown',
   roomPhysicalState:ctx.roomPhysicalState?{...ctx.roomPhysicalState,zones:[...ctx.roomPhysicalState.zones]}:null,
-  beddingSelection:{...(ctx.beddingSelection||DEFAULT_BEDDING_SELECTION)}
+  beddingSelection:{...(ctx.beddingSelection||DEFAULT_BEDDING_SELECTION)},
+  roomSizePreset:ctx.roomSizePreset||'medium_bedroom',roomSizeConfirmed:ctx.roomSizeConfirmed===true,
+  roomCustomWidthMeters:ctx.roomCustomWidthMeters??null,
+  roomCustomDepthMeters:ctx.roomCustomDepthMeters??null,
+  roomCustomHeightMeters:ctx.roomCustomHeightMeters??null
  }
+ const roomGeometry=deriveRoomGeometry(selections,capture.posture,capture.lighting,
+  capture.mode==='mirror'&&capture.posture==='standing')
+ // An incomplete/out-of-bounds custom room has no valid structured dimensions.
+ // Never substitute a fictitious number just to construct SceneSpecification.
+ if(!roomGeometry)throw Error('ROOM_DIMENSIONS_INVALID')
  const derivedUnits:SceneUnit[]=result.sections.map(s=>({id:s.id,text:s.content,authority:unitAuthority(s.id),immutable:true}))
  // Natural Scene Director remains local: the model receives its exact decisions, not
  // an invitation to manufacture another action, camera angle, prop, or light source.
  const direction=buildNaturalSceneDirection(ctx)
  if(direction)derivedUnits.push({id:'natural_scene_director',text:direction,authority:'local_physics',immutable:true})
+ derivedUnits.push({id:'room_geometry',text:renderRoomGeometry(roomGeometry),authority:'user_selection',immutable:true})
  const references:SceneSpecification['references']={
   personDeclared:!!ctx.referenceImagePresent,roomDeclared:!!ctx.roomReferencePresent,
   pixelsAvailableToEditor:false,
@@ -123,7 +137,7 @@ export function buildSceneSpecification(ctx:CompilationContext,result:Compilatio
   'The person reference defines identity and the room reference defines photographed architecture only when actually provided to the image generator.'
  ].filter(Boolean).join(' ')
  const unsigned:Omit<SceneSpecification,'integrity'>={
-  version:1,capture,lighting,selections,references,bodyMechanics:deriveBodyScene(ctx),beddingPhysics:deriveBeddingScene(ctx),derivedUnits,
+  version:1,capture,lighting,selections,references,bodyMechanics:deriveBodyScene(ctx),beddingPhysics:deriveBeddingScene(ctx),roomGeometry,derivedUnits,
   mandatoryUnitIds:derivedUnits.map(s=>s.id),unspecified,conflicts,opening
  }
  return {...unsigned,integrity:sceneFingerprint(unsigned)}
