@@ -3,6 +3,7 @@ import {poseOptions} from '../data/light-geometry'
 import {shotPostures} from '../../shared/body-shot-postures'
 import {compilePrompt} from '../compiler'
 import type {CompilationContext} from '../domain/types'
+import type {BodyPosture} from '../../shared/body-mechanics'
 import {
  BED_LENGTH_CM,BED_WIDTH_CM,MIRROR_WIDTH_CM,POSE_FOOTPRINTS_CM2,
  IMPLICIT_DISTANCES,MEASUREMENT_SOURCES
@@ -24,6 +25,12 @@ describe('PR7a: sourced measurement inventory (no new geometry validation)',()=>
   expect(MEASUREMENT_SOURCES.mirrorWidthCm).toBe('unmeasured')
  })
  it('covers EVERY existing PoseId and canonical shot posture, with explicitly unknown footprints',()=>{
+  // TypeScript unions are erased at runtime. Compile-time proof makes the
+  // actual poseOptions registry exhaustive against the BodyPosture union;
+  // runtime then iterates that registry (never a duplicated hardcoded list).
+  type UnionEqual<A,B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false
+  const unionIsExhaustive:UnionEqual<BodyPosture,typeof poseOptions[number]['id']> = true
+  expect(unionIsExhaustive).toBe(true)
   const ids=poseOptions.map(p=>p.id).sort()
   const registered=Object.keys(POSE_FOOTPRINTS_CM2).sort()
   expect(registered).toEqual(ids)
