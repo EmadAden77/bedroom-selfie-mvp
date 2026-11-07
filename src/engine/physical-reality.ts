@@ -64,6 +64,7 @@ const values:Partial<Record<Field,readonly string[]>>={
  materialId:ids(materialProfiles),fitId:ids(fitProfiles),stateId:ids(garmentStates),
  color:ids(clothingColors),lowerColor:ids(clothingColors),surface:ids(garmentSurfaceChoices),lowerSurface:ids(garmentSurfaceChoices),
  bedroomClutterId:['reference','lived_in_messy'],nightLightingId:ids(nightLightingPresets),
+ referenceImagePresent:['true','false'],roomReferencePresent:['true','false'],windowUncovered:['true','false'],
  poseId:ids(poseOptions),faceDirectionId:ids(faceOptions),lampSideId:ids(lampSideOptions),
  bedroomShotId:['',...ids(bedroomShots)],
  mirrorMovementId:ids(mirrorMovements),mirrorPhoneHeightId:ids(mirrorPhoneHeights),
