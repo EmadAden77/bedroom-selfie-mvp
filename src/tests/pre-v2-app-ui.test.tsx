@@ -12,7 +12,6 @@ describe('App V1 strict-light UI regression',()=>{
    const reply=await authorityHandler.fetch(new Request('https://bedroom-selfie-mvp.vercel.app'+url,{
     method:options.method,headers:options.headers,body:options.body
    }))
-   console.info('PR4_APP_AUTH_DIAG',reply.status,await reply.clone().text())
    return reply
   }))
   render(<App/>)
@@ -33,7 +32,6 @@ describe('App V1 strict-light UI regression',()=>{
   expect(screen.getByText(/المصادر الفعالة: bedside/)).toBeTruthy()
   expect(screen.getByText(/الإضاءة المحفوظة: bedside_warm — الإضاءة المستخدمة: bedside_warm/)).toBeTruthy()
   const localButton=screen.getByRole('button',{name:'اعتماد البرومبت المحلي'}) as HTMLButtonElement
-  console.info('PR4_APP_BUTTON_DIAG',JSON.stringify({disabled:localButton.disabled,alerts:screen.queryAllByRole('alert').map(x=>x.textContent?.slice(0,100))}))
   fireEvent.click(localButton)
   await waitFor(()=>expect(fetch).toHaveBeenCalled())
   await waitFor(()=>expect(screen.getByRole('button',{name:'إعادة تعيين الخيارات'})).toBeTruthy())
