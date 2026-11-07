@@ -13,7 +13,7 @@ export type SharedScene={
 }
 export type SharedFinding={id:string;status:'CONFLICT'|'WARNING'|'UNKNOWN';category:'lighting'|'geometry'|'biomechanics'|'clothing'|'room'|'reference';
  fields:string[];reason:string;repair:string}
-export function inspectSharedScene(s:SharedScene):SharedFinding[]
+export function inspectSharedScene(s:SharedScene,scope?:'all'|'physical'|'presentation'):SharedFinding[]
 export const MIRROR_FIXED_ACTION_SHOTS:readonly string[]
 export const MIRROR_FIXED_HEIGHT:Readonly<Record<string,string>>
 export const MIRROR_FIXED_DISTANCE:Readonly<Record<string,string>>
