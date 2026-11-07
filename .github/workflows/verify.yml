@@ -14,12 +14,10 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
       - name: Install dependencies
-        run: |
-          npm install --no-audit --no-fund
-          echo __PRE_V2_LOCK_BEGIN__
-          cat package-lock.json
-          echo __PRE_V2_LOCK_END__
+        run: npm ci --no-audit --no-fund
       - name: Real TypeScript check
         run: npm run typecheck
       - name: Unit tests
