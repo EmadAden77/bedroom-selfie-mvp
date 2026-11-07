@@ -74,7 +74,7 @@ export function evaluateBedding(body:BodyMechanicalState,selected:BeddingSelecti
  const issue=(code:string,messageAr:string,controls:string[])=>issues.push({code,messageAr,controls})
  if(explicitPillow&&selection.pillow==='absent')issue('BEDDING_PILLOW_ABSENT','الوضعية تتطلب وسادة ملامسة، لكنك حددت عدم وجودها.',['beddingPillow','bedroomShotId'])
  if(explicitBlanket&&selection.blanket==='absent')issue('BEDDING_BLANKET_ABSENT','الوضعية تتطلب بطانية ملامسة، لكنك حددت عدم وجودها.',['beddingBlanket','bedroomShotId'])
- if(shot==='blanket_cocoon'&&selection.blanket==='spread_on_bed')
+ if(explicitBlanket&&selection.blanket==='spread_on_bed')
   issue('BEDDING_COVERAGE_CONFLICT','وضعية الالتفاف بالبطانية تتطلب تماسها مع الجسم، وليس بقاؤها مفرودة فقط.',['beddingBlanket','bedroomShotId'])
  const add=(actorId:string,targetId:string,kind:BeddingContact['kind'],certainty:BodyCertainty,cause:string,sourceContact:string)=>{
   contacts.push({actorId,targetId,kind,certainty,cause,sourceContact})
@@ -85,9 +85,9 @@ export function evaluateBedding(body:BodyMechanicalState,selected:BeddingSelecti
  // Existing fixed support stack: frame supports mattress. Its geometry is never changed.
  add('bed.mattress','bed.frame','support','derived','established_bed_support','bed.mattress')
  for(const contact of mat){
-  const region=contact.actorId==='subject.pelvis'?'pelvis':contact.actorId==='subject.torso'?'torso':
+  const region=contact.actorId==='subject.pelvis'&&(/^(bed_edge|mirror_bed_reflection|edge_|laptop_edge_)/.test(shot))?'pelvis_edge':contact.actorId==='subject.pelvis'?'pelvis':contact.actorId==='subject.torso'?'torso':
    contact.actorId==='subject.free_elbow'?'elbow':'other_contact'
-  const degree=region==='pelvis'||region==='torso'?'moderate':'slight'
+  const degree=region==='pelvis'||region==='pelvis_edge'||region==='torso'?'moderate':'slight'
   add(contact.actorId,'bed.mattress',contact.contactType==='pressure'?'pressure':'support',contact.certainty,
    'v21_contact_'+region,contact.cause)
   respond('bed.mattress',region,degree,'compression',contact.certainty,'v21_contact_'+contact.cause)
@@ -97,10 +97,11 @@ export function evaluateBedding(body:BodyMechanicalState,selected:BeddingSelecti
  if(sheetPresent){
   add('bed.sheet','bed.mattress','support','selected','confirmed_sheet_on_mattress','selected_sheet_presence')
   for(const contact of mat){
-   const region=contact.actorId==='subject.pelvis'?'pelvis':
+   const region=contact.actorId==='subject.pelvis'&&(/^(bed_edge|mirror_bed_reflection|edge_|laptop_edge_)/.test(shot))?'pelvis_edge':contact.actorId==='subject.pelvis'?'pelvis':
     contact.actorId==='subject.torso'?'torso':'localized_contact'
    add(contact.actorId,'bed.sheet','pressure','estimated','contact_through_existing_sheet',contact.cause)
    respond('bed.sheet',region,'slight','folds','estimated','supported_contact_'+contact.cause)
+   if(region==='pelvis_edge')respond('bed.sheet','edge_near_contact','slight','tension','estimated','edge_load_with_confirmed_sheet')
   }
  }else if(selection.sheet==='reference')unknowns.push('SHEET_PRESENCE_NOT_CONFIRMED')
  if(pillowPresent&&selection.pillow!=='absent'){
@@ -144,7 +145,7 @@ export function renderBedding(state:BeddingState):string{
  for(const r of state.responses){
   if(r.targetId==='bed.mattress')parts.push('Local mattress compression follows the established '+r.region+' support region.')
   if(r.targetId==='bed.pillow')parts.push('Existing pillow yields slightly at the established '+r.region+' contact.')
-  if(r.targetId==='bed.sheet')parts.push('Confirmed sheet remains continuous across the actual '+r.region+' contact, with restrained local folds.')
+  if(r.targetId==='bed.sheet')parts.push(r.effect==='tension'?'Confirmed sheet remains attached across the bed edge with slight localized tension.':'Confirmed sheet remains continuous across the actual '+r.region+' contact, with restrained local folds.')
   if(r.targetId==='bed.blanket')parts.push('Confirmed blanket follows the body contact with gravity-supported soft folds.')
  }
  if(state.responses.every(x=>x.targetId!=='bed.mattress'))parts.push('No independent mattress depression without established support.')
