@@ -37,7 +37,7 @@ const approved=async(spec:ReturnType<typeof build>['spec'])=>{
  })))
  return {prompt,sectionOrder,openingLineSelection,integrity:spec.integrity,
   promptDigest,sectionCount:spec.derivedUnits.length,protectedUnitDigests,
-  source:'gemini-editor',validated:true}
+  source:'gemini-editor',validated:true,authoritative:false}
 }
 
 describe('Main Gemini constrained prompt editor interface',()=>{
@@ -50,14 +50,18 @@ describe('Main Gemini constrained prompt editor interface',()=>{
   render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady} onAdvisoryReady={vi.fn()}/>)
   expect(screen.getByText(/عرض البرومبت المحلي المعتمد/)).toBeTruthy()
   fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
-  await waitFor(()=>expect(screen.getByText(/نتيجة Gemini المحررة والمعتمدة برمجيًا/)).toBeTruthy())
+  // PR7b Category 1: valid editorial text is still visible; default medium
+  // room has userConfirmed=false, so it MUST NOT promote to Final Prompt.
+  await waitFor(()=>expect(screen.getByText(/نتيجة Gemini المحررة — غير معتمدة نهائيًا/)).toBeTruthy())
   const [endpoint,options]=fetcher.mock.calls[0] as unknown as [string,{body:string}]
   expect(endpoint).toBe('/api/generate-main-prompt')
   const body=JSON.parse(options.body)
   expect(body.sceneSpecification).toEqual(spec)
   expect(body).not.toHaveProperty('sceneBrief')
   expect(body.sceneSpecification.references.pixelsAvailableToEditor).toBe(false)
-  expect(onPromptReady).toHaveBeenCalledWith(accepted.prompt)
+  expect(onPromptReady).not.toHaveBeenCalledWith(accepted.prompt)
+  expect(onPromptReady).toHaveBeenCalledWith('')
+  expect(screen.getByText(/تحرير Gemini صحيح نصيًا لكنه غير معتمد نهائيًا/)).toBeTruthy()
  })
  it('falls back automatically when Gemini returns a plausible-looking prompt missing physical constraints',async()=>{
   const {spec,result,validation}=build()
@@ -68,9 +72,12 @@ describe('Main Gemini constrained prompt editor interface',()=>{
    :json({...accepted,prompt:'A stylish studio photo with a different model and an invented window.'})))
   render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
-  await waitFor(()=>expect(screen.getByText(/البرومبت المحلي — دون اعتماد تحرير Gemini/)).toBeTruthy())
+  // PR7b Category 1: fallback still displays the exact compiled local bytes
+  // but RG-1/2 unknown and userConfirmed=false forbid final promotion.
+  await waitFor(()=>expect(screen.getByText(/البرومبت المحلي — للعرض فقط، غير معتمد/)).toBeTruthy())
   expect(screen.getAllByRole('alert').some(x=>x.textContent?.includes('لم يُعتمد تعديل Gemini'))).toBe(true)
-  expect(onPromptReady).toHaveBeenCalledWith(result.promptText)
+  expect(onPromptReady).not.toHaveBeenCalledWith(result.promptText)
+  expect(onPromptReady).toHaveBeenCalledWith('')
   expect(screen.queryByText('A stylish studio photo with a different model and an invented window.')).toBeNull()
  })
  it('falls back to local prompt on provider failure without changing user choices',async()=>{
@@ -81,8 +88,11 @@ describe('Main Gemini constrained prompt editor interface',()=>{
    :json({errorCode:'GEMINI_EDITOR_REJECTED',error:'مخرجات غير معتمدة'},422)))
   render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
-  await waitFor(()=>expect(screen.getByText(/البرومبت المحلي — دون اعتماد تحرير Gemini/)).toBeTruthy())
-  expect(onPromptReady).toHaveBeenCalledWith(result.promptText)
+  // PR7b Category 1: fallback still displays the exact compiled local bytes
+  // but RG-1/2 unknown and userConfirmed=false forbid final promotion.
+  await waitFor(()=>expect(screen.getByText(/البرومبت المحلي — للعرض فقط، غير معتمد/)).toBeTruthy())
+  expect(onPromptReady).not.toHaveBeenCalledWith(result.promptText)
+  expect(onPromptReady).toHaveBeenCalledWith('')
   expect(screen.getAllByRole('alert').some(x=>x.textContent?.includes('GEMINI_EDITOR_REJECTED'))).toBe(true)
  })
  it('reports serverless HTML 500 as a server failure and preserves the local validated prompt',async()=>{
@@ -95,9 +105,12 @@ describe('Main Gemini constrained prompt editor interface',()=>{
    })))
   render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
-  await waitFor(()=>expect(screen.getByText(/البرومبت المحلي — دون اعتماد تحرير Gemini/)).toBeTruthy())
+  // PR7b Category 1: fallback still displays the exact compiled local bytes
+  // but RG-1/2 unknown and userConfirmed=false forbid final promotion.
+  await waitFor(()=>expect(screen.getByText(/البرومبت المحلي — للعرض فقط، غير معتمد/)).toBeTruthy())
   expect(screen.getAllByRole('alert').some(x=>x.textContent?.includes('HTTP 500'))).toBe(true)
-  expect(onPromptReady).toHaveBeenCalledWith(result.promptText)
+  expect(onPromptReady).not.toHaveBeenCalledWith(result.promptText)
+  expect(onPromptReady).toHaveBeenCalledWith('')
   expect(onPromptReady).not.toHaveBeenCalledWith(expect.stringContaining('FUNCTION_INVOCATION_FAILED'))
  })
  it('blocks Gemini entirely when local physics is invalid, but preserves independent tools',()=>{
