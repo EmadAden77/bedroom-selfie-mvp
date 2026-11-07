@@ -6,7 +6,8 @@ import type {CompilationContext,ValidationResult} from '../domain/types'
 import {bedroomShots,getShotPosture} from '../data/bedroom-shots'
 import {captureLightingIssues} from '../data/scene-consistency'
 import {validateMirrorControls} from '../data/mirror-controls'
-import {validateRoomPhysicalState} from '../data/room-physical-state'
+import {validateRoomPhysicalState,ROOM_ZONES} from '../data/room-physical-state'
+import type {RoomPhysicalState} from '../data/room-physical-state'
 import {nightLightingPresets} from '../data/night-lighting'
 import {hairVariants} from '../data/hair'
 import {expressionVariants} from '../data/expressions'
@@ -77,6 +78,15 @@ export const OPTION_REGISTRY:Readonly<Record<Field,OptionRegistration>>=Object.f
   ...(relationships[id].length===0?{independentReason:'Output presentation preference; no additional scene-physics dependency.'}:{})
  }])) as Record<Field,OptionRegistration>
 )
+/** Nested editable room controls are registered independently of the parent context key. */
+export const ROOM_OPTION_REGISTRY:Readonly<Record<keyof RoomPhysicalState,{
+ id:keyof RoomPhysicalState;values:readonly string[];dependsOn:readonly Field[];meaning:string
+}>>={
+ order:{id:'order',values:['reference','light','medium','clear'],dependsOn:['roomPhysicalState','roomReferencePresent'],meaning:'Movable object additions, never fixed furniture'},
+ surface:{id:'surface',values:['reference','touch','dust'],dependsOn:['roomPhysicalState','roomReferencePresent','nightLightingId'],meaning:'Only reference-supported or temporary surface marks'},
+ zones:{id:'zones',values:[...ROOM_ZONES],dependsOn:['roomPhysicalState','roomReferencePresent'],meaning:'Editable zones, all furniture stays anchored'},
+ sessionLocked:{id:'sessionLocked',values:['true','false'],dependsOn:['roomPhysicalState','bedroomShotId'],meaning:'Scene-to-scene movable-object continuity'}
+}
 export function affectedFields(changed:readonly Field[]):Field[]{
  const affected=new Set<Field>(changed),queue=[...changed]
  for(let i=0;i<queue.length;i++){
