@@ -13,7 +13,7 @@ type CaptureMode='front'|'mirror'|'rear'|'timer'
 type Category='identity'|'hair'|'expression'|'clothing'|'action'|'room'|'mirror'|'lighting'|'camera'|'materials'
 type Fact={id:string;category:Category;content:string}
 type Selection={
- shotId:string;captureMode:CaptureMode;posture:string;lightingId:string;
+ shotId:string;captureMode:CaptureMode;posture:string;lightingId:string;ownPortrait:boolean;
  hairVariantId:string;hairstyleMode:string;expressionVariantId:string;
  upperGarmentId:string;lowerGarmentId:string|null;upperColor:string;lowerColor:string|null;
  faceDirection:string;mirrorMovement:string;mirrorGaze:string;
@@ -76,6 +76,7 @@ function physicalSceneErrors(s:TrustedSceneSpecification):string[]{
  const e:string[]=[]
  const p=s.selections,d=s.derived
  if(s.conflicts.length)e.push('unresolved_local_conflicts')
+ if(!p.ownPortrait&&s.constraints.some(x=>x.id==='body_pose_physics'&&/193 cm|83 kg/.test(x.content)))e.push('personal_body_profile_transfer')
  if(p.captureMode==='mirror'&&(d.recordingCamera!=='rear'||d.mirrorSurface!=='wardrobe_plane'))e.push('mirror_camera_geometry')
  if(p.captureMode!=='mirror'&&d.mirrorSurface!=='none')e.push('extraneous_mirror')
  if(p.captureMode==='front'&&d.recordingCamera!=='front')e.push('front_camera_geometry')
@@ -105,7 +106,7 @@ export function validateSceneSpecification(value:unknown):TrustedSceneSpecificat
  const ids=v.constraints.map((x:Fact)=>x.id)
  if(new Set(ids).size!==ids.length||v.mandatoryConstraintIds.length!==ids.length||v.mandatoryConstraintIds.some((x:unknown,i:number)=>x!==ids[i]))throw Error('SCENE_MANDATORY_IDS')
  const p=v.selections as Selection
- if(!['front','mirror','rear','timer'].includes(p.captureMode)||![p.shotId,p.posture,p.lightingId,p.hairVariantId,p.hairstyleMode,p.expressionVariantId,p.upperGarmentId,p.faceDirection,p.mirrorMovement,p.mirrorGaze].every(code)||
+ if(typeof p.ownPortrait!=='boolean'||!['front','mirror','rear','timer'].includes(p.captureMode)||![p.shotId,p.posture,p.lightingId,p.hairVariantId,p.hairstyleMode,p.expressionVariantId,p.upperGarmentId,p.faceDirection,p.mirrorMovement,p.mirrorGaze].every(code)||
   typeof p.upperColor!=='string'||p.upperColor.length>100||!(p.lowerGarmentId===null||code(p.lowerGarmentId))||!(p.lowerColor===null||typeof p.lowerColor==='string'))throw Error('SCENE_SELECTIONS')
  if(p.roomState&&(!Array.isArray(p.roomState.zones)||p.roomState.zones.some(x=>!['bed','floor','dresser','nightstand'].includes(x))||typeof p.roomState.sessionLocked!=='boolean'))throw Error('SCENE_ROOM_STATE')
  if(!['reference_declared_unseen','not_provided'].includes(v.references.subject)||!['reference_declared_unseen','not_provided'].includes(v.references.room))throw Error('SCENE_REFERENCE_FLAGS')
