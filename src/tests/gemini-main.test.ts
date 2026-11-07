@@ -166,6 +166,13 @@ describe('Vercel standalone constrained editor',()=>{
    expect(()=>validateSceneSpec(modified)).toThrow('SPEC_BODY_CONFLICT')
   }
  })
+ it('rejects a falsified capture posture even with matching altered body units',()=>{
+  const spec=getSpec()
+  const mutated={...spec,capture:{...spec.capture,posture:'seated_floor'},bodyMechanics:{...spec.bodyMechanics,input:{...spec.bodyMechanics.input,posture:'seated_floor'}}}
+  const {integrity,...unsigned}=mutated
+  const candidate={...unsigned,integrity:sceneFingerprint(unsigned as Omit<typeof spec,'integrity'>)}
+  expect(()=>validateSceneSpec(candidate)).toThrow('SPEC_BODY_POSTURE')
+ })
  it('does not send an invalid mechanical scene to the Gemini provider',async()=>{
   const spec=getSpec()
   vi.stubEnv('GEMINI_API_KEY','fake-key')
