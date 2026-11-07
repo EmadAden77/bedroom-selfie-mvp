@@ -149,6 +149,6 @@ export function renderBedding(state:BeddingState):string{
  }
  if(state.responses.every(x=>x.targetId!=='bed.mattress'))parts.push('No independent mattress depression without established support.')
  if(state.contacts.some(x=>x.cause==='selected_existing_blanket_spread'))parts.push('Confirmed blanket stays spread on its selected mattress support.')
- parts.push('Unknown bedding presence stays unasserted. Invisible bedding is not treated as absent. No unselected pillows, displaced bed frame, invented material constants and detached cloth.')
+ parts.push('Unconfirmed bedding presence stays unasserted. Invisible bedding is not treated as absent. No unselected pillows, displaced bed frame, invented material constants and detached cloth.')
  return parts.join(' ')
 }
