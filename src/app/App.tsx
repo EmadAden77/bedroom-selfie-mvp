@@ -130,7 +130,7 @@ export const App: React.FC = () => {
             onClick={()=>handleContextChange({promptTarget:id})}>{label}</button>)}
         </div>
         <div style={{fontSize:'11px',color:'var(--muted)',marginTop:'8px',lineHeight:1.7}}>
-          Gemini هو كاتب البرومبت المستقل في كل الحالات. يختار تفاصيل اللقطة بحرية وفق إعداداتك، بشرط أن تكون الإضاءة والكاميرا والحركة والتلامس واقعية فيزيائيًا وميكانيكيًا.
+          اختياراتك ومحركات التطبيق المحلية تحدد تفاصيل المشهد والفيزياء بالكامل. Gemini محرر مقيّد لتنظيم النص المعتمد فقط؛ تُرفض الإضافات والحذف والتعارضات تلقائيًا مع الرجوع إلى البرومبت المحلي.
           لا تُضاف معاملات Midjourney مثل --ar دون اختيارها بشكل صريح.
         </div>
       </div>
@@ -139,8 +139,8 @@ export const App: React.FC = () => {
       <PhotoResultAudit ctx={ctxWithImage} originalPrompt={activeGeneratedPrompt || result.promptText} subjectReferenceUrl={meta?.objectUrl} roomReferenceUrl={room.meta?.objectUrl} />
       <footer style={{fontSize:'10px', color:'var(--muted)', textAlign:'center', padding:'20px 0', borderTop:'1px solid var(--border)', marginTop:'20px'}} className="ltr">
         <div>PHYSICAL CLOTHING SYSTEM = APPROVED AND FROZEN</div>
-        <div>Gemini independent creative writer + separate optional local fallback; physical and optical plausibility validated</div>
-        <div>Only concise scene selections are sent to Google for prompt writing. Images are uploaded for photo audit only with explicit consent. No automatic local rule blocks are appended to Gemini output.</div>
+        <div>Deterministic local scene specification → constrained Gemini editor → independent source-preservation validation → local fallback</div>
+        <div>The complete locally approved text specification is sent to Google for ordering; actual reference image pixels are not sent. Gemini cannot introduce free-form scene facts. Ghalyon and v8 remain separate opt-in tools.</div>
       </footer>
     </div>
   )
