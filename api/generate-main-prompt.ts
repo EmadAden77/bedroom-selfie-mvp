@@ -95,6 +95,20 @@ function validateSceneSpec(v:unknown):SceneSpec{
  if(cap.mode==='mirror'&&cap.shotId==='mirror_rear_flash'&&cap.lighting!=='rear_flash')throw Error('SPEC_FLASH')
  if(cap.lighting==='rear_flash'&&!['mirror','rear'].includes(cap.mode))throw Error('SPEC_FLASH')
  if(cap.lighting==='phone_screen_only'&&cap.mode==='rear')throw Error('SPEC_LIGHT')
+ const phoneMode=s.selections.phoneOnlyIlluminationMode||'OFF'
+ if(!['OFF','DARK_ROOM_REAR_FLASH_ONLY','DARK_ROOM_FRONT_SCREEN_ONLY'].includes(String(phoneMode)))throw Error('SPEC_PHONE_MODE')
+ if(phoneMode!=='OFF'){
+  if(!ids.includes('physical_reality'))throw Error('SPEC_PHYSICAL_REALITY')
+  const expected=phoneMode==='DARK_ROOM_REAR_FLASH_ONLY'?'phone_rear_led':'phone_display'
+  const expectedLight=phoneMode==='DARK_ROOM_REAR_FLASH_ONLY'?'rear_flash':'phone_screen_only'
+  if(cap.lighting!==expectedLight)throw Error('SPEC_PHONE_SOURCE')
+  if(phoneMode==='DARK_ROOM_REAR_FLASH_ONLY'&&(cap.mode!=='mirror'||cap.shotId!=='mirror_rear_flash'))throw Error('SPEC_PHONE_CAMERA')
+  if(phoneMode==='DARK_ROOM_FRONT_SCREEN_ONLY'&&cap.mode!=='front')throw Error('SPEC_PHONE_CAMERA')
+  const approved=s.derivedUnits.find(u=>u.id==='physical_reality')?.text||''
+  if(!approved.includes('Active physical emitters: '+expected+' at ')||
+     approved.includes('Active physical emitters: '+expected+',')||
+     !approved.includes('No exact ray tracing'))throw Error('SPEC_PHONE_EXCLUSIVITY')
+ }
  if(s.selections.roomPhysicalState)mandatory.push('physical_room_state')
  if(mandatory.some(id=>!ids.includes(id)))throw Error('SPEC_MANDATORY')
  const byId=new Map(s.derivedUnits.map(unit=>[unit.id,unit.text]))
