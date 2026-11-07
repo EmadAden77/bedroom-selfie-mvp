@@ -66,6 +66,10 @@ describe('Physical Reality Engine constraint graph',()=>{
   expect(evaluatePhysicalReality(ctx).findings.some(f=>f.status==='UNKNOWN')).toBe(true)
   expect(validateMirrorControls(ctx)).toEqual([])
  })
+ it('accepts valid mirror flash configuration under complete trusted catalogue validation',()=>{
+  const ctx={...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'rear_flash',poseId:'standing'}
+  expect(compilePrompt(ctx).validation.errors).toEqual([])
+ })
  it('keeps unmeasured mirror geometry UNKNOWN, rather than physically impossible',()=>{
   const ctx={...base,bedroomShotId:'mirror_wardrobe',poseId:'standing',nightLightingId:'ceiling_neutral'}
   const result=evaluatePhysicalReality(ctx)
