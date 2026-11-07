@@ -44,11 +44,15 @@ export function inspectSharedScene(s){
   if(value===undefined||value===null||value===''){
    if(required.has(field))
     add('required-'+field,'clothing',[field],
-     field==='upperGarmentId'?'القطعة العلوية مطلوبة - Upper garment is required':field+' required',
+     field==='upperGarmentId'?'القطعة العلوية مطلوبة - Upper garment is required':field==='hairVariantId'?'Hair variant required':field==='expressionVariantId'?'Expression variant required':field+' required',
      'اختر قيمة مطلوبة من القائمة.')
   }else if(!available.includes(value)){
    const messages={
     hairVariantId:'Hair variant invalid: '+value,
+    realismIntensity:'Invalid realism intensity',bedroomClutterId:'Invalid bedroom clutter appearance',
+    promptTarget:'Invalid image prompt target',hairstyleMode:'Invalid hairstyle mode',
+    hairDirection:'Invalid hair direction',hairVolume:'Invalid hair volume',hairTexture:'Invalid hair texture',
+    gazeId:'Invalid gaze selection',microExpressionId:'Invalid micro-expression selection',
     expressionVariantId:'Expression variant invalid: '+value,
     upperGarmentId:'Upper garment invalid: '+value,
     lowerGarmentId:'Lower garment must be category lower: '+value,
@@ -71,7 +75,7 @@ export function inspectSharedScene(s){
  if(shot&&PHYSICAL_SHOT_POSTURES[shot]&&s.shotPosture!==PHYSICAL_SHOT_POSTURES[shot])
   add('shot-support','biomechanics',['bedroomShotId','poseId'],'Selected shot posture does not match its registered anatomical support','استخدم الوضعية المعرّفة للّقطة.')
  const upperRule=PHYSICAL_GARMENTS[s.upperGarmentId]
- if(upperRule&&upperRule.category==='upper'&&s.materialId&&!upperRule.allowedMaterials.includes(s.materialId))
+ if(upperRule&&upperRule.category==='upper'&&s.upperGarmentId!=='reference_garment_preserved'&&s.materialId&&!upperRule.allowedMaterials.includes(s.materialId))
   out.push({id:'upper-material-compatibility',status:'WARNING',category:'clothing',
    fields:['upperGarmentId','materialId'],
    reason:'Material '+s.materialId+' may not be compatible with '+s.upperGarmentId,
