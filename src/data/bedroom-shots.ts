@@ -116,4 +116,4 @@ export function renderBedroomShot(shot:BedroomShot):string {
 }
 
 // One canonical anatomical posture per shot; never append a second competing posture.
-export export function getShotPosture(id:string):string | undefined { return shotPostures[id] }
+export function getShotPosture(id:string):string | undefined { return shotPostures[id] }
