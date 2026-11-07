@@ -20,6 +20,8 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Real TypeScript check
         run: npm run typecheck
+      - name: Serverless TypeScript native ESM import smoke test
+        run: node --experimental-strip-types --input-type=module -e "const route = await import('./api/generate-main-prompt.ts'); if (typeof route.default?.fetch !== 'function') process.exit(1)"
       - name: Unit tests
         run: npm test
       - name: Production Vite build
