@@ -51,10 +51,10 @@ export const MirrorSelfieSelector:React.FC<Props>=({ctx,onShotChange,onChange})=
    <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>⚡ فلاش المرآة الفيزيائي</div>
    <p style={{fontSize:11,color:'var(--muted)',lineHeight:1.8,margin:'0 0 9px'}}>يعمل مع جميع وضعيات المرآة: ضوء الفلاش يرتد من الزجاج إلى الشخص، والوهج والظلال والنويز تتبع مسار الضوء والتعريض الحقيقي.</p>
    <div className="grid">
-    <button type="button" className={'option '+(ctx.nightLightingId!=='rear_flash'?'selected':'')} aria-pressed={ctx.nightLightingId!=='rear_flash'} disabled={shotId==='mirror_rear_flash'} onClick={()=>onChange({nightLightingId:'ceiling_neutral'})}>بدون فلاش · إضاءة منزلية</button>
+    <button type="button" className={'option '+(ctx.nightLightingId!=='rear_flash'?'selected':'')} aria-pressed={ctx.nightLightingId!=='rear_flash'} onClick={()=>onChange({nightLightingId:'ceiling_neutral'})}>بدون فلاش · إضاءة منزلية</button>
     <button type="button" className={'option '+(ctx.nightLightingId==='rear_flash'?'selected':'')} aria-pressed={ctx.nightLightingId==='rear_flash'} onClick={()=>onChange({nightLightingId:'rear_flash'})}>⚡ فلاش الكاميرا الخلفية</button>
    </div>
-   {shotId==='mirror_rear_flash'&&<p style={{fontSize:11,color:'var(--muted)',margin:'8px 0 0'}}>هذه الوضعية مخصصة للفلاش؛ اختر وضعية مرآة أخرى لإيقافه.</p>}
+   {shotId==='mirror_rear_flash'&&<p style={{fontSize:11,color:'var(--muted)',margin:'8px 0 0'}}>هذه الوضعية تتطلب الفلاش؛ اختيار ضوء آخر سيُظهر تعارضًا دون تغيير الوضعية تلقائيًا.</p>}
    {ctx.nightLightingId==='rear_flash'&&<p style={{fontSize:11,color:'var(--muted)',margin:'8px 0 0'}}>✓ محاكاة انعكاس LED، موقع الوهج، سقوط الضوء، ظلال الأثاث، عيوب الزجاج ومعالجة مستشعر الهاتف، في Gemini والنسخة المحلية.</p>}
   </div>}
   {([{title:'الوقوف وزوايا الجسم',items:standing},{title:'الجلوس أمام المرآة',items:seated}]).map(group=>
@@ -70,7 +70,7 @@ export const MirrorSelfieSelector:React.FC<Props>=({ctx,onShotChange,onChange})=
   )}
   {active&&<>
    <div style={{borderTop:'1px solid var(--border)',paddingTop:12,fontSize:13,fontWeight:700}}>تحكم الحركة والهندسة</div>
-   <p style={{fontSize:11,color:'var(--muted)',lineHeight:1.8}}>عندما تفرض الوضعية حركة يد أو زاوية محددة، تُقفل الإعدادات المتعارضة تلقائيًا. باقي الخيارات تتبع خطوط الانعكاس والمساحة الفعلية.</p>
+   <p style={{fontSize:11,color:'var(--muted)',lineHeight:1.8}}>عندما تفرض اللقطة حركة يد أو زاوية محددة، تُمنع الأوامر المتناقضة في تلك الخانات. تبديل اللقطة لا يغيّر اختياراتك القديمة خفيةً؛ ستظهر التعارضات لإصلاحها.</p>
    <Choices title="حركة اليد الحرة" value={ctx.mirrorMovementId||'relaxed'} options={mirrorMovements} disabled={fixedMirrorMovementShots.has(shotId)} onSelect={id=>onChange({mirrorMovementId:id})}/>
    <Choices title="ارتفاع الهاتف" value={ctx.mirrorPhoneHeightId||'shot'} options={mirrorPhoneHeights} disabled={!!fixedMirrorHeight[shotId]} onSelect={id=>onChange({mirrorPhoneHeightId:id})}/>
    <Choices title="المسافة من المرآة" value={ctx.mirrorDistanceId||'shot'} options={mirrorDistances} disabled={!!fixedMirrorDistance[shotId]} onSelect={id=>onChange({mirrorDistanceId:id})}/>
