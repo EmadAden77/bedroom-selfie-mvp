@@ -124,6 +124,7 @@ export type CompilationContext = {
   roomReferencePresent?: boolean
   bedroomClutterId?: 'reference' | 'lived_in_messy'
   roomPhysicalState?:RoomPhysicalState
+  phoneOnlyIlluminationMode?: 'OFF' | 'DARK_ROOM_REAR_FLASH_ONLY' | 'DARK_ROOM_FRONT_SCREEN_ONLY'
   nightLightingId?: string
   windowUncovered?: boolean
   poseId?: string
