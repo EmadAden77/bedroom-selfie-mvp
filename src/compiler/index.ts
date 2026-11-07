@@ -1,6 +1,6 @@
 
 import { CompilationContext, CompilationResult, ValidationResult } from '../domain/types'
-import { getShotPosture } from '../data/bedroom-shots'
+import {effectivePhysicalContext} from '../engine/physical-reality'
 import { validateContext } from './validate'
 import { resolveContext } from './resolve'
 import { renderSections } from './render'
@@ -11,9 +11,7 @@ import { validateFinalRealism } from './final-realism'
 
 export function compilePrompt(ctx: CompilationContext): { validation: ValidationResult, result: CompilationResult } {
   // select is implicit in validate/resolve
-  const matchedPosture = ctx.bedroomShotId ? getShotPosture(ctx.bedroomShotId) : undefined
-  // One authority: a selected shot determines the anatomical posture.
-  const synchronized = matchedPosture ? { ...ctx, poseId: matchedPosture } : ctx
+  const synchronized=effectivePhysicalContext(ctx)
   const validation = validateContext(synchronized)
   // Invalid selections are never silently rewritten into a plausible prompt.
   if (!validation.isValid) {
