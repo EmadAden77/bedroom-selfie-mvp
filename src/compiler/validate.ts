@@ -7,11 +7,9 @@ import { expressionVariants, deferredCompositeStates } from '../data/expressions
 import { gazeChoices, microChoices } from '../data/gaze-micro'
 import { poseOptions, faceOptions, lampSideOptions } from '../data/light-geometry'
 import { bedroomShots } from '../data/bedroom-shots'
-import { validateMirrorControls } from '../data/mirror-controls'
+import {evaluatePhysicalReality} from '../engine/physical-reality'
 import { nightLightingPresets } from '../data/night-lighting'
 import { garmentRecords, garmentStates, fitProfiles } from '../data/clothing'
-import {captureLightingIssues} from '../data/scene-consistency'
-import {validateRoomPhysicalState} from '../data/room-physical-state'
 
 export function validateContext(ctx: CompilationContext): ValidationResult {
   const errors: string[] = []
@@ -19,7 +17,6 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
 
   if (ctx.realismIntensity && !realismPresets.some(p=>p.id===ctx.realismIntensity)) errors.push('Invalid realism intensity')
   if (ctx.bedroomClutterId && !['reference','lived_in_messy'].includes(ctx.bedroomClutterId)) errors.push('Invalid bedroom clutter appearance')
-  if(ctx.roomPhysicalState)errors.push(...validateRoomPhysicalState(ctx.roomPhysicalState))
   if (ctx.promptTarget && !['gemini','chatgpt','flux','midjourney'].includes(ctx.promptTarget)) errors.push('Invalid image prompt target')
   if (ctx.hairstyleMode && !['preserve','apply'].includes(ctx.hairstyleMode)) errors.push('Invalid hairstyle mode')
   if (ctx.hairDirection && !hairDirections.some(x=>x.id===ctx.hairDirection)) errors.push('Invalid hair direction')
@@ -137,7 +134,8 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
     if (shot?.mode==='mirror' && ctx.nightLightingId==='phone_screen_only') warnings.push('Mirror selfie may be severely underexposed with phone screen only')
   }
 
-  errors.push(...captureLightingIssues(ctx).filter(issue=>!(issue.includes('فلاش المرآة')&&ctx.bedroomShotId==='mirror_rear_flash')))
-  errors.push(...validateMirrorControls(ctx))
+  const reality=evaluatePhysicalReality(ctx)
+  errors.push(...reality.findings.filter(item=>item.status==='CONFLICT').map(item=>item.reason))
+  warnings.push(...reality.findings.filter(item=>item.status==='WARNING').map(item=>item.reason))
   return { isValid: errors.length === 0, errors, warnings }
 }
