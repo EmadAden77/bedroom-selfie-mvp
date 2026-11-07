@@ -4,7 +4,7 @@ import {buildSceneSpecification,validateConstrainedEditorReply} from '../feature
 import type {CompilationContext} from '../domain/types'
 import {
  EDITORIAL_INSTRUCTIONS,OPENING_LINE_IDS,approvedOpeningLine,
- assembleEditorialPrompt,validateEditorialProposal
+ assembleEditorialPrompt,validateEditorialProposal,digestEditorialText
 } from '../../shared/editorial-contract'
 import {assembleConstrainedPrompt,MAIN_PROMPT_SCHEMA} from '../../api/generate-main-prompt'
 
@@ -88,11 +88,24 @@ describe('PR3 strict editorial-only contract',()=>{
   s.derivedUnits[1].immutable=false as true
   expect(()=>assembleEditorialPrompt(s,proposal(s))).toThrow('EDITOR_SPEC_UNPROTECTED')
  })
- it('independently rejects server prompt substitution by comparing local reassembly',()=>{
+ it('verifies server digests without client-side reassembly and rejects tampering',async()=>{
   const s=spec(),p=proposal(s),server=assembleConstrainedPrompt(JSON.stringify(p),s)
-  const valid={...server,validated:true}
-  expect(validateConstrainedEditorReply(s,valid).prompt).toBe(server.prompt)
-  expect(()=>validateConstrainedEditorReply(s,{...valid,prompt:server.prompt+'\nAn additional light.'}))
-   .toThrow('EDITOR_PROMPT_TAMPERED')
+  const valid={...server,validated:true,
+   promptDigest:await digestEditorialText(server.prompt),
+   sectionCount:s.derivedUnits.length,
+   protectedUnitDigests:await Promise.all(s.derivedUnits.map(async u=>({
+    id:u.id,digest:await digestEditorialText(u.text)
+   })))
+  }
+  expect((await validateConstrainedEditorReply(s,valid)).prompt).toBe(server.prompt)
+  await expect(validateConstrainedEditorReply(s,{...valid,prompt:server.prompt+'\nAn additional light.'}))
+   .rejects.toThrow('EDITOR_PROMPT_TAMPERED')
+  await expect(validateConstrainedEditorReply(s,{...valid,sectionCount:1}))
+   .rejects.toThrow('EDITOR_SECTION_COUNT')
+  await expect(validateConstrainedEditorReply(s,{...valid,protectedUnitDigests:valid.protectedUnitDigests.slice(1)}))
+   .rejects.toThrow('EDITOR_SECTION_DIGESTS')
+  await expect(validateConstrainedEditorReply(s,{...valid,protectedUnitDigests:valid.protectedUnitDigests.map((x,i)=>
+   i===0?{...x,digest:'0'.repeat(64)}:x)}))
+   .rejects.toThrow('EDITOR_SECTION_INTEGRITY')
  })
 })
