@@ -8,6 +8,7 @@ import {getCanonicalShotPosture} from '../shared/body-shot-postures.ts'
 import {evaluateBedding,renderBedding,validBeddingSelection,type BeddingState} from '../shared/bedding-physics.ts'
 import {validateLightingDecision,type LightingDecision} from '../shared/lighting-decision.ts'
 import {EDITORIAL_INSTRUCTIONS,OPENING_LINE_IDS,assembleEditorialPrompt,digestEditorialText} from '../shared/editorial-contract.ts'
+import {assertAuthoritative} from '../shared/authoritative-prompt.ts'
 
 // Compatibility-only export for existing non-Gemini test consumers.
 // It is NEVER included in the model payload; only EDITORIAL_INSTRUCTIONS is sent.
@@ -275,6 +276,15 @@ export default {
     console.warn('[Gemini constrained editor] rejected',error instanceof Error?error.message:'INVALID')
     const reason=error instanceof Error&&/^EDITOR_[A-Z_]+$/.test(error.message)?error.message:'GEMINI_EDITOR_REJECTED'
     return fail(reason,'نتيجة Gemini غير مطابقة لعقد التحرير ('+reason+'). لم تُعتمد.',422)
+   }
+   // Single authority gate: protected bytes must be reconstructable locally;
+   // no model-authored advisory or replacement text can gain Final Prompt status.
+   try{
+    assertAuthoritative(spec,{source:'gemini-editor',prompt:output.prompt,
+     sectionOrder:output.sectionOrder,openingLineSelection:output.openingLineSelection})
+   }catch(error){
+    const code=error instanceof Error?error.message:'FINAL_INVALID'
+    return fail(code,'لم تجتز نتيجة المحرر بوابة اعتماد البرومبت النهائي.',422)
    }
    // Integrity claims are computed by the trusted server, never by Gemini.
    const promptDigest=await digestEditorialText(output.prompt)
