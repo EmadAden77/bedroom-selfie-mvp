@@ -90,3 +90,11 @@ export function assembleEditorialPrompt(spec: EditableSceneSpec, input: unknown)
   openingLineSelection:proposal.openingLineSelection
  }
 }
+
+/** SHA-256 consistency digest for the server response, not a signature or authentication token. */
+export async function digestEditorialText(text: string): Promise<string> {
+ if (!globalThis.crypto?.subtle) throw Error('EDITOR_DIGEST_UNAVAILABLE')
+ const data = new TextEncoder().encode(text)
+ const digest = await globalThis.crypto.subtle.digest('SHA-256', data)
+ return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('')
+}
