@@ -10,7 +10,8 @@ import {buildCreativeSceneBrief} from '../features/ai-prompt-enhancer/buildCreat
 import {buildHairCreativeBrief} from '../data/hair-creative'
 import {hairVariants} from '../data/hair'
 import {compilePrompt} from '../compiler'
-import {buildSceneSpecification,sceneFingerprint,validateConstrainedEditorReply,composeApprovedPrompt} from '../features/ai-prompt-enhancer/scene-specification'
+import {buildSceneSpecification,sceneFingerprint,validateConstrainedEditorReply} from '../features/ai-prompt-enhancer/scene-specification'
+import {assembleEditorialPrompt} from '../../shared/editorial-contract'
 import type {CompilationContext} from '../domain/types'
 import {MAX_SCENE_BRIEF_CHARS,MAX_SCENE_REQUEST_BYTES} from '../features/ai-prompt-enhancer/scene-request-limits'
 
@@ -72,8 +73,11 @@ describe('Vercel standalone constrained editor',()=>{
   expect(body.prompt).toContain('natural')
   expect(body.prompt).toContain('The person reference defines identity')
   expect(body.prompt).toContain(spec.derivedUnits.find(x=>x.id==='bedroom_environment_lock')!.text)
-  expect(body.prompt).toBe(composeApprovedPrompt(spec,body.sectionOrder,body.openingLineSelection))
-  expect(validateConstrainedEditorReply(spec,body).prompt).toBe(body.prompt)
+  expect(body.prompt).toBe(assembleEditorialPrompt(spec,{sectionOrder:body.sectionOrder,openingLineSelection:body.openingLineSelection}).prompt)
+  expect((await validateConstrainedEditorReply(spec,body)).prompt).toBe(body.prompt)
+  expect(body).toHaveProperty('promptDigest')
+  expect(body).toHaveProperty('protectedUnitDigests')
+  expect(body).toHaveProperty('sectionCount',spec.derivedUnits.length)
   const data=JSON.parse(outgoing.contents[0].parts[0].text)
   expect(Object.keys(data).sort()).toEqual(['editorialInstructions','spec'])
   expect(data.spec).toEqual(spec)
