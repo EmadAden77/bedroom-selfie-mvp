@@ -34,7 +34,7 @@ describe('PR4 unified server-side Final Prompt authority gate',()=>{
   expect(spec.roomGeometry.userConfirmed).toBe(false)
   expect(prompt).toBe(spec.derivedUnits
    .filter(u=>u.id!=='natural_scene_director'&&u.id!=='room_geometry')
-   .map(u=>u.text).join('\\n\\n'))
+   .map(u=>u.text).join('\n\n'))
   expect(result.status).toBe(400)
   expect((await result.json() as {errorCode:string}).errorCode).toBe('FINAL_ROOM_UNCONFIRMED')
   expect(()=>assertAuthoritative(spec,{source:'local',prompt})).toThrow('FINAL_ROOM_UNCONFIRMED')
