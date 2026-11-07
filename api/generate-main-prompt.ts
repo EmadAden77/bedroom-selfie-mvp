@@ -3,6 +3,9 @@
  * Gemini can only return a section permutation and an editorial opening: final content
  * is reconstructed here exclusively from immutable local scene units.
  */
+import {inspectSharedScene} from '../shared/physical-reality-core.mjs'
+import type {SharedScene} from '../shared/physical-reality-core.mjs'
+
 export const MAX_SCENE_BRIEF_CHARS=12000 // Only used by independent legacy scene-summary consumers.
 export const MAX_SCENE_REQUEST_BYTES=190000
 const MAX_UNITS=96
@@ -12,6 +15,7 @@ type ImagePromptTarget='gemini'|'chatgpt'|'flux'|'midjourney'
 type SceneUnit={id:string;text:string;authority:string;immutable:true}
 type SceneSpec={
  version:1
+ physicalScene:SharedScene
  capture:{mode:SceneMode;shotId:string;posture:string;lighting:string;target:ImagePromptTarget}
  selections:Record<string,unknown>
  references:{personDeclared:boolean;roomDeclared:boolean;pixelsAvailableToEditor:false;userConfirmedLayout:string[]}
@@ -81,6 +85,32 @@ function validateSceneSpec(v:unknown):SceneSpec{
  if(!['front','mirror','rear','timer'].includes(cap.mode)||!modelTargets.includes(cap.target)||
   ![cap.shotId,cap.posture,cap.lighting].every(codes))throw Error('SPEC_CAPTURE')
  if(s.conflicts.length>0)throw Error('SPEC_CONFLICT')
+ const p=s.physicalScene
+ if(!p||typeof p!=='object'||Array.isArray(p)||
+  ![p.mode,p.shotId,p.nightLightingId,p.upperGarmentId,p.materialId,p.fitId,p.stateId,p.color,p.surface,
+    p.lowerGarmentId,p.lowerMaterialId,p.lowerSurface,p.mirrorMovementId,p.mirrorPhoneHeightId,
+    p.mirrorDistanceId,p.mirrorFramingId,p.mirrorGazeId].every(x=>typeof x==='string')||
+  typeof p.windowUncovered!=='boolean'||typeof p.poseId!=='string'||typeof p.shotPosture!=='string'||
+  typeof p.referenceImagePresent!=='boolean'||typeof p.roomReferencePresent!=='boolean'||
+  ![p.hairVariantId,p.hairstyleMode,p.hairDirection,p.hairVolume,p.hairTexture,p.promptTarget,
+    p.realismIntensity,p.expressionVariantId,p.gazeId,p.microExpressionId,p.bedroomClutterId,
+    p.faceDirectionId,p.lampSideId].every(x=>typeof x==='string'))throw Error('SPEC_PHYSICS_SCHEMA')
+ if(p.mode!==cap.mode||p.shotId!==cap.shotId||p.nightLightingId!==cap.lighting||
+  p.shotPosture!==cap.posture||p.referenceImagePresent!==s.references.personDeclared||
+  p.roomReferencePresent!==s.references.roomDeclared||p.promptTarget!==cap.target||
+  p.hairVariantId!==s.selections.hairVariantId||p.hairstyleMode!==s.selections.hairstyleMode||
+  p.hairDirection!==(s.selections.hairDirection||'auto')||p.hairVolume!==(s.selections.hairVolume||'auto')||
+  p.hairTexture!==(s.selections.hairTexture||'auto')||p.expressionVariantId!==s.selections.expressionVariantId||
+  p.gazeId!==(s.selections.gazeId||'auto')||p.microExpressionId!==(s.selections.microExpressionId||'none')||
+  p.mirrorMovementId!==s.selections.mirrorMovementId||p.mirrorPhoneHeightId!==s.selections.mirrorPhoneHeightId||
+  p.mirrorDistanceId!==s.selections.mirrorDistanceId||p.mirrorFramingId!==s.selections.mirrorFramingId||
+  p.mirrorGazeId!==s.selections.mirrorGazeId||
+  p.upperGarmentId!==s.selections.upperGarmentId||p.materialId!==s.selections.upperMaterialId||
+  p.fitId!==s.selections.upperFitId||p.color!==s.selections.upperColor||
+  p.lowerGarmentId!==s.selections.lowerGarmentId||
+  JSON.stringify(p.roomPhysicalState)!==JSON.stringify(s.selections.roomPhysicalState))
+  throw Error('SPEC_PHYSICS_MISMATCH')
+ if(inspectSharedScene(p).some(x=>x.status==='CONFLICT'))throw Error('SPEC_PHYSICS')
  if(s.references.pixelsAvailableToEditor!==false||typeof s.references.personDeclared!=='boolean'||
   typeof s.references.roomDeclared!=='boolean'||!Array.isArray(s.references.userConfirmedLayout))
   throw Error('SPEC_REFERENCE')

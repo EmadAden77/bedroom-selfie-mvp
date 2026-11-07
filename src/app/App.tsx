@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useRef } from 'react'
 import { Header } from '../components/Header'
 import { RoomReferenceSection } from '../features/reference-room/RoomReferenceSection'
 import { PhysicalRoomStateSelector } from '../features/room-clutter/PhysicalRoomStateSelector'
@@ -8,11 +8,8 @@ import { ReferenceImageSection } from '../features/reference-image/ReferenceImag
 import { HairSelector } from '../features/subject-options/HairSelector'
 import { ExpressionSelector } from '../features/subject-options/ExpressionSelector'
 import { ClothingSelector } from '../features/clothing-options/ClothingSelector'
-import { bedroomShots, getShotPosture } from '../data/bedroom-shots'
 import { BedroomShotsSelector } from '../features/bedroom-shots/BedroomShotsSelector'
 import { MirrorSelfieSelector } from '../features/mirror-selfie/MirrorSelfieSelector'
-import { nextMirrorLighting } from '../data/mirror-flash-physics'
-import { nextLaptopLighting } from '../data/laptop-selfie-physics'
 import { LightGeometrySelector } from '../features/night-lighting/LightGeometrySelector'
 import { NightLightingSelector } from '../features/night-lighting/NightLightingSelector'
 import { AiPromptEnhancer } from '../features/ai-prompt-enhancer/AiPromptEnhancer'
@@ -22,6 +19,9 @@ import { useReferenceImage } from '../hooks/useReferenceImage'
 import { CompilationContext } from '../domain/types'
 import { compilePrompt } from '../compiler'
 import {reconcileCaptureSelection} from '../data/scene-consistency'
+import {evaluatePhysicalReality,updatePhysicalReality,includeCompilerFindings} from '../engine/physical-reality'
+import type {RealityReport} from '../engine/physical-reality'
+import {PhysicalRealityPanel} from '../features/physical-reality/PhysicalRealityPanel'
 
 const defaultContext: CompilationContext = {
   hairVariantId: 'reference_natural_dry',
@@ -69,6 +69,20 @@ export const App: React.FC = () => {
     return compilePrompt(ctxWithImage)
   }, [ctxWithImage])
 
+  const previousReality=useRef<{ctx:CompilationContext;report:RealityReport}|null>(null)
+  const reality=useMemo(()=>{
+    const previous=previousReality.current
+    const changed=previous
+      ? (Object.keys(ctxWithImage) as (keyof CompilationContext)[]).filter(key=>previous.ctx[key]!==ctxWithImage[key])
+      : []
+    const report=previous
+      ? changed.length?updatePhysicalReality(previous.report,ctxWithImage,changed):previous.report
+      : evaluatePhysicalReality(ctxWithImage)
+    previousReality.current={ctx:ctxWithImage,report}
+    return report
+  },[ctxWithImage])
+  const physicalReality=useMemo(()=>includeCompilerFindings(reality,validation),[reality,validation])
+
   const handleContextChange = useCallback((patch: Partial<CompilationContext>) => {
     setCtx(prev => reconcileCaptureSelection(prev,patch))
   }, [])
@@ -85,35 +99,15 @@ export const App: React.FC = () => {
       <Header />
       <ReferenceImageSection meta={meta} error={imageError} loading={imageLoading} onFile={handleFile} onRemove={removeImage} />
       <RoomReferenceSection meta={room.meta} loading={room.loading} error={room.error} onFile={room.handleFile} onRemove={room.removeImage} />
+      <PhysicalRealityPanel status={physicalReality.status} findings={physicalReality.findings} />
       <PhysicalRoomStateSelector value={ctx.roomPhysicalState||DEFAULT_ROOM_PHYSICAL_STATE} roomReferencePresent={!!room.meta} onChange={roomPhysicalState=>handleContextChange({roomPhysicalState})} />
       <HairSelector direction={ctx.hairDirection || 'auto'} volume={ctx.hairVolume || 'auto'} texture={ctx.hairTexture || 'auto'} onAdvancedChange={handleContextChange} selectedId={ctx.hairVariantId} mode={ctx.hairstyleMode || 'preserve'} onModeChange={mode=>handleContextChange({hairstyleMode:mode})} onSelect={(id) => handleContextChange({ hairVariantId: id, hairstyleMode: id==='reference_natural_dry'?'preserve':'apply' })} />
       <ExpressionSelector selectedId={ctx.expressionVariantId} gaze={ctx.gazeId || 'auto'} micro={ctx.microExpressionId || 'none'} onAdvancedChange={handleContextChange} onSelect={(id) => handleContextChange({ expressionVariantId: id })} />
       <ClothingSelector ctx={ctxWithImage} onChange={handleContextChange} />
       <NightLightingSelector shotId={ctx.bedroomShotId} selectedId={ctx.nightLightingId || 'phone_screen_only'} windowUncovered={!!ctx.windowUncovered} onSelect={id=>handleContextChange({ nightLightingId:id })} onWindowChange={open=>handleContextChange({ windowUncovered:open })}/>
-      <LightGeometrySelector poseId={ctx.poseId || 'seated_bed'} faceDirectionId={ctx.faceDirectionId || 'toward_camera'} lampSideId={ctx.lampSideId || 'left'} onChange={patch=>handleContextChange({ ...patch, ...(patch.poseId ? {bedroomShotId:''} : {}) })}/>
-      <BedroomShotsSelector value={ctx.bedroomShotId || ''} onChange={id=>{
-        const selectedShot=bedroomShots.find(s=>s.id===id)
-        const currentLighting=ctx.nightLightingId || 'phone_screen_only'
-        const nextLighting=id==='mirror_rear_flash' ? 'rear_flash'
-          : selectedShot?.mode==='mirror' && ['phone_screen_only','rear_flash'].includes(currentLighting) ? 'ceiling_neutral'
-          : selectedShot?.mode==='rear' && currentLighting==='phone_screen_only' ? 'ceiling_neutral'
-          : id && currentLighting==='rear_flash' ? 'ceiling_neutral'
-          : currentLighting
-        handleContextChange({bedroomShotId:id,...(getShotPosture(id)?{poseId:getShotPosture(id)}:{}),nightLightingId:nextLaptopLighting(id,nextLighting),
-          ...(selectedShot?.mode==='mirror' ? {faceDirectionId:'toward_camera'} : {})})
-      }}/>
-      <MirrorSelfieSelector ctx={ctxWithImage} onChange={handleContextChange} onShotChange={id=>{
-        const currentLighting=ctx.nightLightingId || 'phone_screen_only'
-        const nextLighting=nextLaptopLighting(id,nextMirrorLighting(id,currentLighting))
-        handleContextChange({
-          bedroomShotId:id,
-          poseId:getShotPosture(id)||'standing',
-          faceDirectionId:'toward_camera',
-          nightLightingId:nextLighting,
-          mirrorMovementId:'relaxed',mirrorPhoneHeightId:'shot',
-          mirrorDistanceId:'shot',mirrorFramingId:'shot',mirrorGazeId:'shot'
-        })
-      }}/>
+      <LightGeometrySelector poseId={ctx.poseId || 'seated_bed'} faceDirectionId={ctx.faceDirectionId || 'toward_camera'} lampSideId={ctx.lampSideId || 'left'} onChange={patch=>handleContextChange(patch)}/>
+      <BedroomShotsSelector value={ctx.bedroomShotId || ''} onChange={id=>handleContextChange({bedroomShotId:id})}/>
+      <MirrorSelfieSelector ctx={ctxWithImage} onChange={handleContextChange} onShotChange={id=>handleContextChange({bedroomShotId:id})}/>
       <div className="card">
         <div style={{fontWeight:600,fontSize:'14px',marginBottom:'10px'}}>نموذج توليد الصور المستهدف</div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:'8px'}}>
@@ -128,7 +122,7 @@ export const App: React.FC = () => {
             onClick={()=>handleContextChange({promptTarget:id})}>{label}</button>)}
         </div>
         <div style={{fontSize:'11px',color:'var(--muted)',marginTop:'8px',lineHeight:1.7}}>
-          Gemini هو كاتب البرومبت المستقل في كل الحالات. يختار تفاصيل اللقطة بحرية وفق إعداداتك، بشرط أن تكون الإضاءة والكاميرا والحركة والتلامس واقعية فيزيائيًا وميكانيكيًا.
+          Gemini محرر لغوي مقيد للوحدات التي أجازها المترجم المحلي، ولا يختار هندسة الغرفة أو مصادر الضوء أو وضعيات جديدة.
           لا تُضاف معاملات Midjourney مثل --ar دون اختيارها بشكل صريح.
         </div>
       </div>

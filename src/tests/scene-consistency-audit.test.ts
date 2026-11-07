@@ -49,9 +49,9 @@ describe('Cross-engine scene invariants',()=>{
   expect(captureLightingIssues({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'ceiling_neutral'})).toHaveLength(1)
   expect(captureLightingIssues({...base,bedroomShotId:'bed_edge',nightLightingId:'laptop_screen_only'})).toHaveLength(1)
  })
- it('does not silently change unrelated scene selections; resolves a flash-only pose when user switches light',()=>{
+ it('never silently changes the flash pose when lighting selection changes',()=>{
   const selected=reconcileCaptureSelection({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'rear_flash'},{nightLightingId:'ceiling_neutral'})
-  expect(selected.bedroomShotId).toBe('mirror_wardrobe')
+  expect(selected.bedroomShotId).toBe('mirror_rear_flash')
   expect(selected.nightLightingId).toBe('ceiling_neutral')
   const explicit=reconcileCaptureSelection({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'rear_flash'},{bedroomShotId:'mirror_floor',nightLightingId:'ceiling_neutral'})
   expect(explicit.bedroomShotId).toBe('mirror_floor')

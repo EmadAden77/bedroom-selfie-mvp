@@ -1,22 +1,7 @@
 
 import React from 'react'
 import { CompilationContext } from '../../domain/types'
-import { garmentRecords, materialProfiles, fitProfiles, garmentStates } from '../../data/clothing'
-
-const clothingColors = [
-  { id: 'white', label: 'أبيض', hex: '#FFFFFF' },
-  { id: 'black', label: 'أسود', hex: '#161616' },
-  { id: 'charcoal', label: 'فحمي', hex: '#393B3D' },
-  { id: 'dark_gray', label: 'رمادي غامق', hex: '#595D63' },
-  { id: 'light_gray', label: 'رمادي فاتح', hex: '#B5B9BE' },
-  { id: 'navy', label: 'كحلي', hex: '#1D3152' },
-  { id: 'beige', label: 'بيج', hex: '#D2BD9D' },
-  { id: 'olive', label: 'زيتي', hex: '#667044' },
-  { id: 'brown', label: 'بني', hex: '#755440' },
-  { id: 'burgundy', label: 'عنابي', hex: '#692F3C' },
-  { id: 'blue', label: 'أزرق', hex: '#447AA5' },
-  { id: 'cream', label: 'كريمي', hex: '#F3E6CE' }
-] as const
+import { garmentRecords, materialProfiles, fitProfiles, garmentStates, clothingColors, garmentSurfaceChoices } from '../../data/clothing'
 
 type ColorPaletteProps = {
   value: string
@@ -93,11 +78,7 @@ export const ClothingSelector: React.FC<Props> = ({ ctx, onChange }) => {
             <div>
               <div style={{fontSize:'11px', fontWeight:600, marginBottom:'4px'}}>Surface:</div>
               <select className="input" value={ctx.surface} onChange={e=>onChange({ surface: e.target.value })}>
-                <option value="solid">سادة - solid</option>
-                <option value="subtle heathered">ممزوج خفيف</option>
-                <option value="ribbed">مضلع - ribbed (يتطلب rib_knit فقط)</option>
-                <option value="subtle weave">نسج خفيف</option>
-                <option value="apparent knit-like surface character">ملمس محاك كمرجع</option>
+                {garmentSurfaceChoices.map(choice=><option key={choice.id} value={choice.id}>{choice.label}</option>)}
               </select>
             </div>
           </div>

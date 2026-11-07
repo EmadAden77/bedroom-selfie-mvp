@@ -2,11 +2,13 @@ import type {CompilationContext,CompilationResult,ValidationResult} from '../../
 import {bedroomShots,getShotPosture} from '../../data/bedroom-shots'
 import {buildNaturalSceneDirection} from './natural-scene-director'
 import {MAX_SCENE_REQUEST_BYTES} from './scene-request-limits'
+import {toSharedScene} from '../../engine/physical-reality'
 
 export type SceneCapture={mode:'front'|'mirror'|'rear'|'timer';shotId:string;posture:string;lighting:string;target:'gemini'|'chatgpt'|'flux'|'midjourney'}
 export type SceneUnit={id:string;text:string;authority:'user_selection'|'reference_scope'|'local_physics';immutable:true}
 export type SceneSpecification={
  version:1
+ physicalScene:ReturnType<typeof toSharedScene>
  capture:SceneCapture
  selections:{
   hairstyleMode:string;hairVariantId:string;hairDirection:string;hairVolume:string;hairTexture:string
@@ -98,7 +100,7 @@ export function buildSceneSpecification(ctx:CompilationContext,result:Compilatio
   'The person reference defines identity and the room reference defines photographed architecture only when actually provided to the image generator.'
  ].filter(Boolean).join(' ')
  const unsigned:Omit<SceneSpecification,'integrity'>={
-  version:1,capture,selections,references,derivedUnits,
+  version:1,physicalScene:toSharedScene(ctx),capture,selections,references,derivedUnits,
   mandatoryUnitIds:derivedUnits.map(s=>s.id),unspecified,conflicts,opening
  }
  return {...unsigned,integrity:sceneFingerprint(unsigned)}
