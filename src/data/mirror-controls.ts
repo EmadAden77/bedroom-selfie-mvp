@@ -100,5 +100,5 @@ export function validateMirrorControls(ctx:CompilationContext):string[]{
   stateId:ctx.stateId,color:ctx.color,surface:ctx.surface,windowUncovered:!!ctx.windowUncovered,
   mirrorMovementId:ctx.mirrorMovementId,mirrorPhoneHeightId:ctx.mirrorPhoneHeightId,
   mirrorDistanceId:ctx.mirrorDistanceId,mirrorFramingId:ctx.mirrorFramingId,mirrorGazeId:ctx.mirrorGazeId
- }).filter(x=>x.id.startsWith('mirror-')).map(x=>x.reason)
+ }).filter(x=>x.status==='CONFLICT'&&x.id.startsWith('mirror-')).map(x=>x.reason)
 }
