@@ -45,11 +45,11 @@ describe('v8 text-only auditor UI',()=>{
   render(<ImagePromptAuditorV8 ctx={base} sourcePrompt={source} sceneBrief={brief} onPromptReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تدقيق وإصلاح البرومبت — v8'}))
   await waitFor(()=>expect(fetcher).toHaveBeenCalledTimes(1))
-  expect(JSON.parse((fetcher.mock.calls[0][1] as {body:string}).body).prompt).toBe(source)
+  expect(JSON.parse(((fetcher.mock.calls[0] as unknown as [string,{body:string}])[1]).body).prompt).toBe(source)
   fireEvent.change(screen.getByLabelText(/برومبت للتدقيق/),{target:{value:'Photograph a different scene explicitly requested by the user, preserving identity.'}})
   fireEvent.click(screen.getByRole('button',{name:'تدقيق وإصلاح البرومبت — v8'}))
   await waitFor(()=>expect(fetcher).toHaveBeenCalledTimes(2))
-  expect(JSON.parse((fetcher.mock.calls[1][1] as {body:string}).body).prompt).toContain('different scene')
+  expect(JSON.parse(((fetcher.mock.calls[1] as unknown as [string,{body:string}])[1]).body).prompt).toContain('different scene')
  })
  it('can audit another person without transferring user body measurements',async()=>{
   const fetcher=vi.fn(async()=>ok({...response,repairNotes:[]}))
@@ -58,7 +58,7 @@ describe('v8 text-only auditor UI',()=>{
   fireEvent.click(screen.getByRole('checkbox',{name:/الصورة تخصني/}))
   fireEvent.click(screen.getByRole('button',{name:'تدقيق وإصلاح البرومبت — v8'}))
   await waitFor(()=>expect(screen.getByText(/لم يرصد المدقق تناقضًا نصيًا/)).toBeTruthy())
-  expect(JSON.parse((fetcher.mock.calls[0][1] as {body:string}).body).ownPortrait).toBe(false)
+  expect(JSON.parse(((fetcher.mock.calls[0] as unknown as [string,{body:string}])[1]).body).ownPortrait).toBe(false)
  })
  it('accepts the audited prompt for the existing image-result audit',async()=>{
   const accept=vi.fn()
