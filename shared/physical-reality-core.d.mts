@@ -1,13 +1,14 @@
 export function captureLightingIssuesCore(shotId:string,mode:string,lighting:string):string[]
 export type SharedScene={
  mode:string;shotId:string;nightLightingId:string;windowUncovered?:boolean;
+ poseId?:string;shotPosture?:string;referenceImagePresent?:boolean;roomReferencePresent?:boolean;
  upperGarmentId:string;materialId:string;fitId:string;stateId:string;color:string;surface:string;
  lowerGarmentId?:string;lowerMaterialId?:string;lowerSurface?:string;
  mirrorMovementId?:string;mirrorPhoneHeightId?:string;mirrorDistanceId?:string;
  mirrorFramingId?:string;mirrorGazeId?:string;
  roomPhysicalState?:{order:string;surface:string;zones:string[];sessionLocked:boolean}|null
 }
-export type SharedFinding={id:string;status:'CONFLICT';category:'lighting'|'geometry'|'biomechanics'|'clothing'|'room';
+export type SharedFinding={id:string;status:'CONFLICT'|'WARNING'|'UNKNOWN';category:'lighting'|'geometry'|'biomechanics'|'clothing'|'room'|'reference';
  fields:string[];reason:string;repair:string}
 export function inspectSharedScene(s:SharedScene):SharedFinding[]
 export const MIRROR_FIXED_ACTION_SHOTS:readonly string[]
