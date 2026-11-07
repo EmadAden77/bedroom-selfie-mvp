@@ -139,7 +139,11 @@ export const PHYSICAL_OPTION_IDS=Object.freeze({
     "hallway_spill",
     "window_streetlight",
     "laptop_screen_only",
-    "near_darkness"
+    "near_darkness",
+    "rear_flash",
+    "television_screen",
+    "decorative_led",
+    "sunset_projector"
   ],
   "poseId": [
     "seated_bed",
