@@ -28,6 +28,15 @@ const ui=(finalReady:ReturnType<typeof vi.fn>,advisoryReady:ReturnType<typeof vi
  advisoryReady.mockClear()
 }
 describe('PR4 Ghalyon/Auditor advisory output has no final-prompt authority',()=>{
+ it('snapshots both exact advisory labels (fails if either label is removed or modified)',()=>{
+  const final=vi.fn(),advisory=vi.fn()
+  ui(final,advisory)
+  const labels=screen.getAllByRole('note')
+  expect(labels).toHaveLength(2)
+  expect(labels[0].textContent?.trim()).toMatchInlineSnapshot('"Advisory Output — Non-Authoritative"')
+  expect(labels[1].textContent?.trim()).toMatchInlineSnapshot('"Advisory Output — Non-Authoritative"')
+ })
+
  it('Ghalyon retains generation, copy and review handoff but cannot call authoritative prompt callback',async()=>{
   const draft='A realistic standing mirror selfie in a bedroom with a single ordinary light and physically supported arm.'
   const fetcher=vi.fn(async()=>json({
@@ -41,6 +50,11 @@ describe('PR4 Ghalyon/Auditor advisory output has no final-prompt authority',()=
   fireEvent.click(screen.getByRole('button',{name:/تحسين مشهد السيلفي الحالي مباشرةً/}))
   await waitFor(()=>expect(screen.getByText('الأمر المحسّن — مسودة استشارية')).toBeTruthy())
   expect(screen.getByRole('button',{name:'نسخ الاقتراح الاستشاري'})).toBeTruthy()
+  const copiedG=vi.fn(async()=>{})
+  vi.stubGlobal('navigator',{...navigator,clipboard:{writeText:copiedG}})
+  fireEvent.click(screen.getByRole('button',{name:'نسخ الاقتراح الاستشاري'}))
+  await waitFor(()=>expect(copiedG).toHaveBeenCalledWith(draft))
+
   fireEvent.click(screen.getByRole('button',{name:'إرسال الاقتراح لمراجعة الصورة (استشاري)'}))
   expect(advisory).toHaveBeenCalledWith(draft)
   expect(final).not.toHaveBeenCalledWith(draft)
@@ -58,6 +72,11 @@ describe('PR4 Ghalyon/Auditor advisory output has no final-prompt authority',()=
   fireEvent.click(screen.getByRole('button',{name:'تدقيق وإصلاح البرومبت — v8'}))
   await waitFor(()=>expect(screen.getByText('C — مسودة البرومبت الإنجليزية (استشارية وليست نهائية)')).toBeTruthy())
   expect(screen.getByRole('button',{name:'نسخ المسودة الاستشارية'})).toBeTruthy()
+  const copiedA=vi.fn(async()=>{})
+  vi.stubGlobal('navigator',{...navigator,clipboard:{writeText:copiedA}})
+  fireEvent.click(screen.getByRole('button',{name:'نسخ المسودة الاستشارية'}))
+  await waitFor(()=>expect(copiedA).toHaveBeenCalledWith(draft))
+
   fireEvent.click(screen.getByRole('button',{name:'إرسال المسودة لمراجعة الصورة (استشاري)'}))
   expect(advisory).toHaveBeenCalledWith(draft)
   expect(final).not.toHaveBeenCalledWith(draft)
