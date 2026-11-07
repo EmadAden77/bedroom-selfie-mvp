@@ -1,6 +1,7 @@
 import React,{useEffect,useRef,useState} from 'react'
 import type {CompilationContext} from '../../domain/types'
 import {bedroomShots} from '../../data/bedroom-shots'
+import {evaluatePhysicalReality} from '../../engine/physical-reality'
 
 type Result={
  repairNotes:string[]
@@ -42,7 +43,7 @@ export const ImagePromptAuditorV8:React.FC<Props>=({ctx,sourcePrompt,sceneBrief,
  useEffect(()=>{
   version.current++;pending.current?.abort();pending.current=null
   setLoading(false);setResult(null);setError('');setCopied(false)
- },[sourcePrompt,sceneBrief,ctx.bedroomShotId,ctx.nightLightingId])
+ },[sourcePrompt,sceneBrief,ctx.bedroomShotId,ctx.nightLightingId,ctx.phoneOnlyIlluminationMode])
  useEffect(()=>()=>{version.current++;pending.current?.abort()},[])
 
  async function audit(){
@@ -57,7 +58,7 @@ export const ImagePromptAuditorV8:React.FC<Props>=({ctx,sourcePrompt,sceneBrief,
     method:'POST',headers:{'content-type':'application/json'},signal:ctrl.signal,
     body:JSON.stringify({
      prompt:preferred,sceneBrief,captureMode:capture,shotId:shot?.id||'',
-     lighting:ctx.nightLightingId||'phone_screen_only',
+     lighting:evaluatePhysicalReality(ctx).effectiveLightingId,
      subjectReferencePresent:!!ctx.referenceImagePresent,
      roomReferencePresent:!!ctx.roomReferencePresent,
      ownPortrait
