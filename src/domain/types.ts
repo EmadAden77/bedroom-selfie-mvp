@@ -101,6 +101,7 @@ export type ReferenceImageMeta = {
 }
 
 import type {RoomPhysicalState} from '../data/room-physical-state'
+import type {BeddingSelection} from '../../shared/bedding-physics'
 
 export type CompilationContext = {
   hairVariantId: string
@@ -124,6 +125,7 @@ export type CompilationContext = {
   roomReferencePresent?: boolean
   bedroomClutterId?: 'reference' | 'lived_in_messy'
   roomPhysicalState?:RoomPhysicalState
+  beddingSelection?:BeddingSelection
   phoneOnlyIlluminationMode?: 'OFF' | 'DARK_ROOM_REAR_FLASH_ONLY' | 'DARK_ROOM_FRONT_SCREEN_ONLY'
   nightLightingId?: string
   windowUncovered?: boolean
