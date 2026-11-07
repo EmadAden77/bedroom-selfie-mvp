@@ -15,7 +15,11 @@ jobs:
         with:
           node-version: '24'
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: |
+          npm install --no-audit --no-fund
+          echo __PRE_V2_LOCK_BEGIN__
+          cat package-lock.json
+          echo __PRE_V2_LOCK_END__
       - name: Real TypeScript check
         run: npm run typecheck
       - name: Unit tests
