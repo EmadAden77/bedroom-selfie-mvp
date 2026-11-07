@@ -9,6 +9,7 @@ import {evaluateBedding,renderBedding,validBeddingSelection,type BeddingState} f
 import {validateLightingDecision,type LightingDecision} from '../shared/lighting-decision.ts'
 import {EDITORIAL_INSTRUCTIONS,OPENING_LINE_IDS,assembleEditorialPrompt,digestEditorialText} from '../shared/editorial-contract.ts'
 import {assertAuthoritative} from '../shared/authoritative-prompt.ts'
+import {mirrorRearFlashNeedsSource,captureAllowsRearFlash,rearCaptureScreenOnlyConflict} from '../shared/capture-lighting-rules.ts'
 
 // Compatibility-only export for existing non-Gemini test consumers.
 // It is NEVER included in the model payload; only EDITORIAL_INSTRUCTIONS is sent.
@@ -116,9 +117,9 @@ export function validateSceneSpec(v:unknown):SceneSpec{
  if(!beddingUnit||beddingUnit.text!==renderBedding(canonicalBedding))throw Error('SPEC_BEDDING_UNIT')
  const mandatory=['reference_identity','identity_fidelity','facial_identity_guard','hair_identity_guard','clothing_output_guard','bedroom_environment_lock','background_continuity','light_pose_geometry','body_pose_physics','camera_physics','realism_intensity','night_lighting_'+cap.lighting,'upper_'+String(s.selections.upperGarmentId)]
  if(cap.mode==='mirror')mandatory.push('mirror_composition')
- if(cap.mode==='mirror'&&cap.shotId==='mirror_rear_flash'&&cap.lighting!=='rear_flash')throw Error('SPEC_FLASH')
- if(cap.lighting==='rear_flash'&&!['mirror','rear'].includes(cap.mode))throw Error('SPEC_FLASH')
- if(cap.lighting==='phone_screen_only'&&cap.mode==='rear')throw Error('SPEC_LIGHT')
+ if(cap.mode==='mirror'&&mirrorRearFlashNeedsSource(cap.shotId,cap.lighting))throw Error('SPEC_FLASH')
+ if(cap.lighting==='rear_flash'&&!captureAllowsRearFlash(cap.mode))throw Error('SPEC_FLASH')
+ if(rearCaptureScreenOnlyConflict(cap.mode,cap.lighting))throw Error('SPEC_LIGHT')
  const phoneMode=s.selections.phoneOnlyIlluminationMode||'OFF'
  if(!['OFF','DARK_ROOM_REAR_FLASH_ONLY','DARK_ROOM_FRONT_SCREEN_ONLY'].includes(String(phoneMode)))throw Error('SPEC_PHONE_MODE')
  // Input validation only: Gemini never resolves lighting decisions.
