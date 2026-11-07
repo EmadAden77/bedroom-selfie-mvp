@@ -2,7 +2,7 @@
  * This is a consistency checker, not a ray tracer or image-quality guarantee.
  * Existing rule authors remain in their domain modules; the graph owns invocation and diagnostics.
  */
-import type {CompilationContext} from '../domain/types'
+import type {CompilationContext,ValidationResult} from '../domain/types'
 import {bedroomShots,getShotPosture} from '../data/bedroom-shots'
 import {captureLightingIssues} from '../data/scene-consistency'
 import {validateMirrorControls} from '../data/mirror-controls'
@@ -147,4 +147,42 @@ export function evaluatePhysicalReality(ctx:CompilationContext,changed?:readonly
 /** Verify registry completeness against the actual context of the running app. */
 export function missingRegistrations(ctx:CompilationContext):string[]{
  return Object.keys(ctx).filter(key=>!(key in OPTION_REGISTRY))
+}
+
+/** Migration adapter: compiler-only legacy validators remain authoritative until converted
+ * to typed graph rules. Never present a compiler-rejected scene as VALID or UNKNOWN.
+ */
+export function includeCompilerFindings(
+ reality:ReturnType<typeof evaluatePhysicalReality>,validation:Pick<ValidationResult,'errors'|'warnings'>
+):ReturnType<typeof evaluatePhysicalReality>{
+ const findings=[...reality.findings]
+ const existing=new Set(findings.map(x=>x.reason))
+ const infer=(reason:string):{category:RealityCategory;fields:Field[];repair:string}=>{
+  const s=reason.toLowerCase()
+  if(/garment|material|fit|rib|color|state|surface|clothing|قطعة|ملابس/.test(s))
+   return {category:'clothing',fields:['upperGarmentId','materialId','fitId','stateId','color','surface','lowerGarmentId'],repair:'راجع توافق نوع القطعة والخامة والقصّة والسطح واللون، أو اختر القيم الافتراضية للقطعة.'}
+  if(/light|flash|lamp|window|curtain|إضاءة|فلاش|نافذة/.test(s))
+   return {category:'lighting',fields:['nightLightingId','windowUncovered','bedroomShotId'],repair:'غيّر مصدر الضوء أو اللقطة صراحةً حتى يتوافقا، دون إضافة مصدر ضوء غير موجود.'}
+  if(/mirror|reflection|مرآة/.test(s))
+   return {category:'geometry',fields:['bedroomShotId','mirrorDistanceId','mirrorPhoneHeightId','mirrorMovementId'],repair:'راجع إعداد المرآة أو اختر الوضع الافتراضي الخاص باللقطة.'}
+  if(/hair|hairstyle|شعر/.test(s))
+   return {category:'reference',fields:['hairVariantId','hairstyleMode'],repair:'اختر تسريحة مسموحة واحفظ خصائص الشعر الأصلية.'}
+  if(/expression|gaze|micro/.test(s))
+   return {category:'biomechanics',fields:['expressionVariantId','gazeId','microExpressionId'],repair:'اختر تعبيرًا أو اتجاه نظر متوافقًا.'}
+  if(/pose|shot|posture|face direction/.test(s))
+   return {category:'biomechanics',fields:['poseId','bedroomShotId','faceDirectionId'],repair:'راجع وضعية الجسم ونوع اللقطة، دون افتراض دعم أو طرف إضافي.'}
+  return {category:'reference',fields:[],repair:'راجع الاختيار المذكور والمرجع المتاح؛ لا تعتمد هذا المشهد قبل حل الخطأ.'}
+ }
+ for(const [status,messages] of [['CONFLICT',validation.errors],['WARNING',validation.warnings]] as const)
+  for(const [i,reason] of messages.entries()){
+   if(existing.has(reason))continue
+   existing.add(reason)
+   const mapped=infer(reason)
+   findings.push(finding('legacy-'+status+'-'+i,status,mapped.category,mapped.fields,
+    'فحص المترجم الحالي: '+reason,mapped.repair))
+  }
+ const status:RealityStatus=findings.some(x=>x.status==='CONFLICT')?'CONFLICT'
+  :findings.some(x=>x.status==='WARNING')?'WARNING'
+  :findings.some(x=>x.status==='UNKNOWN')?'UNKNOWN':'VALID'
+ return {...reality,status,findings}
 }
