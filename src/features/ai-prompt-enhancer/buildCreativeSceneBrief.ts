@@ -17,6 +17,7 @@ import {buildLaptopGeminiBrief} from '../../data/laptop-selfie-physics'
 import {buildNaturalSceneDirection} from './natural-scene-director'
 import {effectivePhysicalContext,renderPhysicalReality} from '../../engine/physical-reality'
 import {renderValidatedBodyScene} from '../../engine/body-mechanics'
+import {renderValidatedBedding} from '../../engine/bedding-physics'
 
 const isSelectedLaptop=(id:string)=>id.startsWith('laptop_')&&id!=='laptop_reflection'
 const selected=<T extends {id:string}>(items:readonly T[],id:string|undefined)=>items.find(x=>x.id===id)
@@ -50,6 +51,7 @@ export function buildCreativeSceneBrief(selectedContext:CompilationContext):stri
   'Body posture: '+plain(shot?getShotPosture(shot.id):ctx.poseId)+'.',
   buildNaturalSceneDirection(ctx),
   renderValidatedBodyScene(ctx),
+  renderValidatedBedding(ctx),
   'Expression: '+(face?.observableFacialConfiguration||'natural relaxed expression')+'.',
   buildHairCreativeBrief(ctx),
   'Upper clothing: '+upperDescription+

@@ -5,6 +5,7 @@
  */
 import {evaluateBodyMechanics,renderBodyMechanics,type BodyMechanicalState} from '../shared/body-mechanics.ts'
 import {getCanonicalShotPosture} from '../shared/body-shot-postures.ts'
+import {evaluateBedding,renderBedding,validBeddingSelection,type BeddingState} from '../shared/bedding-physics.ts'
 
 export const MAX_SCENE_BRIEF_CHARS=12000 // Only used by independent legacy scene-summary consumers.
 export const MAX_SCENE_REQUEST_BYTES=190000
@@ -19,6 +20,7 @@ type SceneSpec={
  selections:Record<string,unknown>
  references:{personDeclared:boolean;roomDeclared:boolean;pixelsAvailableToEditor:false;userConfirmedLayout:string[]}
  bodyMechanics:BodyMechanicalState
+ beddingPhysics:BeddingState
  derivedUnits:SceneUnit[]
  mandatoryUnitIds:string[]
  unspecified:string[]
@@ -79,7 +81,7 @@ export function validateSceneSpec(v:unknown):SceneSpec{
  if(!v||typeof v!=='object'||Array.isArray(v))throw Error('SPEC_SCHEMA')
  const s=v as SceneSpec
  if(s.version!==1||!s.capture||!s.references||!s.selections||!Array.isArray(s.derivedUnits)||
-  !s.bodyMechanics||!Array.isArray(s.mandatoryUnitIds)||!Array.isArray(s.unspecified)||!Array.isArray(s.conflicts)||
+  !s.bodyMechanics||!s.beddingPhysics||!Array.isArray(s.mandatoryUnitIds)||!Array.isArray(s.unspecified)||!Array.isArray(s.conflicts)||
   typeof s.opening!=='string'||typeof s.integrity!=='string')throw Error('SPEC_SCHEMA')
  const cap=s.capture
  if(!['front','mirror','rear','timer'].includes(cap.mode)||!modelTargets.includes(cap.target)||
@@ -114,6 +116,15 @@ export function validateSceneSpec(v:unknown):SceneSpec{
  const bodyUnit=s.derivedUnits.find(u=>u.id==='body_mechanics_v21')
  if(!bodyUnit||bodyUnit.text!==renderBodyMechanics(canonicalBody))
   throw Error('SPEC_BODY_UNIT')
+ // Bedding is independently derived from the *server-verified* V2.1 contacts.
+ if(!validBeddingSelection(s.selections.beddingSelection))throw Error('SPEC_BEDDING_INPUT')
+ let canonicalBedding:BeddingState
+ try{canonicalBedding=evaluateBedding(canonicalBody,s.selections.beddingSelection)}
+ catch{throw Error('SPEC_BEDDING_INPUT')}
+ if(canonicalBedding.status==='INVALID')throw Error('SPEC_BEDDING_CONFLICT')
+ if(JSON.stringify(canonicalBedding)!==JSON.stringify(s.beddingPhysics))throw Error('SPEC_BEDDING_DERIVATION')
+ const beddingUnit=s.derivedUnits.find(u=>u.id==='bedding_physics_v22')
+ if(!beddingUnit||beddingUnit.text!==renderBedding(canonicalBedding))throw Error('SPEC_BEDDING_UNIT')
  const mandatory=['reference_identity','identity_fidelity','facial_identity_guard','hair_identity_guard','clothing_output_guard','bedroom_environment_lock','background_continuity','light_pose_geometry','body_pose_physics','camera_physics','realism_intensity','night_lighting_'+cap.lighting,'upper_'+String(s.selections.upperGarmentId)]
  if(cap.mode==='mirror')mandatory.push('mirror_composition')
  if(cap.mode==='mirror'&&cap.shotId==='mirror_rear_flash'&&cap.lighting!=='rear_flash')throw Error('SPEC_FLASH')

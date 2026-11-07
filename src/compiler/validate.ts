@@ -13,6 +13,7 @@ import { garmentRecords, garmentStates, fitProfiles } from '../data/clothing'
 import {captureLightingIssues} from '../data/scene-consistency'
 import {evaluatePhysicalReality} from '../engine/physical-reality'
 import {deriveBodyScene} from '../engine/body-mechanics'
+import {deriveBeddingScene} from '../engine/bedding-physics'
 import {validateRoomPhysicalState} from '../data/room-physical-state'
 
 export function validateContext(ctx: CompilationContext): ValidationResult {
@@ -142,6 +143,9 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
   const mechanical=deriveBodyScene(ctx)
   errors.push(...mechanical.issues.map(i=>i.code+': '+i.messageAr))
   if(mechanical.status==='NEEDS_INFORMATION')warnings.push('BODY_NEEDS_INFORMATION: تفاصيل الارتكاز أو الهندسة غير مؤكدة؛ لم تُفترض مواضع مخفية.')
+  const bedding=deriveBeddingScene(ctx)
+  errors.push(...bedding.issues.map(i=>i.code+': '+i.messageAr))
+  if(bedding.status==='NEEDS_INFORMATION')warnings.push('BEDDING_NEEDS_INFORMATION: سطح التلامس غير مؤكّد؛ لم نفترض انضغاطًا إضافيًا.')
   const physical=evaluatePhysicalReality(ctx)
   errors.push(...physical.issues.map(i=>i.message))
   warnings.push(...physical.warnings)

@@ -5,6 +5,8 @@ import {MAX_SCENE_REQUEST_BYTES} from './scene-request-limits'
 import {evaluatePhysicalReality} from '../../engine/physical-reality'
 import {deriveBodyScene} from '../../engine/body-mechanics'
 import type {BodyMechanicalState} from '../../../shared/body-mechanics'
+import {deriveBeddingScene} from '../../engine/bedding-physics'
+import {DEFAULT_BEDDING_SELECTION,type BeddingState,type BeddingSelection} from '../../../shared/bedding-physics'
 
 export type SceneCapture={mode:'front'|'mirror'|'rear'|'timer';shotId:string;posture:string;lighting:string;target:'gemini'|'chatgpt'|'flux'|'midjourney'}
 export type SceneUnit={id:string;text:string;authority:'user_selection'|'reference_scope'|'local_physics';immutable:true}
@@ -20,9 +22,11 @@ export type SceneSpecification={
   phoneOnlyIlluminationMode:string
   bodyHoldingHand:string;bodySupportChoice:string;bodyFreeHandTask:string;bodyFeetVisibility:string
   roomPhysicalState:CompilationContext['roomPhysicalState']|null
+  beddingSelection:BeddingSelection
  }
  references:{personDeclared:boolean;roomDeclared:boolean;pixelsAvailableToEditor:false;userConfirmedLayout:string[]}
  bodyMechanics:BodyMechanicalState
+ beddingPhysics:BeddingState
  derivedUnits:SceneUnit[]
  mandatoryUnitIds:string[]
  unspecified:string[]
@@ -78,7 +82,8 @@ export function buildSceneSpecification(ctx:CompilationContext,result:Compilatio
   phoneOnlyIlluminationMode:ctx.phoneOnlyIlluminationMode||'OFF',
   bodyHoldingHand:ctx.bodyHoldingHand||'auto',bodySupportChoice:ctx.bodySupportChoice||'auto',
   bodyFreeHandTask:ctx.bodyFreeHandTask||'auto',bodyFeetVisibility:ctx.bodyFeetVisibility||'unknown',
-  roomPhysicalState:ctx.roomPhysicalState?{...ctx.roomPhysicalState,zones:[...ctx.roomPhysicalState.zones]}:null
+  roomPhysicalState:ctx.roomPhysicalState?{...ctx.roomPhysicalState,zones:[...ctx.roomPhysicalState.zones]}:null,
+  beddingSelection:{...(ctx.beddingSelection||DEFAULT_BEDDING_SELECTION)}
  }
  const derivedUnits:SceneUnit[]=result.sections.map(s=>({id:s.id,text:s.content,authority:unitAuthority(s.id),immutable:true}))
  // Natural Scene Director remains local: the model receives its exact decisions, not
@@ -107,7 +112,7 @@ export function buildSceneSpecification(ctx:CompilationContext,result:Compilatio
   'The person reference defines identity and the room reference defines photographed architecture only when actually provided to the image generator.'
  ].filter(Boolean).join(' ')
  const unsigned:Omit<SceneSpecification,'integrity'>={
-  version:1,capture,selections,references,bodyMechanics:deriveBodyScene(ctx),derivedUnits,
+  version:1,capture,selections,references,bodyMechanics:deriveBodyScene(ctx),beddingPhysics:deriveBeddingScene(ctx),derivedUnits,
   mandatoryUnitIds:derivedUnits.map(s=>s.id),unspecified,conflicts,opening
  }
  return {...unsigned,integrity:sceneFingerprint(unsigned)}

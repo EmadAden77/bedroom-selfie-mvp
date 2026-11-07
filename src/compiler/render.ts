@@ -8,6 +8,7 @@ import { expressionVariants } from '../data/expressions'
 import { renderGazeMicro } from '../data/gaze-micro'
 import { renderBodyPosePhysics } from '../data/body-pose-physics'
 import {renderValidatedBodyScene} from '../engine/body-mechanics'
+import {renderValidatedBedding} from '../engine/bedding-physics'
 import { renderPoseInteraction } from '../data/pose-interaction'
 import { renderMirrorComposition } from '../data/mirror-controls'
 import { renderMirrorFlashPhysics } from '../data/mirror-flash-physics'
@@ -120,6 +121,7 @@ export function renderSections(ctx: CompilationContext): PromptSection[] {
   sections.push({ id: 'light_pose_geometry', content: renderLightGeometry(ctx) })
   sections.push({ id: 'body_pose_physics', content: renderBodyPosePhysics(ctx) })
   sections.push({ id: 'body_mechanics_v21', content: renderValidatedBodyScene(ctx) })
+  sections.push({ id: 'bedding_physics_v22', content: renderValidatedBedding(ctx) })
   const interaction=renderPoseInteraction(ctx)
   if(interaction) sections.push({id:'pose_interaction',content:interaction})
   const mirrorComposition=renderMirrorComposition(ctx)
