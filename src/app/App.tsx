@@ -11,8 +11,6 @@ import { ClothingSelector } from '../features/clothing-options/ClothingSelector'
 import { bedroomShots, getShotPosture } from '../data/bedroom-shots'
 import { BedroomShotsSelector } from '../features/bedroom-shots/BedroomShotsSelector'
 import { MirrorSelfieSelector } from '../features/mirror-selfie/MirrorSelfieSelector'
-import { nextMirrorLighting } from '../data/mirror-flash-physics'
-import { nextLaptopLighting } from '../data/laptop-selfie-physics'
 import { LightGeometrySelector } from '../features/night-lighting/LightGeometrySelector'
 import { NightLightingSelector } from '../features/night-lighting/NightLightingSelector'
 import { AiPromptEnhancer } from '../features/ai-prompt-enhancer/AiPromptEnhancer'
@@ -21,7 +19,7 @@ import { PhotoResultAudit } from '../features/photo-result-audit/PhotoResultAudi
 import { useReferenceImage } from '../hooks/useReferenceImage'
 import { CompilationContext } from '../domain/types'
 import { compilePrompt } from '../compiler'
-import {reconcileCaptureSelection} from '../data/scene-consistency'
+import {evaluatePhysicalReality} from '../engine/physical-reality'
 
 const defaultContext: CompilationContext = {
   hairVariantId: 'reference_natural_dry',
@@ -46,6 +44,7 @@ const defaultContext: CompilationContext = {
   bedroomClutterId: 'reference',
   roomPhysicalState: {...DEFAULT_ROOM_PHYSICAL_STATE,zones:[...DEFAULT_ROOM_PHYSICAL_STATE.zones]}, 
   nightLightingId: 'phone_screen_only',
+  phoneOnlyIlluminationMode:'OFF',
   windowUncovered: false,
   poseId: 'seated_bed',
   faceDirectionId: 'toward_camera',
@@ -70,8 +69,9 @@ export const App: React.FC = () => {
   }, [ctxWithImage])
 
   const handleContextChange = useCallback((patch: Partial<CompilationContext>) => {
-    setCtx(prev => reconcileCaptureSelection(prev,patch))
+    setCtx(prev => ({...prev,...patch}))
   }, [])
+  const physical=useMemo(()=>evaluatePhysicalReality(ctxWithImage),[ctxWithImage])
 
   const handleReset = useCallback(() => {
     setCtx(defaultContext)
@@ -89,31 +89,27 @@ export const App: React.FC = () => {
       <HairSelector direction={ctx.hairDirection || 'auto'} volume={ctx.hairVolume || 'auto'} texture={ctx.hairTexture || 'auto'} onAdvancedChange={handleContextChange} selectedId={ctx.hairVariantId} mode={ctx.hairstyleMode || 'preserve'} onModeChange={mode=>handleContextChange({hairstyleMode:mode})} onSelect={(id) => handleContextChange({ hairVariantId: id, hairstyleMode: id==='reference_natural_dry'?'preserve':'apply' })} />
       <ExpressionSelector selectedId={ctx.expressionVariantId} gaze={ctx.gazeId || 'auto'} micro={ctx.microExpressionId || 'none'} onAdvancedChange={handleContextChange} onSelect={(id) => handleContextChange({ expressionVariantId: id })} />
       <ClothingSelector ctx={ctxWithImage} onChange={handleContextChange} />
+      <section className="card" aria-label="محرك الواقعية الفيزيائية">
+        <div style={{fontWeight:700,marginBottom:8}}>Physical Reality Engine V1 — مصادر الضوء</div>
+        <p style={{fontSize:12,color:'var(--muted)'}}>المصدر الفعلي منفصل عن أثر الإضاءة وعن تعريض الكاميرا. الوضع الصارم يوقف المصادر الأخرى فعليًا في المشهد الناتج، دون تغيير إعداداتك المحفوظة.</p>
+        <label style={{fontSize:12}}>وضع إضاءة الهاتف
+          <select className="input" value={ctx.phoneOnlyIlluminationMode||'OFF'} onChange={e=>handleContextChange({phoneOnlyIlluminationMode:e.target.value as CompilationContext['phoneOnlyIlluminationMode']})}>
+            <option value="OFF">عادي — استخدام الإضاءة المختارة</option>
+            <option value="DARK_ROOM_REAR_FLASH_ONLY">غرفة مظلمة — فلاش خلفي فقط أمام المرآة</option>
+            <option value="DARK_ROOM_FRONT_SCREEN_ONLY">غرفة مظلمة — شاشة الهاتف فقط بالكاميرا الأمامية</option>
+          </select>
+        </label>
+        <p style={{fontSize:12}}>المصادر الفعالة: {physical.emitters.filter(e=>e.enabled).map(e=>e.id).join('، ')||'لا يوجد مصدر محدد'}</p>
+        <p style={{fontSize:11,color:'var(--muted)'}}>الإضاءة المحفوظة: {ctx.nightLightingId} — الإضاءة المستخدمة: {physical.effectiveLightingId}. الانعكاسات ليست مصادر ضوء مستقلة.</p>
+        {physical.issues.map(i=><div key={i.code} role="alert" style={{fontSize:12,color:'var(--error)',marginBottom:8}}>{i.message}
+          {i.corrections.map(c=><button type="button" key={c.label} className="option" style={{display:'block',marginTop:6}} onClick={()=>handleContextChange(c.patch)}>{c.label} (بعد موافقتك)</button>)}
+        </div>)}
+        {physical.warnings.map(w=><p key={w} style={{fontSize:11,color:'var(--muted)'}}>{w}</p>)}
+      </section>
       <NightLightingSelector shotId={ctx.bedroomShotId} selectedId={ctx.nightLightingId || 'phone_screen_only'} windowUncovered={!!ctx.windowUncovered} onSelect={id=>handleContextChange({ nightLightingId:id })} onWindowChange={open=>handleContextChange({ windowUncovered:open })}/>
       <LightGeometrySelector poseId={ctx.poseId || 'seated_bed'} faceDirectionId={ctx.faceDirectionId || 'toward_camera'} lampSideId={ctx.lampSideId || 'left'} onChange={patch=>handleContextChange({ ...patch, ...(patch.poseId ? {bedroomShotId:''} : {}) })}/>
-      <BedroomShotsSelector value={ctx.bedroomShotId || ''} onChange={id=>{
-        const selectedShot=bedroomShots.find(s=>s.id===id)
-        const currentLighting=ctx.nightLightingId || 'phone_screen_only'
-        const nextLighting=id==='mirror_rear_flash' ? 'rear_flash'
-          : selectedShot?.mode==='mirror' && ['phone_screen_only','rear_flash'].includes(currentLighting) ? 'ceiling_neutral'
-          : selectedShot?.mode==='rear' && currentLighting==='phone_screen_only' ? 'ceiling_neutral'
-          : id && currentLighting==='rear_flash' ? 'ceiling_neutral'
-          : currentLighting
-        handleContextChange({bedroomShotId:id,...(getShotPosture(id)?{poseId:getShotPosture(id)}:{}),nightLightingId:nextLaptopLighting(id,nextLighting),
-          ...(selectedShot?.mode==='mirror' ? {faceDirectionId:'toward_camera'} : {})})
-      }}/>
-      <MirrorSelfieSelector ctx={ctxWithImage} onChange={handleContextChange} onShotChange={id=>{
-        const currentLighting=ctx.nightLightingId || 'phone_screen_only'
-        const nextLighting=nextLaptopLighting(id,nextMirrorLighting(id,currentLighting))
-        handleContextChange({
-          bedroomShotId:id,
-          poseId:getShotPosture(id)||'standing',
-          faceDirectionId:'toward_camera',
-          nightLightingId:nextLighting,
-          mirrorMovementId:'relaxed',mirrorPhoneHeightId:'shot',
-          mirrorDistanceId:'shot',mirrorFramingId:'shot',mirrorGazeId:'shot'
-        })
-      }}/>
+      <BedroomShotsSelector value={ctx.bedroomShotId || ''} onChange={id=>handleContextChange({bedroomShotId:id})}/>
+      <MirrorSelfieSelector ctx={ctxWithImage} onChange={handleContextChange} onShotChange={id=>handleContextChange({bedroomShotId:id})}/>
       <div className="card">
         <div style={{fontWeight:600,fontSize:'14px',marginBottom:'10px'}}>نموذج توليد الصور المستهدف</div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:'8px'}}>
