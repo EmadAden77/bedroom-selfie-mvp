@@ -1,6 +1,6 @@
 // @vitest-environment node
 import {describe,it,expect,vi,afterEach} from 'vitest'
-afterEach(()=>vi.unstubAllEnvs())
+afterEach(()=>{vi.unstubAllEnvs()})
 import {captureLightingIssuesCore,inspectSharedScene} from '../../shared/physical-reality-core.mjs'
 import {captureLightingIssues} from '../data/scene-consistency'
 import {bedroomShots} from '../data/bedroom-shots'
