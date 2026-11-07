@@ -11,7 +11,7 @@ import {
 type Props={ctx:CompilationContext;result:CompilationResult;validation:ValidationResult;onReset:()=>void;onPromptReady:(prompt:string)=>void}
 type MainReply={
  prompt?:string;source?:string;model?:string;error?:string;errorCode?:string
- sectionOrder?:string[];openingLineSelection?:'canonical'|'concise';integrity?:string
+ sectionOrder?:string[];openingLineSelection?:'canonical'|'concise';integrity?:string;promptDigest?:string;sectionCount?:number;protectedUnitDigests?:{id:string;digest:string}[]
  validated?:boolean
 }
 
@@ -71,7 +71,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
    if(!response.ok)throw Error((payload.error||'تعذر تحرير البرومبت عبر Gemini.')+(payload.errorCode?' ('+payload.errorCode+')':''))
    if(payload.validated!==true)throw Error('لم يؤكد الخادم مطابقة نتيجة Gemini للمشهد المحلي.')
    // Independently reconstruct and compare all immutable units on the client.
-   const checked=validateConstrainedEditorReply(spec,payload)
+   const checked=await validateConstrainedEditorReply(spec,payload)
    if(current()){setGenerated(checked.prompt);setEngine('gemini');onPromptReady(checked.prompt)}
   }catch(e){
    if(current()){
