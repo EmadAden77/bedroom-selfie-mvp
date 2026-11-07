@@ -105,6 +105,14 @@ export function toSharedScene(ctx:CompilationContext){
  const lower=garmentRecords.find(x=>x.id===ctx.lowerGarmentId)
  return {
   mode:shot?.mode||'front',shotId:ctx.bedroomShotId||'',
+  hairVariantId:ctx.hairVariantId,hairstyleMode:ctx.hairstyleMode||'preserve',
+  hairDirection:ctx.hairDirection||'auto',hairVolume:ctx.hairVolume||'auto',hairTexture:ctx.hairTexture||'auto',
+  promptTarget:ctx.promptTarget||'gemini',realismIntensity:ctx.realismIntensity||'natural',
+  expressionVariantId:ctx.expressionVariantId,gazeId:ctx.gazeId||'auto',
+  microExpressionId:ctx.microExpressionId||'none',
+  bedroomClutterId:ctx.bedroomClutterId||'reference',
+  faceDirectionId:ctx.faceDirectionId||'toward_camera',lampSideId:ctx.lampSideId||'left',
+  lowerFitId:ctx.lowerFitId||'',lowerStateId:ctx.lowerStateId||'',
   poseId:ctx.poseId||'',shotPosture:(shot?getShotPosture(shot.id):ctx.poseId)||'',
   referenceImagePresent:!!ctx.referenceImagePresent,roomReferencePresent:!!ctx.roomReferencePresent,
   nightLightingId:ctx.nightLightingId||'phone_screen_only',windowUncovered:!!ctx.windowUncovered,
