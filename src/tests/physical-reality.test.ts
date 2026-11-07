@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest'
 import type {CompilationContext} from '../domain/types'
-import {OPTION_REGISTRY,ROOM_OPTION_REGISTRY,affectedFields,evaluatePhysicalReality,includeCompilerFindings,missingRegistrations} from '../engine/physical-reality'
+import {OPTION_REGISTRY,ROOM_OPTION_REGISTRY,affectedFields,evaluatePhysicalReality,updatePhysicalReality,includeCompilerFindings,missingRegistrations} from '../engine/physical-reality'
 import {compilePrompt} from '../compiler'
 import {bedroomShots} from '../data/bedroom-shots'
 import {nightLightingPresets} from '../data/night-lighting'
@@ -99,6 +99,22 @@ describe('Physical Reality Engine constraint graph',()=>{
   expect(diagnostics.status).toBe('CONFLICT')
   expect(diagnostics.findings.some(f=>f.category==='clothing'&&f.status==='CONFLICT')).toBe(true)
   expect(ctx.color).toBe('invented emerald')
+ })
+ it('incrementally preserves unaffected findings and reaches identical full results across sequential changes',()=>{
+  const one={...base}
+  const full=evaluatePhysicalReality(one)
+  const two={...one,promptTarget:'chatgpt' as const}
+  const second=updatePhysicalReality(full,two,['promptTarget'])
+  expect(second.recomputedRules).toEqual([])
+  expect(second.findings).toEqual(evaluatePhysicalReality(two).findings)
+  const three={...two,bedroomShotId:'mirror_rear_flash',poseId:'standing',nightLightingId:'ceiling_neutral'}
+  const third=updatePhysicalReality(second,three,['bedroomShotId','poseId','nightLightingId'])
+  expect(third.status).toBe('CONFLICT')
+  expect(third.findings).toEqual(evaluatePhysicalReality(three).findings)
+  const four={...three,nightLightingId:'rear_flash'}
+  const fourth=updatePhysicalReality(third,four,['nightLightingId'])
+  expect(fourth.findings).toEqual(evaluatePhysicalReality(four).findings)
+  expect(fourth.status).not.toBe('CONFLICT')
  })
  it('preserves error-on-conflict behavior through sequential changes',()=>{
   const steps:CompilationContext[]=[
