@@ -3,6 +3,8 @@
  * Gemini can only return a section permutation and an editorial opening: final content
  * is reconstructed here exclusively from immutable local scene units.
  */
+import {captureLightingIssuesCore} from '../shared/physical-reality-core.mjs'
+
 export const MAX_SCENE_BRIEF_CHARS=12000 // Only used by independent legacy scene-summary consumers.
 export const MAX_SCENE_REQUEST_BYTES=190000
 const MAX_UNITS=96
@@ -81,6 +83,7 @@ function validateSceneSpec(v:unknown):SceneSpec{
  if(!['front','mirror','rear','timer'].includes(cap.mode)||!modelTargets.includes(cap.target)||
   ![cap.shotId,cap.posture,cap.lighting].every(codes))throw Error('SPEC_CAPTURE')
  if(s.conflicts.length>0)throw Error('SPEC_CONFLICT')
+ if(captureLightingIssuesCore(s.capture.shotId,s.capture.mode,s.capture.lighting).length)throw Error('SPEC_PHYSICS')
  if(s.references.pixelsAvailableToEditor!==false||typeof s.references.personDeclared!=='boolean'||
   typeof s.references.roomDeclared!=='boolean'||!Array.isArray(s.references.userConfirmedLayout))
   throw Error('SPEC_REFERENCE')
