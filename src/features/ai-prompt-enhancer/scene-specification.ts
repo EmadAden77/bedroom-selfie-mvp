@@ -2,6 +2,7 @@ import type {CompilationContext,CompilationResult,ValidationResult} from '../../
 import {bedroomShots,getShotPosture} from '../../data/bedroom-shots'
 import {buildNaturalSceneDirection} from './natural-scene-director'
 import {MAX_SCENE_REQUEST_BYTES} from './scene-request-limits'
+import {evaluatePhysicalReality} from '../../engine/physical-reality'
 
 export type SceneCapture={mode:'front'|'mirror'|'rear'|'timer';shotId:string;posture:string;lighting:string;target:'gemini'|'chatgpt'|'flux'|'midjourney'}
 export type SceneUnit={id:string;text:string;authority:'user_selection'|'reference_scope'|'local_physics';immutable:true}
@@ -14,6 +15,7 @@ export type SceneSpecification={
   upperGarmentId:string;upperColor:string;upperMaterialId:string;upperFitId:string
   lowerGarmentId:string;lowerColor:string
   mirrorMovementId:string;mirrorPhoneHeightId:string;mirrorDistanceId:string;mirrorFramingId:string;mirrorGazeId:string
+  phoneOnlyIlluminationMode:string
   roomPhysicalState:CompilationContext['roomPhysicalState']|null
  }
  references:{personDeclared:boolean;roomDeclared:boolean;pixelsAvailableToEditor:false;userConfirmedLayout:string[]}
@@ -57,7 +59,7 @@ export function buildSceneSpecification(ctx:CompilationContext,result:Compilatio
  const capture:SceneCapture={
   mode:shot?.mode||'front',shotId:shot?.id||'',
   posture:(shot?getShotPosture(shot.id):ctx.poseId)||'',
-  lighting:ctx.nightLightingId||'phone_screen_only',
+  lighting:evaluatePhysicalReality(ctx).effectiveLightingId,
   target:ctx.promptTarget||'gemini'
  }
  const selections:SceneSpecification['selections']={
@@ -69,6 +71,7 @@ export function buildSceneSpecification(ctx:CompilationContext,result:Compilatio
   lowerGarmentId:ctx.lowerGarmentId||'',lowerColor:ctx.lowerGarmentId?code(ctx.lowerColor):'',
   mirrorMovementId:code(ctx.mirrorMovementId),mirrorPhoneHeightId:code(ctx.mirrorPhoneHeightId),
   mirrorDistanceId:code(ctx.mirrorDistanceId),mirrorFramingId:code(ctx.mirrorFramingId),mirrorGazeId:code(ctx.mirrorGazeId),
+  phoneOnlyIlluminationMode:ctx.phoneOnlyIlluminationMode||'OFF',
   roomPhysicalState:ctx.roomPhysicalState?{...ctx.roomPhysicalState,zones:[...ctx.roomPhysicalState.zones]}:null
  }
  const derivedUnits:SceneUnit[]=result.sections.map(s=>({id:s.id,text:s.content,authority:unitAuthority(s.id),immutable:true}))
