@@ -42,6 +42,7 @@ const defaultContext: CompilationContext = {
   color: 'apparent dark charcoal-gray as observed',
   surface: 'apparent knit-like surface character',
   referenceImagePresent: false,
+  ownPortrait: true,
   roomReferencePresent: false,
   bedroomClutterId: 'reference',
   roomPhysicalState: {...DEFAULT_ROOM_PHYSICAL_STATE,zones:[...DEFAULT_ROOM_PHYSICAL_STATE.zones]}, 
@@ -84,6 +85,7 @@ export const App: React.FC = () => {
     <div className="container" dir="rtl">
       <Header />
       <ReferenceImageSection meta={meta} error={imageError} loading={imageLoading} onFile={handleFile} onRemove={removeImage} />
+      <label style={{fontSize:12,display:'flex',alignItems:'center',gap:8,margin:'4px 0 12px'}}><input type="checkbox" checked={ctx.ownPortrait!==false} onChange={e=>handleContextChange({ownPortrait:e.target.checked})}/>الصورة تخصني: طبّق بنيتي 193 سم / 83 كجم. ألغِ الخيار لشخص آخر.</label>
       <RoomReferenceSection meta={room.meta} loading={room.loading} error={room.error} onFile={room.handleFile} onRemove={room.removeImage} />
       <PhysicalRoomStateSelector value={ctx.roomPhysicalState||DEFAULT_ROOM_PHYSICAL_STATE} roomReferencePresent={!!room.meta} onChange={roomPhysicalState=>handleContextChange({roomPhysicalState})} />
       <HairSelector direction={ctx.hairDirection || 'auto'} volume={ctx.hairVolume || 'auto'} texture={ctx.hairTexture || 'auto'} onAdvancedChange={handleContextChange} selectedId={ctx.hairVariantId} mode={ctx.hairstyleMode || 'preserve'} onModeChange={mode=>handleContextChange({hairstyleMode:mode})} onSelect={(id) => handleContextChange({ hairVariantId: id, hairstyleMode: id==='reference_natural_dry'?'preserve':'apply' })} />
@@ -128,7 +130,7 @@ export const App: React.FC = () => {
             onClick={()=>handleContextChange({promptTarget:id})}>{label}</button>)}
         </div>
         <div style={{fontSize:'11px',color:'var(--muted)',marginTop:'8px',lineHeight:1.7}}>
-          Gemini هو كاتب البرومبت المستقل في كل الحالات. يختار تفاصيل اللقطة بحرية وفق إعداداتك، بشرط أن تكون الإضاءة والكاميرا والحركة والتلامس واقعية فيزيائيًا وميكانيكيًا.
+          اختياراتك ومحركات التطبيق المحلية تحدد تفاصيل المشهد والفيزياء بالكامل. Gemini محرر مقيّد لتنظيم النص المعتمد فقط؛ تُرفض الإضافات والحذف والتعارضات تلقائيًا مع الرجوع إلى البرومبت المحلي.
           لا تُضاف معاملات Midjourney مثل --ar دون اختيارها بشكل صريح.
         </div>
       </div>
@@ -137,8 +139,8 @@ export const App: React.FC = () => {
       <PhotoResultAudit ctx={ctxWithImage} originalPrompt={activeGeneratedPrompt || result.promptText} subjectReferenceUrl={meta?.objectUrl} roomReferenceUrl={room.meta?.objectUrl} />
       <footer style={{fontSize:'10px', color:'var(--muted)', textAlign:'center', padding:'20px 0', borderTop:'1px solid var(--border)', marginTop:'20px'}} className="ltr">
         <div>PHYSICAL CLOTHING SYSTEM = APPROVED AND FROZEN</div>
-        <div>Gemini independent creative writer + separate optional local fallback; physical and optical plausibility validated</div>
-        <div>Only concise scene selections are sent to Google for prompt writing. Images are uploaded for photo audit only with explicit consent. No automatic local rule blocks are appended to Gemini output.</div>
+        <div>Deterministic local scene specification → constrained Gemini editor → independent source-preservation validation → local fallback</div>
+        <div>The complete locally approved text specification is sent to Google for ordering; actual reference image pixels are not sent. Gemini cannot introduce free-form scene facts. Ghalyon and v8 remain separate opt-in tools.</div>
       </footer>
     </div>
   )

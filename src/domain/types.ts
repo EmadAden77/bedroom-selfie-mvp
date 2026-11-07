@@ -121,6 +121,8 @@ export type CompilationContext = {
   color: string
   surface: string
   referenceImagePresent: boolean
+  /** False when the selected subject is another person; never transfer user's body measurements. */
+  ownPortrait?: boolean
   roomReferencePresent?: boolean
   bedroomClutterId?: 'reference' | 'lived_in_messy'
   roomPhysicalState?:RoomPhysicalState

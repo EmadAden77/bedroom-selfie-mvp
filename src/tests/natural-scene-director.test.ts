@@ -66,8 +66,8 @@ describe('Natural Scene Director integration',()=>{
   expect(naturalSceneSelectionIssues({...base,bedroomShotId:'laptop_cross_legs_trackpad',nightLightingId:'laptop_screen_only'})).toEqual([])
  })
  it('both Gemini author and Ghalyon follow photographic natural activity, not unrelated prompt tasks',()=>{
-  expect(PHYSICS_ONLY_SYSTEM).toContain('NATURAL SCENE DIRECTOR')
-  expect(PHYSICS_ONLY_SYSTEM).toContain('normal unflipped mirror reverses printed text')
+  expect(PHYSICS_ONLY_SYSTEM).toContain('already resolved identity, anatomy, camera')
+  expect(PHYSICS_ONLY_SYSTEM).toContain('DO NOT produce creative prose')
   expect(GHALYON_SYSTEM).toContain('For photographic tasks only')
  })
 })
@@ -104,7 +104,7 @@ describe('Server-side natural activity preflight',()=>{
     body:JSON.stringify({...selection,sceneBrief,posture:'standing',target:'gemini'})
    }))
    expect(response.status).toBe(400)
-   expect((await response.json() as {errorCode:string}).errorCode).toBe('NATURAL_SCENE_CONFLICT')
+   expect((await response.json() as {errorCode:string}).errorCode).toBe('SCENE_SPEC_REQUIRED')
   }
   expect(upstream).not.toHaveBeenCalled()
  })
