@@ -22,6 +22,8 @@ import { useReferenceImage } from '../hooks/useReferenceImage'
 import { CompilationContext } from '../domain/types'
 import { compilePrompt } from '../compiler'
 import {reconcileCaptureSelection} from '../data/scene-consistency'
+import {evaluatePhysicalReality} from '../engine/physical-reality'
+import {PhysicalRealityPanel} from '../features/physical-reality/PhysicalRealityPanel'
 
 const defaultContext: CompilationContext = {
   hairVariantId: 'reference_natural_dry',
@@ -69,6 +71,8 @@ export const App: React.FC = () => {
     return compilePrompt(ctxWithImage)
   }, [ctxWithImage])
 
+  const physicalReality = useMemo(() => evaluatePhysicalReality(ctxWithImage), [ctxWithImage])
+
   const handleContextChange = useCallback((patch: Partial<CompilationContext>) => {
     setCtx(prev => reconcileCaptureSelection(prev,patch))
   }, [])
@@ -85,6 +89,7 @@ export const App: React.FC = () => {
       <Header />
       <ReferenceImageSection meta={meta} error={imageError} loading={imageLoading} onFile={handleFile} onRemove={removeImage} />
       <RoomReferenceSection meta={room.meta} loading={room.loading} error={room.error} onFile={room.handleFile} onRemove={room.removeImage} />
+      <PhysicalRealityPanel status={physicalReality.status} findings={physicalReality.findings} />
       <PhysicalRoomStateSelector value={ctx.roomPhysicalState||DEFAULT_ROOM_PHYSICAL_STATE} roomReferencePresent={!!room.meta} onChange={roomPhysicalState=>handleContextChange({roomPhysicalState})} />
       <HairSelector direction={ctx.hairDirection || 'auto'} volume={ctx.hairVolume || 'auto'} texture={ctx.hairTexture || 'auto'} onAdvancedChange={handleContextChange} selectedId={ctx.hairVariantId} mode={ctx.hairstyleMode || 'preserve'} onModeChange={mode=>handleContextChange({hairstyleMode:mode})} onSelect={(id) => handleContextChange({ hairVariantId: id, hairstyleMode: id==='reference_natural_dry'?'preserve':'apply' })} />
       <ExpressionSelector selectedId={ctx.expressionVariantId} gaze={ctx.gazeId || 'auto'} micro={ctx.microExpressionId || 'none'} onAdvancedChange={handleContextChange} onSelect={(id) => handleContextChange({ expressionVariantId: id })} />
