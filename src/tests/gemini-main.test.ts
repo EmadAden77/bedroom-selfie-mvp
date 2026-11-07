@@ -218,8 +218,8 @@ describe('Gemini constrained editor Vercel endpoint',()=>{
    {orderedConstraintIds:[...order,'new_lamp'],layout:'paragraphs'},
    {orderedConstraintIds:order,layout:'paragraphs',prompt:'invented new furniture'}
   ].entries()){
-   vi.stubGlobal('fetch',vi.fn(async()=>provider(order)))
-   vi.stubGlobal('fetch',vi.fn(async()=>new Response(JSON.stringify({candidates:[{content:{parts:[{text:JSON.stringify(response)}]}}]}),{status:200}))))
+   const mockedProvider={candidates:[{content:{parts:[{text:JSON.stringify(response)}]}}]}
+   vi.stubGlobal('fetch',vi.fn(async()=>new Response(JSON.stringify(mockedProvider),{status:200})))
    const r=await handler.fetch(request(payload,{'x-forwarded-for':'editor-bad-'+i}))
    expect(r.status).toBe(422)
    expect((await r.json() as {errorCode:string}).errorCode).toBe('GEMINI_CONSTRAINT_VIOLATION')
