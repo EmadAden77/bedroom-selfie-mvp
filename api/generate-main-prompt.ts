@@ -3,6 +3,8 @@
  * Gemini can only return a section permutation and an editorial opening: final content
  * is reconstructed here exclusively from immutable local scene units.
  */
+import {evaluateBodyMechanics,renderBodyMechanics,type BodyMechanicalState} from '../shared/body-mechanics'
+
 export const MAX_SCENE_BRIEF_CHARS=12000 // Only used by independent legacy scene-summary consumers.
 export const MAX_SCENE_REQUEST_BYTES=190000
 const MAX_UNITS=96
@@ -15,6 +17,7 @@ type SceneSpec={
  capture:{mode:SceneMode;shotId:string;posture:string;lighting:string;target:ImagePromptTarget}
  selections:Record<string,unknown>
  references:{personDeclared:boolean;roomDeclared:boolean;pixelsAvailableToEditor:false;userConfirmedLayout:string[]}
+ bodyMechanics:BodyMechanicalState
  derivedUnits:SceneUnit[]
  mandatoryUnitIds:string[]
  unspecified:string[]
@@ -75,7 +78,7 @@ function validateSceneSpec(v:unknown):SceneSpec{
  if(!v||typeof v!=='object'||Array.isArray(v))throw Error('SPEC_SCHEMA')
  const s=v as SceneSpec
  if(s.version!==1||!s.capture||!s.references||!s.selections||!Array.isArray(s.derivedUnits)||
-  !Array.isArray(s.mandatoryUnitIds)||!Array.isArray(s.unspecified)||!Array.isArray(s.conflicts)||
+  !s.bodyMechanics||!Array.isArray(s.mandatoryUnitIds)||!Array.isArray(s.unspecified)||!Array.isArray(s.conflicts)||
   typeof s.opening!=='string'||typeof s.integrity!=='string')throw Error('SPEC_SCHEMA')
  const cap=s.capture
  if(!['front','mirror','rear','timer'].includes(cap.mode)||!modelTargets.includes(cap.target)||
@@ -90,6 +93,25 @@ function validateSceneSpec(v:unknown):SceneSpec{
   s.derivedUnits.some(u=>u.immutable!==true||!['user_selection','reference_scope','local_physics'].includes(u.authority)||
    typeof u.text!=='string'||u.text.trim().length<8||u.text.length>15000))throw Error('SPEC_UNITS')
  if(s.mandatoryUnitIds.length!==ids.length||s.mandatoryUnitIds.some((id,i)=>id!==ids[i]))throw Error('SPEC_MANDATORY')
+ // Server independently recomputes the shared mechanical contract from normalized
+ // user selections. Never trust status, contacts, deformability or compiler prose.
+ let canonicalBody:BodyMechanicalState
+ try{canonicalBody=evaluateBodyMechanics(s.bodyMechanics.input)}
+ catch{throw Error('SPEC_BODY_INPUT')}
+ if(canonicalBody.status==='INVALID')throw Error('SPEC_BODY_CONFLICT')
+ if(s.bodyMechanics.input.shotId!==cap.shotId||
+  s.bodyMechanics.input.capture!==cap.mode||
+  s.bodyMechanics.input.posture!==cap.posture||
+  s.bodyMechanics.input.holdingHand!==(s.selections.bodyHoldingHand||'auto')||
+  s.bodyMechanics.input.supportChoice!==(s.selections.bodySupportChoice||'auto')||
+  s.bodyMechanics.input.freeHandTask!==(s.selections.bodyFreeHandTask||'auto')||
+  s.bodyMechanics.input.feetVisibility!==(s.selections.bodyFeetVisibility||'unknown'))
+  throw Error('SPEC_BODY_SELECTIONS')
+ if(JSON.stringify(canonicalBody)!==JSON.stringify(s.bodyMechanics))
+  throw Error('SPEC_BODY_DERIVATION')
+ const bodyUnit=s.derivedUnits.find(u=>u.id==='body_mechanics_v21')
+ if(!bodyUnit||bodyUnit.text!==renderBodyMechanics(canonicalBody))
+  throw Error('SPEC_BODY_UNIT')
  const mandatory=['reference_identity','identity_fidelity','facial_identity_guard','hair_identity_guard','clothing_output_guard','bedroom_environment_lock','background_continuity','light_pose_geometry','body_pose_physics','camera_physics','realism_intensity','night_lighting_'+cap.lighting,'upper_'+String(s.selections.upperGarmentId)]
  if(cap.mode==='mirror')mandatory.push('mirror_composition')
  if(cap.mode==='mirror'&&cap.shotId==='mirror_rear_flash'&&cap.lighting!=='rear_flash')throw Error('SPEC_FLASH')
