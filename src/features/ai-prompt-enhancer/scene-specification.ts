@@ -8,7 +8,7 @@ import {deriveBodyScene} from '../../engine/body-mechanics'
 import type {BodyMechanicalState} from '../../../shared/body-mechanics'
 import {deriveBeddingScene} from '../../engine/bedding-physics'
 import {DEFAULT_BEDDING_SELECTION,type BeddingState,type BeddingSelection} from '../../../shared/bedding-physics'
-import {assembleEditorialPrompt,type OpeningLineSelection} from '../../../shared/editorial-contract'
+import {digestEditorialText,validateEditorialProposal,type OpeningLineSelection} from '../../../shared/editorial-contract'
 
 export type SceneCapture={mode:'front'|'mirror'|'rear'|'timer';shotId:string;posture:string;lighting:string;target:'gemini'|'chatgpt'|'flux'|'midjourney'}
 export type SceneUnit={id:string;text:string;authority:'user_selection'|'reference_scope'|'local_physics';immutable:true}
@@ -39,6 +39,9 @@ export type SceneSpecification={
 }
 export type ConstrainedEditorReply={
  prompt:string
+ promptDigest:string
+ sectionCount:number
+ protectedUnitDigests:{id:string;digest:string}[]
  sectionOrder:string[]
  openingLineSelection:OpeningLineSelection
  integrity:string
@@ -127,26 +130,34 @@ export function buildSceneSpecification(ctx:CompilationContext,result:Compilatio
 }
 
 /**
- * The server returns a reconstructed prompt. Independently reproduce it from
- * this exact client-side spec, never from model-authored free text.
+ * Client-side verification only: never reassemble or rewrite the final prompt here.
+ * Check the server's structured order claim, section count, and SHA-256 digests
+ * against the client's already-validated immutable source units.
+ * Digests detect accidental or transport corruption; they are not signatures.
  */
-export function validateConstrainedEditorReply(spec:SceneSpecification,reply:unknown):ConstrainedEditorReply{
+export async function validateConstrainedEditorReply(spec:SceneSpecification,reply:unknown):Promise<ConstrainedEditorReply>{
  if(!reply||typeof reply!=='object'||Array.isArray(reply))throw Error('EDITOR_SCHEMA')
  const data=reply as Record<string,unknown>
  if(data.source!=='gemini-editor'||data.integrity!==spec.integrity)throw Error('EDITOR_INTEGRITY')
  if(data.validated!==true)throw Error('EDITOR_NOT_VALIDATED')
- const local=assembleEditorialPrompt(spec,{
+ validateEditorialProposal(spec,{
   sectionOrder:data.sectionOrder,
   openingLineSelection:data.openingLineSelection
  })
- if(typeof data.prompt!=='string'||data.prompt!==local.prompt)
-  throw Error('EDITOR_PROMPT_TAMPERED')
+ if(typeof data.prompt!=='string'||typeof data.promptDigest!=='string'||!(/^[a-f0-9]{64}$/).test(data.promptDigest))
+  throw Error('EDITOR_DIGEST_SCHEMA')
+ if(data.sectionCount!==spec.derivedUnits.length)throw Error('EDITOR_SECTION_COUNT')
+ if(!Array.isArray(data.protectedUnitDigests)||data.protectedUnitDigests.length!==spec.derivedUnits.length)
+  throw Error('EDITOR_SECTION_DIGESTS')
+ const digests=await Promise.all([
+  digestEditorialText(data.prompt),
+  ...spec.derivedUnits.map(unit=>digestEditorialText(unit.text))
+ ])
+ if(digests[0]!==data.promptDigest)throw Error('EDITOR_PROMPT_TAMPERED')
+ for(let i=0;i<spec.derivedUnits.length;i++){
+  const received=data.protectedUnitDigests[i] as {id?:unknown;digest?:unknown}|null
+  if(!received||received.id!==spec.derivedUnits[i].id||received.digest!==digests[i+1])
+   throw Error('EDITOR_SECTION_INTEGRITY')
+ }
  return data as ConstrainedEditorReply
-}
-
-/** A local-only helper for consistent test and UI reassembly. */
-export function composeApprovedPrompt(
- spec:SceneSpecification,sectionOrder:string[],openingLineSelection:OpeningLineSelection='canonical'
-):string{
- return assembleEditorialPrompt(spec,{sectionOrder,openingLineSelection}).prompt
 }
