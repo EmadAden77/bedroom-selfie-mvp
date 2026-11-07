@@ -3,6 +3,7 @@ import { bedroomShots, getShotPosture } from '../data/bedroom-shots'
 import { isMirrorFlash } from '../data/mirror-flash-physics'
 import { isLivedInClutter } from '../data/bedroom-clutter'
 import { isLaptopSelfieShot } from '../data/laptop-selfie-physics'
+import {mirrorRearFlashNeedsSource} from '../../shared/capture-lighting-rules'
 
 /** Final deterministic consistency gate. Only proven contradictions block export. */
 export function validateFinalRealism(ctx: CompilationContext, sections: PromptSection[]): ValidationResult {
@@ -46,7 +47,7 @@ export function validateFinalRealism(ctx: CompilationContext, sections: PromptSe
   }
   if (light === 'phone_screen_only' && !byId.get('night_lighting_phone_screen_only')?.includes('sole active light source')) errors.push('Final realism: phone-only lighting contradicts source')
   if (light === 'window_streetlight' && !ctx.windowUncovered) errors.push('Final realism: external streetlight blocked by closed curtains')
-  if (shot?.id === 'mirror_rear_flash' && light !== 'rear_flash') errors.push('Final realism: mirror flash requires rear LED source')
+  if (mirrorRearFlashNeedsSource(shot?.id,light)) errors.push('Final realism: mirror flash requires rear LED source')
   if (isMirrorFlash(ctx) && !byId.get('mirror_flash_physics')?.includes('MIRROR FLASH OPTICS:')) errors.push('Final realism: mirror flash ray path missing')
   if (!isMirrorFlash(ctx) && byId.has('mirror_flash_physics')) errors.push('Final realism: mirror flash instructions leaked into a non-flash capture')
   if(isLaptopSelfieShot(ctx.bedroomShotId)&&!byId.get('laptop_selfie_physics')?.includes('LAPTOP SELFIE PHYSICS:'))errors.push('Final realism: laptop support physics missing')
