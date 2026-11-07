@@ -91,7 +91,7 @@ type Rule={id:string;fields:readonly Field[];run:(ctx:CompilationContext)=>Reali
 const finding=(id:string,status:RealityFinding['status'],category:RealityCategory,fields:Field[],reason:string,repair:string):RealityFinding=>({id,status,category,fields,reason,repair})
 const rules:readonly Rule[]=[
  {id:'capture-light',fields:['bedroomShotId','nightLightingId'],run:ctx=>
-  captureLightingIssues(ctx).filter(issue=>!(issue.includes('فلاش المرآة')&&ctx.bedroomShotId==='mirror_rear_flash'))
+  captureLightingIssues(ctx)
    .map((reason,i)=>finding('capture-light-'+i,'CONFLICT','lighting',['bedroomShotId','nightLightingId'],reason,
     'اختر وضع إضاءة يطابق نوع الكاميرا واللقطة، أو غيّر اللقطة صراحةً.'))},
  {id:'mirror-controls',fields:['bedroomShotId','mirrorMovementId','mirrorPhoneHeightId','mirrorDistanceId','mirrorFramingId','mirrorGazeId'],
