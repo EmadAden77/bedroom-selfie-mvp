@@ -1,10 +1,9 @@
 import React from 'react'
 import { nightLightingPresets } from '../../data/night-lighting'
-import {bedroomShots} from '../../data/bedroom-shots'
 
 type Props = { shotId?:string; selectedId: string; windowUncovered: boolean; onSelect: (id: string) => void; onWindowChange: (open: boolean) => void }
 export const NightLightingSelector: React.FC<Props> = ({ shotId,selectedId, windowUncovered, onSelect, onWindowChange }) => {
-  const shot=bedroomShots.find(s=>s.id===shotId)\n  return (
+  return (
   <section className="card" aria-label="الإضاءة الليلية الفيزيائية">
     <div style={{fontWeight:600, fontSize:'14px', marginBottom:'4px'}}>٥. الإضاءة الليلية الفيزيائية داخل الغرفة</div>
     <div style={{fontSize:'11px', color:'var(--muted)', marginBottom:'12px'}}>اختر مشهد إضاءة واحدًا متكاملًا. لا تُضاف مصادر ضوء مخفية، والتعريض لا يخلق ضوءًا فعليًا.</div>
