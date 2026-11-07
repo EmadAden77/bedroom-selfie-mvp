@@ -10,6 +10,10 @@ import {validateLightingDecision,type LightingDecision} from '../shared/lighting
 import {EDITORIAL_INSTRUCTIONS,OPENING_LINE_IDS,assembleEditorialPrompt,digestEditorialText} from '../shared/editorial-contract.ts'
 import {assertAuthoritative} from '../shared/authoritative-prompt.ts'
 import {mirrorRearFlashNeedsSource,captureAllowsRearFlash,rearCaptureScreenOnlyConflict} from '../shared/capture-lighting-rules.ts'
+import {
+ deriveRoomGeometry,renderRoomGeometry,roomGeometryIssues,
+ type RoomGeometry,type RoomOptions
+} from '../shared/room-geometry-rules.ts'
 
 // Compatibility-only export for existing non-Gemini test consumers.
 // It is NEVER included in the model payload; only EDITORIAL_INSTRUCTIONS is sent.
@@ -32,6 +36,7 @@ type SceneSpec={
  references:{personDeclared:boolean;roomDeclared:boolean;pixelsAvailableToEditor:false;userConfirmedLayout:string[]}
  bodyMechanics:BodyMechanicalState
  beddingPhysics:BeddingState
+ roomGeometry:RoomGeometry
  derivedUnits:SceneUnit[]
  mandatoryUnitIds:string[]
  unspecified:string[]
@@ -71,7 +76,7 @@ export function validateSceneSpec(v:unknown):SceneSpec{
  if(!v||typeof v!=='object'||Array.isArray(v))throw Error('SPEC_SCHEMA')
  const s=v as SceneSpec
  if(s.version!==1||!s.capture||!s.lighting||!s.references||!s.selections||!Array.isArray(s.derivedUnits)||
-  !s.bodyMechanics||!s.beddingPhysics||!Array.isArray(s.mandatoryUnitIds)||!Array.isArray(s.unspecified)||!Array.isArray(s.conflicts)||
+  !s.bodyMechanics||!s.beddingPhysics||!s.roomGeometry||!Array.isArray(s.mandatoryUnitIds)||!Array.isArray(s.unspecified)||!Array.isArray(s.conflicts)||
   typeof s.opening!=='string'||typeof s.integrity!=='string')throw Error('SPEC_SCHEMA')
  const cap=s.capture
  if(!['front','mirror','rear','timer'].includes(cap.mode)||!modelTargets.includes(cap.target)||
@@ -86,6 +91,29 @@ export function validateSceneSpec(v:unknown):SceneSpec{
   s.derivedUnits.some(u=>u.immutable!==true||!['user_selection','reference_scope','local_physics'].includes(u.authority)||
    typeof u.text!=='string'||u.text.trim().length<8||u.text.length>15000))throw Error('SPEC_UNITS')
  if(s.mandatoryUnitIds.length!==ids.length||s.mandatoryUnitIds.some((id,i)=>id!==ids[i]))throw Error('SPEC_MANDATORY')
+ // PR7b: independently recompute geometry from untrusted user option fields.
+ // Invalid values reject BEFORE the upstream Gemini request; unknown remains
+ // compilable but is ineligible for authoritative promotion.
+ const optionKeys=['roomSizePreset','roomSizeConfirmed','roomCustomWidthMeters','roomCustomDepthMeters','roomCustomHeightMeters']
+ if(optionKeys.some(key=>!Object.prototype.hasOwnProperty.call(s.selections,key))||
+    typeof s.selections.roomSizePreset!=='string'||typeof s.selections.roomSizeConfirmed!=='boolean')
+  throw Error('SPEC_ROOM_INPUT')
+ const roomOptions:RoomOptions={
+  roomSizePreset:s.selections.roomSizePreset as RoomOptions['roomSizePreset'],
+  roomSizeConfirmed:s.selections.roomSizeConfirmed as boolean,
+  roomCustomWidthMeters:s.selections.roomCustomWidthMeters as number|null,
+  roomCustomDepthMeters:s.selections.roomCustomDepthMeters as number|null,
+  roomCustomHeightMeters:s.selections.roomCustomHeightMeters as number|null
+ }
+ const canonicalRoom=deriveRoomGeometry(roomOptions,cap.posture,cap.lighting,
+  cap.mode==='mirror'&&cap.posture==='standing')
+ if(!canonicalRoom)throw Error('SPEC_ROOM_INPUT')
+ if(JSON.stringify(canonicalRoom)!==JSON.stringify(s.roomGeometry))throw Error('SPEC_ROOM_GEOMETRY')
+ if(roomGeometryIssues(canonicalRoom).some(result=>result.status==='invalid'))
+  throw Error('SPEC_ROOM_INVALID')
+ const roomUnit=s.derivedUnits.find(u=>u.id==='room_geometry')
+ if(!roomUnit||roomUnit.immutable!==true||roomUnit.text!==renderRoomGeometry(canonicalRoom))
+  throw Error('SPEC_ROOM_UNIT')
  if(cap.shotId&&getCanonicalShotPosture(cap.shotId)!==cap.posture)throw Error('SPEC_BODY_POSTURE')
  // Server independently recomputes the shared mechanical contract from normalized
  // user selections. Never trust status, contacts, deformability or compiler prose.
@@ -278,14 +306,17 @@ export default {
     const reason=error instanceof Error&&/^EDITOR_[A-Z_]+$/.test(error.message)?error.message:'GEMINI_EDITOR_REJECTED'
     return fail(reason,'نتيجة Gemini غير مطابقة لعقد التحرير ('+reason+'). لم تُعتمد.',422)
    }
-   // Single authority gate: protected bytes must be reconstructable locally;
-   // no model-authored advisory or replacement text can gain Final Prompt status.
-   try{
-    assertAuthoritative(spec,{source:'gemini-editor',prompt:output.prompt,
-     sectionOrder:output.sectionOrder,openingLineSelection:output.openingLineSelection})
-   }catch(error){
-    const code=error instanceof Error?error.message:'FINAL_INVALID'
-    return fail(code,'لم تجتز نتيجة المحرر بوابة اعتماد البرومبت النهائي.',422)
+   // PR7b separates a correctly assembled editorial draft from AUTHORITY.
+   // Unknown/unconfirmed geometry remains visible and copyable, never final.
+   const eligible=spec.roomGeometry.userConfirmed&&roomGeometryIssues(spec.roomGeometry).length===0
+   if(eligible){
+    try{
+     assertAuthoritative(spec,{source:'gemini-editor',prompt:output.prompt,
+      sectionOrder:output.sectionOrder,openingLineSelection:output.openingLineSelection})
+    }catch(error){
+     const code=error instanceof Error?error.message:'FINAL_INVALID'
+     return fail(code,'لم تجتز نتيجة المحرر بوابة اعتماد البرومبت النهائي.',422)
+    }
    }
    // Integrity claims are computed by the trusted server, never by Gemini.
    const promptDigest=await digestEditorialText(output.prompt)
@@ -293,7 +324,7 @@ export default {
     id:unit.id,digest:await digestEditorialText(unit.text)
    })))
    return json({...output,promptDigest,sectionCount:spec.derivedUnits.length,
-    protectedUnitDigests,validated:true,model})
+    protectedUnitDigests,validated:true,authoritative:eligible,model})
   }catch(error){
    const timeout=(error as Error)?.name==='TimeoutError'||(error as Error)?.name==='AbortError'
    console.warn('[Gemini constrained editor] request failure',timeout?'TIMEOUT':'NETWORK')
