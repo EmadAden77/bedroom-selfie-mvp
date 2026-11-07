@@ -1,4 +1,5 @@
 import type {CompilationContext} from '../domain/types'
+import {MIRROR_FIXED_ACTION_SHOTS,MIRROR_FIXED_HEIGHT,MIRROR_FIXED_DISTANCE,MIRROR_FIXED_GAZE,inspectSharedScene} from '../../shared/physical-reality-core.mjs'
 import {buildMirrorRoomReferenceGeometry} from './mirror-room-geometry'
 import {buildMirrorOpticsMechanics} from './mirror-optics-mechanics'
 
@@ -44,10 +45,10 @@ export const mirrorGazes:readonly MirrorOption[]=[
 ]
 
 /** Fixed actions and sightlines take precedence over a second conflicting command. */
-export const fixedMirrorMovementShots=new Set(['mirror_floor','mirror_double','mirror_dresser','mirror_jacket','mirror_writing'])
-export const fixedMirrorHeight:Record<string,string>={mirror_floor_angle:'waist',mirror_face_phone:'face'}
-export const fixedMirrorDistance:Record<string,string>={mirror_close:'close'}
-export const fixedMirrorGaze:Record<string,string>={mirror_phone_gaze:'screen',mirror_mist:'reflection',mirror_half_face:'reflection'}
+export const fixedMirrorMovementShots=new Set(MIRROR_FIXED_ACTION_SHOTS)
+export const fixedMirrorHeight:Record<string,string>=MIRROR_FIXED_HEIGHT
+export const fixedMirrorDistance:Record<string,string>=MIRROR_FIXED_DISTANCE
+export const fixedMirrorGaze:Record<string,string>=MIRROR_FIXED_GAZE
 
 export function mirrorChoice<T extends MirrorOption>(items:readonly T[],id:string|undefined):T{
  return items.find(item=>item.id===id)||items[0]
@@ -90,22 +91,14 @@ export function buildMirrorGeminiBrief(ctx:CompilationContext):string{
  ].join('\n')
 }
 
+/** Compatibility wrapper: the portable physics engine owns mirror selection constraints. */
 export function validateMirrorControls(ctx:CompilationContext):string[]{
  if(!isMirrorShotId(ctx.bedroomShotId))return []
- const errors:string[]=[]
- for(const [key,value,items] of [
-  ['movement',ctx.mirrorMovementId,mirrorMovements],
-  ['phone height',ctx.mirrorPhoneHeightId,mirrorPhoneHeights],
-  ['distance',ctx.mirrorDistanceId,mirrorDistances],
-  ['framing',ctx.mirrorFramingId,mirrorFramings],
-  ['gaze',ctx.mirrorGazeId,mirrorGazes]
- ] as const){
-  if(value&&!items.some(item=>item.id===value))errors.push('Unknown mirror '+key)
- }
- const shotId=ctx.bedroomShotId||''
- if(fixedMirrorMovementShots.has(shotId)&&ctx.mirrorMovementId&&ctx.mirrorMovementId!=='relaxed')errors.push('Mirror shot already assigns the free hand a task')
- if(fixedMirrorHeight[shotId]&&ctx.mirrorPhoneHeightId&&!['shot',fixedMirrorHeight[shotId]].includes(ctx.mirrorPhoneHeightId))errors.push('Mirror camera height conflicts with selected shot')
- if(fixedMirrorDistance[shotId]&&ctx.mirrorDistanceId&&!['shot',fixedMirrorDistance[shotId]].includes(ctx.mirrorDistanceId))errors.push('Mirror distance conflicts with selected shot')
- if(fixedMirrorGaze[shotId]&&ctx.mirrorGazeId&&!['shot',fixedMirrorGaze[shotId]].includes(ctx.mirrorGazeId))errors.push('Mirror gaze conflicts with selected shot')
- return errors
+ return inspectSharedScene({
+  mode:'mirror',shotId:ctx.bedroomShotId||'',nightLightingId:ctx.nightLightingId||'phone_screen_only',
+  upperGarmentId:ctx.upperGarmentId,materialId:ctx.materialId,fitId:ctx.fitId,
+  stateId:ctx.stateId,color:ctx.color,surface:ctx.surface,windowUncovered:!!ctx.windowUncovered,
+  mirrorMovementId:ctx.mirrorMovementId,mirrorPhoneHeightId:ctx.mirrorPhoneHeightId,
+  mirrorDistanceId:ctx.mirrorDistanceId,mirrorFramingId:ctx.mirrorFramingId,mirrorGazeId:ctx.mirrorGazeId
+ }).filter(x=>x.id.startsWith('mirror-')).map(x=>x.reason)
 }
