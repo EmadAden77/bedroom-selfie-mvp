@@ -127,6 +127,10 @@ export type CompilationContext = {
   phoneOnlyIlluminationMode?: 'OFF' | 'DARK_ROOM_REAR_FLASH_ONLY' | 'DARK_ROOM_FRONT_SCREEN_ONLY'
   nightLightingId?: string
   windowUncovered?: boolean
+  bodyHoldingHand?: 'auto' | 'left' | 'right' | 'none'
+  bodySupportChoice?: 'auto' | 'floor' | 'mattress' | 'none' | 'unknown'
+  bodyFreeHandTask?: 'auto' | 'free' | 'surface_support' | 'phone'
+  bodyFeetVisibility?: 'visible' | 'occluded' | 'outside_crop' | 'unknown' | 'absent'
   poseId?: string
   faceDirectionId?: string
   lampSideId?: string
