@@ -1,0 +1,32 @@
+import React from 'react'
+import {afterEach,describe,it,expect} from 'vitest'
+import {cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react'
+import {App} from '../app/App'
+
+afterEach(cleanup)
+describe('App V1 strict-light UI regression',()=>{
+ it('preserves stored lamp through strict switching, explicit camera correction and reset',async()=>{
+  render(<App/>)
+  fireEvent.click(screen.getByRole('button',{name:/المصباح الجانبي الدافئ/}))
+  const mode=screen.getByLabelText('وضع إضاءة الهاتف') as HTMLSelectElement
+  expect(screen.getByText(/الإضاءة المحفوظة: bedside_warm/)).toBeTruthy()
+  fireEvent.change(mode,{target:{value:'DARK_ROOM_REAR_FLASH_ONLY'}})
+  expect(screen.getByRole('alert',{name:''}).textContent).toContain('فلاش الهاتف فقط')
+  expect(screen.getByText(/الإضاءة المحفوظة: bedside_warm — الإضاءة المستخدمة: rear_flash/)).toBeTruthy()
+  fireEvent.click(screen.getByRole('button',{name:/اختيار لقطة فلاش المرآة \(بعد موافقتك\)/}))
+  expect(screen.getByText(/المصادر الفعالة: phone_rear_led/)).toBeTruthy()
+  fireEvent.click(screen.getByRole('button',{name:/على البطن مع الكوعين/}))
+  expect(screen.getByText(/فلاش الهاتف فقط يتطلب لقطة المرآة/)).toBeTruthy()
+  fireEvent.change(mode,{target:{value:'DARK_ROOM_FRONT_SCREEN_ONLY'}})
+  expect(screen.getByText(/المصادر الفعالة: phone_display/)).toBeTruthy()
+  expect(screen.getByText(/الإضاءة المحفوظة: bedside_warm — الإضاءة المستخدمة: phone_screen_only/)).toBeTruthy()
+  fireEvent.change(mode,{target:{value:'OFF'}})
+  expect(screen.getByText(/المصادر الفعالة: bedside/)).toBeTruthy()
+  expect(screen.getByText(/الإضاءة المحفوظة: bedside_warm — الإضاءة المستخدمة: bedside_warm/)).toBeTruthy()
+  fireEvent.click(screen.getByRole('button',{name:'اعتماد البرومبت المحلي'}))
+  await waitFor(()=>expect(screen.getByRole('button',{name:'إعادة تعيين الخيارات'})).toBeTruthy())
+  fireEvent.click(screen.getByRole('button',{name:'إعادة تعيين الخيارات'}))
+  expect((screen.getByLabelText('وضع إضاءة الهاتف') as HTMLSelectElement).value).toBe('OFF')
+  expect(screen.getByText(/الإضاءة المحفوظة: phone_screen_only — الإضاءة المستخدمة: phone_screen_only/)).toBeTruthy()
+ })
+})
