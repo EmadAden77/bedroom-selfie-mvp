@@ -152,14 +152,31 @@ const rules:readonly Rule[]=[
     'استخدم أوصاف دعم الوزن والتلامس الحالية؛ لا تستنتج قياسات أو قوى رقمية.')
   ]:[]}
 ]
-export function evaluatePhysicalReality(ctx:CompilationContext,changed?:readonly Field[]):{status:RealityStatus;findings:RealityFinding[];evaluatedRules:string[]}{
+export type RealityReport={status:RealityStatus;findings:RealityFinding[];evaluatedRules:string[];findingsByRule:Record<string,RealityFinding[]>}
+const summarize=(findings:RealityFinding[]):RealityStatus=>
+ findings.some(x=>x.status==='CONFLICT')?'CONFLICT':
+ findings.some(x=>x.status==='WARNING')?'WARNING':
+ findings.some(x=>x.status==='UNKNOWN')?'UNKNOWN':'VALID'
+/** Full check by default; filtered mode returns only the selected affected rules. */
+export function evaluatePhysicalReality(ctx:CompilationContext,changed?:readonly Field[]):RealityReport{
  const affected=changed?affectedFields(changed):null
  const selected=rules.filter(rule=>!affected||rule.fields.some(field=>affected.includes(field)))
- const findings=selected.flatMap(rule=>rule.run(ctx))
- const status:RealityStatus=findings.some(x=>x.status==='CONFLICT')?'CONFLICT'
-  :findings.some(x=>x.status==='WARNING')?'WARNING'
-  :findings.some(x=>x.status==='UNKNOWN')?'UNKNOWN':'VALID'
- return {status,findings,evaluatedRules:selected.map(x=>x.id)}
+ const findingsByRule=Object.fromEntries(selected.map(rule=>[rule.id,rule.run(ctx)])) as Record<string,RealityFinding[]>
+ const findings=selected.flatMap(rule=>findingsByRule[rule.id])
+ return {status:summarize(findings),findings,evaluatedRules:selected.map(x=>x.id),findingsByRule}
+}
+/** Recalculate only rules depending on a changed field, preserving all unaffected findings.
+ * Safe use requires previous to be a full report for the matching previous selections.
+ */
+export function updatePhysicalReality(previous:RealityReport,next:CompilationContext,changed:readonly Field[]):RealityReport{
+ if(previous.evaluatedRules.length!==rules.length||rules.some(rule=>!Object.prototype.hasOwnProperty.call(previous.findingsByRule,rule.id)))
+  return evaluatePhysicalReality(next)
+ const affected=affectedFields(changed)
+ const touched=rules.filter(rule=>rule.fields.some(field=>affected.includes(field)))
+ const findingsByRule={...previous.findingsByRule}
+ for(const rule of touched)findingsByRule[rule.id]=rule.run(next)
+ const findings=rules.flatMap(rule=>findingsByRule[rule.id])
+ return {status:summarize(findings),findings,findingsByRule,evaluatedRules:touched.map(rule=>rule.id)}
 }
 /** Verify registry completeness against the actual context of the running app. */
 export function missingRegistrations(ctx:CompilationContext):string[]{
@@ -198,8 +215,6 @@ export function includeCompilerFindings(
    findings.push(finding('legacy-'+status+'-'+i,status,mapped.category,mapped.fields,
     'فحص المترجم الحالي: '+reason,mapped.repair))
   }
- const status:RealityStatus=findings.some(x=>x.status==='CONFLICT')?'CONFLICT'
-  :findings.some(x=>x.status==='WARNING')?'WARNING'
-  :findings.some(x=>x.status==='UNKNOWN')?'UNKNOWN':'VALID'
+ const status=summarize(findings)
  return {...reality,status,findings}
 }
