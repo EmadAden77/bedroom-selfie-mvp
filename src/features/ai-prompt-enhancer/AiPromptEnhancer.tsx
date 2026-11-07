@@ -120,8 +120,12 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
     setGenerated(checked.prompt);setEngine('gemini')
     // Editorial verification is distinct from promotion to Final Prompt.
     // Only the explicit server authority claim can update activeGeneratedPrompt.
-    onPromptReady(payload.authoritative===true?checked.prompt:'')
-    if(payload.authoritative!==true)
+    // Defense in depth: an incorrect/malformed server authority claim
+    // cannot bypass the locally observed unconfirmed/unknown room state.
+    const finalAllowed=payload.authoritative===true&&spec.roomGeometry.userConfirmed&&
+     roomGeometryIssues(spec.roomGeometry).length===0
+    onPromptReady(finalAllowed?checked.prompt:'')
+    if(!finalAllowed)
      setError('تحرير Gemini صحيح نصيًا لكنه غير معتمد نهائيًا: تأكيد الغرفة والقياسات الناقصة مطلوبان.')
    }
   }catch(e){
