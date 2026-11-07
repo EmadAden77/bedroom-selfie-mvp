@@ -21,9 +21,10 @@ export type BodyMechanicalInput={
  freeHandTask:FreeHandTask;feetVisibility:BodyVisibility
 }
 export type BodyIssue={code:string;messageAr:string;controls:string[]}
+export type VisualRelation={occluderId:string;occludedId:string;relation:'occludes'|'outside_crop';certainty:BodyCertainty;cause:string}
 export type BodyMechanicalState={
  status:BodyStatus;input:BodyMechanicalInput;supportSurface:'mattress'|'floor'|'unknown'
- contacts:ContactRelation[];deformations:{targetId:string;region:string;cause:string;certainty:BodyCertainty}[]
+ contacts:ContactRelation[];visualRelations:VisualRelation[];deformations:{targetId:string;region:string;cause:string;certainty:BodyCertainty}[]
  visibility:{feet:BodyVisibility;oppositeHand:BodyVisibility}
  issues:BodyIssue[];uncertainties:string[]
 }
@@ -68,6 +69,7 @@ export function evaluateBodyMechanics(input:BodyMechanicalInput):BodyMechanicalS
  const issues:BodyIssue[]=[]
  const uncertainties:string[]=[]
  const contacts:ContactRelation[]=[]
+ const visualRelations:VisualRelation[]=[]
  const deformations:BodyMechanicalState['deformations']=[]
  const add=(actorId:string,targetId:string,contactType:ContactRelation['contactType'],certainty:BodyCertainty,cause:string)=>{
   contacts.push({actorId,targetId,contactType,certainty,cause})
@@ -145,13 +147,16 @@ export function evaluateBodyMechanics(input:BodyMechanicalInput):BodyMechanicalS
   uncertainties.push('FREE_HAND_SUPPORT_TARGET_UNCONFIRMED')
  if(input.freeHandTask==='surface_support'&&freeSupportShots.has(input.shotId)&&!selectedFreeHand)
   add('subject.free_hand','existing.support_surface','support','derived','selected_free_hand_support')
+ if(input.shotId==='mirror_face_phone')visualRelations.push({occluderId:'phone',occludedId:'subject.reflected_face',relation:'occludes',certainty:'derived',cause:'selected_phone_face_overlap'})
+ if(input.feetVisibility==='outside_crop')visualRelations.push({occluderId:'camera.frame',occludedId:'subject.feet',relation:'outside_crop',certainty:'selected',cause:'user_selected_crop'})
+ if(input.feetVisibility==='occluded')visualRelations.push({occluderId:'unverified_occluder',occludedId:'subject.feet',relation:'occludes',certainty:'unknown',cause:'user_selected_visibility_without_geometry'})
  if(input.feetVisibility==='outside_crop'||input.feetVisibility==='occluded'||input.feetVisibility==='unknown')
   uncertainties.push('FOOT_POSITION_NOT_OBSERVABLE')
  if(input.feetVisibility==='absent'&&input.posture==='standing')
   error('BODY_STANDING_FEET_ABSENT','الوقوف دون قدم داعمة أو دعم بديل تعارض مؤكد.',['bodyFeetVisibility','poseId'])
  const status:BodyStatus=issues.length?'INVALID':
   (!postures.includes(input.posture)||input.supportChoice==='unknown'||input.feetVisibility==='absent'&&input.posture!=='standing')?'NEEDS_INFORMATION':'VALID'
- return {status,input:{...input},supportSurface,contacts,deformations,
+ return {status,input:{...input},supportSurface,contacts,visualRelations,deformations,
   visibility:{feet:input.feetVisibility,oppositeHand:'unknown'},issues,uncertainties}
 }
 /** Only factual qualitative relationships are sent to the immutable prompt unit. */
@@ -186,6 +191,7 @@ export function renderBodyMechanics(state:BodyMechanicalState):string{
   parts.push('Mattress compression is limited to '+state.deformations.filter(d=>d.targetId==='bed.mattress').map(d=>d.region.replace(/_/g,' ')).join(' and ')+'.')
  if(state.deformations.some(d=>d.targetId==='bed.pillow'))parts.push('Pillow compresses locally under its established body contact.')
  if(state.deformations.every(d=>d.targetId!=='bed.mattress'))parts.push('No unsupported mattress deformation.')
+ if(state.visualRelations.some(v=>v.cause==='selected_phone_face_overlap'))parts.push('The recording phone visually obscures only the overlapped reflected face region; visual overlap is not physical face contact.')
  if(state.visibility.feet==='outside_crop'||state.visibility.feet==='occluded')
   parts.push('Feet outside the crop and visually blocked feet are not treated as physically absent; exact hidden positions are not asserted.')
  parts.push('Keep selected posture, garment, room anchors, camera profile and lighting unchanged. Do not invent joint angles and hidden limb positions.')
