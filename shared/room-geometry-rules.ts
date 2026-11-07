@@ -86,7 +86,10 @@ export function fitWithinRoom(
  const minDepth=bed.lengthCm/100+1
  if(minWidth>room.widthMeters||minDepth>room.depthMeters)
   return {status:'invalid',reason:`bed does not fit in ${room.widthMeters.toFixed(1)}m × ${room.depthMeters.toFixed(1)}m room`}
- if(checkImplicitDistances&&room.depthMeters*100<IMPLICIT_DISTANCES.optionalCouchCm)
+ // The 3m and optional 5m cues lack a shared measured origin and direction.
+ // Even if the depth exceeds either cue, simultaneous fit cannot be proven;
+ // do not treat their approximate positions as measured coordinates.
+ if(checkImplicitDistances&&IMPLICIT_DISTANCES.personToBedCm>0&&IMPLICIT_DISTANCES.optionalCouchCm>0)
   return {status:'unknown',reason:'implicit distances pending PR8'}
  if(pose.widthCm===null||pose.lengthCm===null)
   return {status:'unknown',reason:'pose footprint width or length not defined; RG-1 cannot verify fit'}
