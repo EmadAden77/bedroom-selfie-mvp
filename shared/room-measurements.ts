@@ -61,12 +61,20 @@ export const IMPLICIT_DISTANCES = {
  optionalCouchCm: 500
 } as const
 
+/**
+ * Explicit compile-time completeness contract for every scalar measurement,
+ * plus the pose footprint table. See src/tests/room-measurements-pr7a.test.ts.
+ */
+export type MeasurementSourceKey =
+ | 'bedLengthCm' | 'bedWidthCm' | 'mirrorWidthCm'
+ | 'personToBedCm' | 'optionalCouchCm' | 'poseFootprints'
+
 /** Per-constant provenance; verified by src/tests/room-measurements-pr7a.test.ts. */
-export const MEASUREMENT_SOURCES = {
+export const MEASUREMENT_SOURCES: Record<MeasurementSourceKey,string> = {
  bedLengthCm:'src/data/bedroom-shots.ts (pillow_stack: 160 by 200 cm queen mattress)',
  bedWidthCm:'src/data/bedroom-shots.ts (pillow_stack: 160 by 200 cm queen mattress)',
  mirrorWidthCm:'unmeasured',
  poseFootprints:'unmeasured',
  personToBedCm:'src/data/mirror-room-geometry.ts (STANDING_MIRROR: roughly 3-metre); src/data/mirror-optics-mechanics.ts (scene: near 3 metres)',
  optionalCouchCm:'src/data/mirror-room-geometry.ts (STANDING_MIRROR: approximately 5-metre); src/data/mirror-optics-mechanics.ts (scene: near 5 metres)'
-} as const
+}
