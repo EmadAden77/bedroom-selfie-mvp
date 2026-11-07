@@ -42,6 +42,7 @@ const defaultContext: CompilationContext = {
   color: 'apparent dark charcoal-gray as observed',
   surface: 'apparent knit-like surface character',
   referenceImagePresent: false,
+  ownPortrait: true,
   roomReferencePresent: false,
   bedroomClutterId: 'reference',
   roomPhysicalState: {...DEFAULT_ROOM_PHYSICAL_STATE,zones:[...DEFAULT_ROOM_PHYSICAL_STATE.zones]}, 
@@ -84,6 +85,7 @@ export const App: React.FC = () => {
     <div className="container" dir="rtl">
       <Header />
       <ReferenceImageSection meta={meta} error={imageError} loading={imageLoading} onFile={handleFile} onRemove={removeImage} />
+      <label style={{fontSize:12,display:'flex',alignItems:'center',gap:8,margin:'4px 0 12px'}}><input type="checkbox" checked={ctx.ownPortrait!==false} onChange={e=>handleContextChange({ownPortrait:e.target.checked})}/>الصورة تخصني: طبّق بنيتي 193 سم / 83 كجم. ألغِ الخيار لشخص آخر.</label>
       <RoomReferenceSection meta={room.meta} loading={room.loading} error={room.error} onFile={room.handleFile} onRemove={room.removeImage} />
       <PhysicalRoomStateSelector value={ctx.roomPhysicalState||DEFAULT_ROOM_PHYSICAL_STATE} roomReferencePresent={!!room.meta} onChange={roomPhysicalState=>handleContextChange({roomPhysicalState})} />
       <HairSelector direction={ctx.hairDirection || 'auto'} volume={ctx.hairVolume || 'auto'} texture={ctx.hairTexture || 'auto'} onAdvancedChange={handleContextChange} selectedId={ctx.hairVariantId} mode={ctx.hairstyleMode || 'preserve'} onModeChange={mode=>handleContextChange({hairstyleMode:mode})} onSelect={(id) => handleContextChange({ hairVariantId: id, hairstyleMode: id==='reference_natural_dry'?'preserve':'apply' })} />
