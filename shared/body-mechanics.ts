@@ -33,7 +33,7 @@ const hands:readonly string[]=['auto','left','right','none']
 const surfaces:readonly string[]=['auto','floor','mattress','none','unknown']
 const tasks:readonly string[]=['auto','free','surface_support','phone']
 const visibilities:readonly string[]=['visible','occluded','outside_crop','unknown','absent']
-const fixedHands:Readonly<Record<string,'left'|'right'>>={
+const fixedHands:Readonly<Partial<Record<string,'left'|'right'>>>={
  side_knee_tucked:'right',laptop_side_bed_open:'left'
 }
 const pillowShots=new Set([
