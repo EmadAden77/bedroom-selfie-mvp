@@ -10,7 +10,7 @@ import {validateRoomPhysicalState} from '../data/room-physical-state'
 import {nightLightingPresets} from '../data/night-lighting'
 import {hairVariants} from '../data/hair'
 import {expressionVariants} from '../data/expressions'
-import {garmentRecords,materialProfiles,fitProfiles,garmentStates} from '../data/clothing'
+import {garmentRecords,materialProfiles,fitProfiles,garmentStates,clothingColors,garmentSurfaceChoices} from '../data/clothing'
 import {poseOptions,faceOptions,lampSideOptions} from '../data/light-geometry'
 import {mirrorMovements,mirrorPhoneHeights,mirrorDistances,mirrorFramings,mirrorGazes} from '../data/mirror-controls'
 import {hairDirections,hairVolumes,hairTextures} from '../data/hair-advanced'
@@ -24,7 +24,7 @@ export type RealityFinding={
  fields:(keyof CompilationContext)[];reason:string;repair:string
 }
 type Field=keyof CompilationContext
-export type OptionRegistration={id:Field;dependsOn:readonly Field[];values:readonly string[]|null;independentReason?:string}
+export type OptionRegistration={id:Field;dependsOn:readonly Field[];values:readonly string[]|null;supportsCustom?:boolean;independentReason?:string}
 /** All fields in CompilationContext must have a declaration. Null values mean free text,
  * structured objects, booleans or reference metadata (not an unchecked enum).
  */
@@ -59,11 +59,12 @@ const values:Partial<Record<Field,readonly string[]>>={
  promptTarget:['gemini','chatgpt','flux','midjourney'],realismIntensity:ids(realismPresets),
  expressionVariantId:ids(expressionVariants),gazeId:ids(gazeChoices),microExpressionId:ids(microChoices),
  upperGarmentId:ids(garmentRecords.filter(x=>x.category==='upper')),
- lowerGarmentId:ids(garmentRecords.filter(x=>x.category==='lower')),
+ lowerGarmentId:['',...ids(garmentRecords.filter(x=>x.category==='lower'))],
  materialId:ids(materialProfiles),fitId:ids(fitProfiles),stateId:ids(garmentStates),
+ color:ids(clothingColors),lowerColor:ids(clothingColors),surface:ids(garmentSurfaceChoices),lowerSurface:ids(garmentSurfaceChoices),
  bedroomClutterId:['reference','lived_in_messy'],nightLightingId:ids(nightLightingPresets),
  poseId:ids(poseOptions),faceDirectionId:ids(faceOptions),lampSideId:ids(lampSideOptions),
- bedroomShotId:ids(bedroomShots),
+ bedroomShotId:['',...ids(bedroomShots)],
  mirrorMovementId:ids(mirrorMovements),mirrorPhoneHeightId:ids(mirrorPhoneHeights),
  mirrorDistanceId:ids(mirrorDistances),mirrorFramingId:ids(mirrorFramings),mirrorGazeId:ids(mirrorGazes),
  lowerMaterialId:ids(materialProfiles),lowerFitId:ids(fitProfiles),lowerStateId:ids(garmentStates)
@@ -72,6 +73,7 @@ const fields=Object.keys(relationships) as Field[]
 export const OPTION_REGISTRY:Readonly<Record<Field,OptionRegistration>>=Object.freeze(
  Object.fromEntries(fields.map(id=>[id,{
   id,dependsOn:relationships[id],values:values[id]||null,
+  ...(id==='color'||id==='lowerColor'?{supportsCustom:true}:{}),
   ...(relationships[id].length===0?{independentReason:'Output presentation preference; no additional scene-physics dependency.'}:{})
  }])) as Record<Field,OptionRegistration>
 )
