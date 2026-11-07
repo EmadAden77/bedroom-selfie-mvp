@@ -141,7 +141,7 @@ export const App: React.FC = () => {
       </div>
       <RealismIntensitySelector value={ctx.realismIntensity || 'natural'} onChange={value=>handleContextChange({realismIntensity:value})}/>
       <AiPromptEnhancer ctx={ctxWithImage} result={result} validation={validation} onReset={handleReset} onPromptReady={setActiveGeneratedPrompt} onAdvisoryReady={setAdvisoryReviewPrompt} />
-      <PhotoResultAudit ctx={ctxWithImage} originalPrompt={activeGeneratedPrompt || result.promptText} advisoryReviewPrompt={advisoryReviewPrompt} subjectReferenceUrl={meta?.objectUrl} roomReferenceUrl={room.meta?.objectUrl} />
+      <PhotoResultAudit ctx={ctxWithImage} originalPrompt={activeGeneratedPrompt} advisoryReviewPrompt={advisoryReviewPrompt} subjectReferenceUrl={meta?.objectUrl} roomReferenceUrl={room.meta?.objectUrl} />
       <footer style={{fontSize:'10px', color:'var(--muted)', textAlign:'center', padding:'20px 0', borderTop:'1px solid var(--border)', marginTop:'20px'}} className="ltr">
         <div>PHYSICAL CLOTHING SYSTEM = APPROVED AND FROZEN</div>
         <div>Gemini independent creative writer + separate optional local fallback; physical and optical plausibility validated</div>
