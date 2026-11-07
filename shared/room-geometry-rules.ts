@@ -7,7 +7,7 @@
 import {
  BED_LENGTH_CM,BED_WIDTH_CM,MIRROR_WIDTH_CM,POSE_FOOTPRINTS_CM2,
  IMPLICIT_DISTANCES,type PoseId
-} from './room-measurements'
+} from './room-measurements.ts'
 
 export type RuleResult =
  | {status:'valid'}
