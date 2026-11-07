@@ -4,6 +4,7 @@ import {afterEach,describe,expect,it,vi} from 'vitest'
 import {GhalyonPromptOptimizer} from '../features/ai-prompt-enhancer/GhalyonPromptOptimizer'
 import {AiPromptEnhancer} from '../features/ai-prompt-enhancer/AiPromptEnhancer'
 import {compilePrompt} from '../compiler'
+import {buildSceneSpecification} from '../features/ai-prompt-enhancer/scene-specification'
 import type {CompilationContext,CompilationResult,ValidationResult} from '../domain/types'
 
 afterEach(()=>{cleanup();vi.unstubAllGlobals()})
@@ -29,7 +30,6 @@ describe('Cancelled Gemini requests never overwrite newer UI state',()=>{
  })
  it('keeps the local fallback even if a cancelled Gemini response arrives late',async()=>{
   let release:(response:Response)=>void=()=>{}
-  vi.stubGlobal('fetch',vi.fn(()=>new Promise<Response>(resolve=>{release=resolve})))
   const ready=vi.fn()
   const ctx:CompilationContext={
    hairVariantId:'reference_natural_dry',expressionVariantId:'reference_expression_preserved',
@@ -41,11 +41,16 @@ describe('Cancelled Gemini requests never overwrite newer UI state',()=>{
   const {result,validation}=compilePrompt(ctx)
   expect(validation.isValid).toBe(true)
   const local=result.promptText
+  const spec=buildSceneSpecification(ctx,result,validation)
+  vi.stubGlobal('fetch',vi.fn((url:string)=>url==='/api/authorize-final-prompt'
+   ?Promise.resolve(new Response(JSON.stringify({source:'local',prompt:local,
+     validated:true,integrity:spec.integrity}),{status:200,headers:{'content-type':'application/json'}}))
+   :new Promise<Response>(resolve=>{release=resolve})))
   render(<AiPromptEnhancer ctx={ctx} result={result} validation={validation} onReset={vi.fn()} onPromptReady={ready} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
   await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(1))
   fireEvent.click(screen.getByRole('button',{name:'اعتماد البرومبت المحلي'}))
-  expect(ready).toHaveBeenCalledWith(local)
+  await waitFor(()=>expect(ready).toHaveBeenCalledWith(local))
   await act(async()=>{release(new Response(JSON.stringify({prompt:photo}),{status:200,headers:{'content-type':'application/json'}}));await Promise.resolve()})
   expect(ready).toHaveBeenCalledWith(local)
   expect(screen.queryByText(photo)).toBeNull()
