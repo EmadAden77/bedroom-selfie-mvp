@@ -105,6 +105,8 @@ export function toSharedScene(ctx:CompilationContext){
  const lower=garmentRecords.find(x=>x.id===ctx.lowerGarmentId)
  return {
   mode:shot?.mode||'front',shotId:ctx.bedroomShotId||'',
+  poseId:ctx.poseId||'',shotPosture:(shot?getShotPosture(shot.id):ctx.poseId)||'',
+  referenceImagePresent:!!ctx.referenceImagePresent,roomReferencePresent:!!ctx.roomReferencePresent,
   nightLightingId:ctx.nightLightingId||'phone_screen_only',windowUncovered:!!ctx.windowUncovered,
   upperGarmentId:ctx.upperGarmentId,materialId:ctx.materialId,fitId:ctx.fitId,
   stateId:ctx.stateId,color:ctx.color,surface:ctx.surface,
@@ -119,38 +121,7 @@ type Rule={id:string;fields:readonly Field[];run:(ctx:CompilationContext)=>Reali
 const finding=(id:string,status:RealityFinding['status'],category:RealityCategory,fields:Field[],reason:string,repair:string):RealityFinding=>({id,status,category,fields,reason,repair})
 const rules:readonly Rule[]=[
  {id:'shared-physical-constraints',fields:['bedroomShotId','nightLightingId','windowUncovered','upperGarmentId','materialId','fitId','stateId','color','surface','lowerGarmentId','lowerMaterialId','lowerSurface','mirrorMovementId','mirrorPhoneHeightId','mirrorDistanceId','mirrorFramingId','mirrorGazeId','roomPhysicalState'],
-  run:ctx=>inspectSharedScene(toSharedScene(ctx)) as RealityFinding[]},
- {id:'shot-posture',fields:['bedroomShotId','poseId'],run:ctx=>{
-   if(!ctx.bedroomShotId)return []
-   const matched=getShotPosture(ctx.bedroomShotId)
-   if(!matched||!ctx.poseId||matched===ctx.poseId)return []
-   // Existing compilePrompt synchronizes posture from the selected shot; report before that normalization.
-   return [finding('shot-posture','WARNING','biomechanics',['bedroomShotId','poseId'],
-    'الوضعية العامة تختلف عن وضعية اللقطة؛ المترجم الحالي يعتمد وضعية اللقطة صراحةً.',
-    'وحّد اختيار الوضعية مع وضعية اللقطة، أو ألغِ اختيار اللقطة.')]
-  }},
- {id:'spatial-evidence',fields:['bedroomShotId','roomReferencePresent','mirrorFramingId','mirrorDistanceId'],run:ctx=>{
-   if(!ctx.bedroomShotId?.startsWith('mirror_'))return []
-   return ctx.roomReferencePresent?[
-    finding('mirror-measurements','UNKNOWN','geometry',['mirrorDistanceId','mirrorFramingId'],
-     'لا توجد قياسات معايرة للمرآة أو المسافات أو مجال رؤية الكاميرا؛ لا يمكن إثبات خلو مسار الانعكاس من الحجب.',
-     'استخدم وصفًا نسبيًا واحفظ مواقع الأثاث. يمكن إدخال قياسات موثوقة لاحقًا.')
-   ]:[
-    finding('mirror-reference','UNKNOWN','reference',['roomReferencePresent','bedroomShotId'],
-     'صورة الغرفة غير متاحة؛ هندسة المرآة المحددة نصيًا لا تثبت أبعادها أو ما يظهر داخل الانعكاس.',
-     'أضف صورة مرجعية للغرفة إذا كانت متاحة، وإلا تجنب ادعاء أبعاد دقيقة.')
-   ]
-  }},
- {id:'identity-evidence',fields:['referenceImagePresent','hairVariantId','upperGarmentId'],run:ctx=>
-  ctx.referenceImagePresent?[]:[finding('person-reference','UNKNOWN','reference',['referenceImagePresent'],
-   'لم تُرفق صورة هوية؛ لا يمكن التحقق من تفاصيل الوجه أو خط الشعر أو الملابس المرجعية.',
-   'أرفق صورة الهوية إن أردت مطابقة الملامح، دون اختراع تفاصيل مفقودة.')]},
- {id:'material-contact',fields:['bedroomShotId','poseId','roomPhysicalState'],run:ctx=>
-  ctx.bedroomShotId||ctx.poseId?[
-   finding('unmeasured-contact','UNKNOWN','biomechanics',['bedroomShotId','poseId'],
-    'التلامس والضغط ومركز الثقل مقيّدون وصفيًا، لكن لا توجد بيانات مفاصل أو كتل أو أسطح ثلاثية الأبعاد لإثباتهم عدديًا.',
-    'استخدم أوصاف دعم الوزن والتلامس الحالية؛ لا تستنتج قياسات أو قوى رقمية.')
-  ]:[]}
+  run:ctx=>inspectSharedScene(toSharedScene(ctx)) as RealityFinding[]}
 ]
 export type RealityReport={status:RealityStatus;findings:RealityFinding[];evaluatedRules:string[];findingsByRule:Record<string,RealityFinding[]>;recomputedRules?:string[]}
 const summarize=(findings:RealityFinding[]):RealityStatus=>
