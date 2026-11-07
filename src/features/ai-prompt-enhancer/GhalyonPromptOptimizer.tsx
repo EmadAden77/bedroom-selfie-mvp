@@ -3,9 +3,9 @@ import type {GhalyonMode,GhalyonTarget} from './ghalyon-config'
 import {explicitUnauthorizedEmitter,type PhoneOnlyMode} from '../../engine/physical-reality'
 
 type Reply={status:'questions'|'complete';questions:string[];optimizedPrompt:string;improvements:string[];proTip:string;error?:string;errorCode?:string}
-type Props={sourcePrompt:string;scenePrompt?:string;initialTarget?:GhalyonTarget;phoneOnlyMode?:PhoneOnlyMode;onPromptReady:(prompt:string)=>void}
+type Props={sourcePrompt:string;scenePrompt?:string;initialTarget?:GhalyonTarget;phoneOnlyMode?:PhoneOnlyMode;onAdvisoryReady:(prompt:string)=>void}
 
-export const GhalyonPromptOptimizer:React.FC<Props>=({sourcePrompt,scenePrompt='',initialTarget='gemini',phoneOnlyMode='OFF',onPromptReady})=>{
+export const GhalyonPromptOptimizer:React.FC<Props>=({sourcePrompt,scenePrompt='',initialTarget='gemini',phoneOnlyMode='OFF',onAdvisoryReady})=>{
  const [idea,setIdea]=useState('')
  const [mode,setMode]=useState<GhalyonMode>('auto')
  const [target,setTarget]=useState<GhalyonTarget>(initialTarget)
@@ -67,8 +67,9 @@ export const GhalyonPromptOptimizer:React.FC<Props>=({sourcePrompt,scenePrompt='
  }
  return <div style={{borderTop:'1px solid var(--border)',marginTop:'20px',paddingTop:'16px'}}>
   <h2 style={{fontSize:'16px',margin:'0 0 8px'}}>🧠 غَليون — مهندس تحسين الأوامر</h2>
+  <p role="note" style={{fontSize:12,fontWeight:700}}>Advisory Output — Non-Authoritative</p>
   <p style={{fontSize:'12px',lineHeight:1.8,color:'var(--muted)'}}>
-   مرحباً، أنا غَليون — مهندس تحسين الأوامر. أرسل فكرتك أو البرومبت الخام وحدد النموذج المستهدف وBASIC أو DETAIL وسأحوّله إلى Prompt احترافي جاهز للاستخدام.
+   مرحباً، أنا غَليون — مهندس تحسين الأوامر. أرسل فكرتك أو البرومبت الخام وحدد النموذج المستهدف وBASIC أو DETAIL وسأقدّم اقتراحًا استشاريًا للتحسين والمراجعة، وليس برومبتًا نهائيًا معتمدًا.
   </p>
   <label htmlFor="ghalyon-idea" style={{fontSize:'12px'}}>الفكرة أو البرومبت الخام</label>
   <textarea id="ghalyon-idea" className="input" rows={5} maxLength={14000} value={idea}
@@ -110,15 +111,15 @@ export const GhalyonPromptOptimizer:React.FC<Props>=({sourcePrompt,scenePrompt='
   </div>}
   {error&&<p role="alert" style={{fontSize:'12px',color:'#b91c1c'}}>{error}</p>}
   {result?.status==='complete'&&<div style={{marginTop:'16px'}}>
-   <h3 style={{fontSize:'13px'}}>الأمر المحسّن</h3>
+   <h3 style={{fontSize:'13px'}}>الأمر المحسّن — مسودة استشارية</h3>
    <div className="preview-box" dir="ltr" style={{textAlign:'left',overflowWrap:'anywhere'}}>{result.optimizedPrompt}</div>
    <h3 style={{fontSize:'13px'}}>أبرز التحسينات</h3>
    <ul style={{fontSize:'12px',lineHeight:1.8,paddingRight:'20px'}}>{result.improvements.map((s,i)=><li key={i}>{s}</li>)}</ul>
    <h3 style={{fontSize:'13px'}}>نصيحة احترافية</h3>
    <p style={{fontSize:'12px',lineHeight:1.8}}>{result.proTip}</p>
-   <button type="button" className="btn" onClick={()=>void copy()}>{copied?'✓ نُسخ':'نسخ الأمر'}</button>
+   <button type="button" className="btn" onClick={()=>void copy()}>{copied?'✓ نُسخ':'نسخ الاقتراح الاستشاري'}</button>
    <button type="button" className="btn btn-secondary" style={{marginRight:'8px'}}
-    onClick={()=>onPromptReady(result.optimizedPrompt)}>اعتماده لتدقيق الصورة</button>
+    onClick={()=>onAdvisoryReady(result.optimizedPrompt)}>إرسال الاقتراح لمراجعة الصورة (استشاري)</button>
   </div>}
   <p style={{fontSize:'11px',color:'var(--muted)',lineHeight:1.7,marginTop:'12px'}}>
    لا يحفظ التطبيق الأفكار أو الإجابات محليًا. يُرسل النص إلى Gemini للتحسين وفق سياسة Google. Claude هنا هدف لتحسين البرومبت النصي، لا لتوليد الصور.
