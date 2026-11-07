@@ -33,7 +33,7 @@ export default {
   if(!raw||typeof raw!=='object'||Array.isArray(raw))return respond('FINAL_REQUEST_SCHEMA','Invalid authority request')
   const data=raw as Record<string,unknown>
   // React state cannot be posted into authority. Reject attempts explicitly.
-  if(Object.hasOwn(data,'activeGeneratedPrompt'))return respond('FINAL_DIRECT_STATE_REJECTED','Untrusted activeGeneratedPrompt cannot be submitted')
+  if(Object.prototype.hasOwnProperty.call(data,'activeGeneratedPrompt'))return respond('FINAL_DIRECT_STATE_REJECTED','Untrusted activeGeneratedPrompt cannot be submitted')
   if(Object.keys(data).sort().join(',')!=='candidate,sceneSpecification')
    return respond('FINAL_REQUEST_SCHEMA','Expected exactly sceneSpecification and candidate')
   const candidate=data.candidate
