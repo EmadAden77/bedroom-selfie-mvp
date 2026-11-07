@@ -14,7 +14,7 @@ export const NightLightingSelector: React.FC<Props> = ({ shotId,selectedId, wind
   <section className="card" aria-label="الإضاءة الليلية الفيزيائية">
     <div style={{fontWeight:600, fontSize:'14px', marginBottom:'4px'}}>٥. الإضاءة الليلية الفيزيائية داخل الغرفة</div>
     <div style={{fontSize:'11px', color:'var(--muted)', marginBottom:'12px'}}>اختر مشهد إضاءة واحدًا متكاملًا. لا تُضاف مصادر ضوء مخفية، والتعريض لا يخلق ضوءًا فعليًا.</div>
-    {shotId==='mirror_rear_flash'&&<p style={{fontSize:'11px',color:'var(--muted)',marginBottom:8}}>تغيير الفلاش إلى مصدر إضاءة آخر يحوّل وضعية «فلاش المرآة» إلى «مرآة الدولاب» العادية تلقائيًا، منعًا للتعارض.</p>}
+    {shotId==='mirror_rear_flash'&&<p style={{fontSize:'11px',color:'var(--muted)',marginBottom:8}}>اختيار إضاءة مخالفة لفلاش المرآة سيظهر تعارضًا حتى تختار التصحيح بنفسك.</p>}
     <div className="grid">
       {nightLightingPresets.map(p => <button type="button" key={p.id} className={`option ${selectedId === p.id ? 'selected' : ''}`} aria-pressed={selectedId === p.id} disabled={incompatible(p.id)} title={incompatible(p.id)?'اختر وضعية تصوير متوافقة مع مصدر الضوء أولًا':undefined} onClick={()=>onSelect(p.id)}>
         <div style={{fontWeight:600,fontSize:'13px'}}>{p.arabicLabel}</div>
