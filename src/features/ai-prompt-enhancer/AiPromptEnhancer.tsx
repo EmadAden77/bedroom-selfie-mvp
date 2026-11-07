@@ -8,14 +8,14 @@ import {
  buildSceneSpecification,validateConstrainedEditorReply,MAX_SCENE_SPEC_REQUEST_BYTES
 } from './scene-specification'
 
-type Props={ctx:CompilationContext;result:CompilationResult;validation:ValidationResult;onReset:()=>void;onPromptReady:(prompt:string)=>void}
+type Props={ctx:CompilationContext;result:CompilationResult;validation:ValidationResult;onReset:()=>void;onPromptReady:(prompt:string)=>void;onAdvisoryReady:(draft:string)=>void}
 type MainReply={
  prompt?:string;source?:string;model?:string;error?:string;errorCode?:string
  sectionOrder?:string[];openingLineSelection?:'canonical'|'concise';integrity?:string;promptDigest?:string;sectionCount?:number;protectedUnitDigests?:{id:string;digest:string}[]
  validated?:boolean
 }
 
-export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,onPromptReady})=>{
+export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,onPromptReady,onAdvisoryReady})=>{
  const [generated,setGenerated]=useState('')
  const [auditorSource,setAuditorSource]=useState('')
  const [engine,setEngine]=useState<'gemini'|'local'|''>('')
@@ -43,14 +43,44 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
   requestRef.current=null
   setGenerated('');setAuditorSource('');setEngine('');setError('');setLoading(false);setCopied(false)
   onPromptReady('')
- },[spec.integrity,prompt,sceneBrief,ctx.promptTarget,onPromptReady])
+  onAdvisoryReady('')
+ },[spec.integrity,prompt,sceneBrief,ctx.promptTarget,onPromptReady,onAdvisoryReady])
  useEffect(()=>()=>{requestVersion.current++;requestRef.current?.abort()},[])
 
- function acceptLocal(reason=''){
+ /**
+  * Local scene output is not authoritative solely because it exists in React.
+  * Only the server's single authority gate can promote its exact section text.
+  */
+ async function authorizeLocal(reason=''){
   if(!fallbackReady)return
-  setGenerated(prompt);setAuditorSource('');setEngine('local')
-  setError(reason);setLoading(false);setCopied(false)
-  onPromptReady(prompt)
+  requestRef.current?.abort()
+  const version=++requestVersion.current
+  const ctrl=new AbortController();requestRef.current=ctrl
+  const current=()=>version===requestVersion.current&&!ctrl.signal.aborted
+  setLoading(true);setError('');setGenerated('');setAuditorSource('');setEngine('');setCopied(false)
+  onPromptReady('')
+  try{
+   const response=await fetch('/api/authorize-final-prompt',{
+    method:'POST',headers:{'content-type':'application/json'},signal:ctrl.signal,
+    body:JSON.stringify({sceneSpecification:spec,candidate:{source:'local',prompt}})
+   })
+   if(!(response.headers.get('content-type')||'').includes('application/json'))
+    throw Error('FINAL_AUTH_NON_JSON')
+   const data=await response.json() as {source?:string;prompt?:string;integrity?:string;validated?:boolean;errorCode?:string;error?:string}
+   if(!current())return
+   if(!response.ok)throw Error(data.errorCode||data.error||'FINAL_AUTH_REJECTED')
+   if(data.source!=='local'||data.validated!==true||data.prompt!==prompt||data.integrity!==spec.integrity)
+    throw Error('FINAL_AUTH_RESPONSE_MISMATCH')
+   if(current()){
+    setGenerated(prompt);setEngine('local');setError(reason)
+    onPromptReady(prompt)
+   }
+  }catch(e){
+   if(current()){
+    setGenerated('');setEngine('');onPromptReady('')
+    setError((reason?reason+' ':'')+'رفض اعتماد البرومبت المحلي حتى يجتاز بوابة الخادم: '+(e instanceof Error?e.message:'FINAL_AUTH_FAILED'))
+   }
+  }finally{if(current())setLoading(false)}
  }
  async function generate(){
   if(!ready)return
@@ -70,13 +100,13 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
    if(!current())return
    if(!response.ok)throw Error((payload.error||'تعذر تحرير البرومبت عبر Gemini.')+(payload.errorCode?' ('+payload.errorCode+')':''))
    if(payload.validated!==true)throw Error('لم يؤكد الخادم مطابقة نتيجة Gemini للمشهد المحلي.')
-   // Independently reconstruct and compare all immutable units on the client.
+   // Verify server claims and section digests without reassembling protected text.
    const checked=await validateConstrainedEditorReply(spec,payload)
    if(current()){setGenerated(checked.prompt);setEngine('gemini');onPromptReady(checked.prompt)}
   }catch(e){
    if(current()){
     const detail=e instanceof Error?e.message:'تعذر الاتصال بمحرر Gemini.'
-    acceptLocal('لم يُعتمد تعديل Gemini: '+detail+' تم الرجوع إلى البرومبت المحلي الصحيح.')
+    await authorizeLocal('لم يُعتمد تعديل Gemini: '+detail+' يمكن اعتماد البرومبت المحلي بعد تحقق الخادم.')
    }
   }finally{if(current())setLoading(false)}
  }
@@ -86,8 +116,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
   catch{setError('تعذر النسخ؛ يمكنك تحديد النص ونسخه يدويًا.')}
  }
  function useLocal(){
-  requestVersion.current++;requestRef.current?.abort();requestRef.current=null
-  acceptLocal()
+  void authorizeLocal()
  }
 
  return <section className="card" aria-label="المحرك الرئيسي لتوليد البرومبت">
@@ -127,7 +156,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
     <button type="button" className="btn btn-secondary" onClick={onReset}>إعادة تعيين الخيارات</button>
    </div>
   </div>}
-  <GhalyonPromptOptimizer sourcePrompt={generated} scenePrompt={sceneBrief} phoneOnlyMode={ctx.phoneOnlyIlluminationMode||'OFF'} initialTarget={ctx.promptTarget==='chatgpt'?'chatgpt':'gemini'} onPromptReady={text=>{setAuditorSource(text);onPromptReady(text)}}/>
-  <ImagePromptAuditorV8 ctx={ctx} sourcePrompt={auditorSource||generated} sceneBrief={sceneBrief} onPromptReady={onPromptReady}/>
+  <GhalyonPromptOptimizer sourcePrompt={generated} scenePrompt={sceneBrief} phoneOnlyMode={ctx.phoneOnlyIlluminationMode||'OFF'} initialTarget={ctx.promptTarget==='chatgpt'?'chatgpt':'gemini'} onAdvisoryReady={text=>{setAuditorSource(text);onAdvisoryReady(text)}}/>
+  <ImagePromptAuditorV8 ctx={ctx} sourcePrompt={auditorSource||generated} sceneBrief={sceneBrief} onAdvisoryReady={onAdvisoryReady}/>
  </section>
 }

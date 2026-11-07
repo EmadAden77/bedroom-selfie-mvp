@@ -1,11 +1,19 @@
 import React from 'react'
-import {afterEach,describe,it,expect} from 'vitest'
+import {afterEach,describe,it,expect,vi} from 'vitest'
+import authorityHandler from '../../api/authorize-final-prompt'
 import {cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react'
 import {App} from '../app/App'
 
-afterEach(cleanup)
+afterEach(()=>{cleanup();vi.unstubAllGlobals()})
 describe('App V1 strict-light UI regression',()=>{
  it('preserves stored lamp through strict switching, explicit camera correction and reset',async()=>{
+  vi.stubGlobal('fetch',vi.fn(async(url:string,options:RequestInit)=>{
+   if(url!=='/api/authorize-final-prompt')throw Error('unexpected authority request: '+url)
+   const reply=await authorityHandler.fetch(new Request('https://bedroom-selfie-mvp.vercel.app'+url,{
+    method:options.method,headers:options.headers,body:options.body
+   }))
+   return reply
+  }))
   render(<App/>)
   fireEvent.click(screen.getByRole('button',{name:/المصباح الجانبي الدافئ/}))
   const mode=screen.getByLabelText('وضع إضاءة الهاتف') as HTMLSelectElement
@@ -23,7 +31,9 @@ describe('App V1 strict-light UI regression',()=>{
   fireEvent.change(mode,{target:{value:'OFF'}})
   expect(screen.getByText(/المصادر الفعالة: bedside/)).toBeTruthy()
   expect(screen.getByText(/الإضاءة المحفوظة: bedside_warm — الإضاءة المستخدمة: bedside_warm/)).toBeTruthy()
-  fireEvent.click(screen.getByRole('button',{name:'اعتماد البرومبت المحلي'}))
+  const localButton=screen.getByRole('button',{name:'اعتماد البرومبت المحلي'}) as HTMLButtonElement
+  fireEvent.click(localButton)
+  await waitFor(()=>expect(fetch).toHaveBeenCalled())
   await waitFor(()=>expect(screen.getByRole('button',{name:'إعادة تعيين الخيارات'})).toBeTruthy())
   fireEvent.click(screen.getByRole('button',{name:'إعادة تعيين الخيارات'}))
   expect((screen.getByLabelText('وضع إضاءة الهاتف') as HTMLSelectElement).value).toBe('OFF')
