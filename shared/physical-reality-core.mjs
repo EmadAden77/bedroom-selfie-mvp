@@ -34,12 +34,14 @@ export const REFERENCE_UPPER_LOCK={
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character'
 }
-export function inspectSharedScene(s){
+export function inspectSharedScene(s,scope='all'){
  const out=[]
  const add=(id,category,fields,reason,repair)=>out.push({id,status:'CONFLICT',category,fields,reason,repair})
  const mode=s.mode||'front',shot=s.shotId||'',light=s.nightLightingId||'phone_screen_only'
  const required=new Set(['hairVariantId','expressionVariantId','upperGarmentId','materialId','fitId','stateId'])
  for(const [field,available] of Object.entries(PHYSICAL_OPTION_IDS)){
+  const isPresentation=field==='promptTarget'||field==='realismIntensity'
+  if(scope==='presentation'&&!isPresentation||scope==='physical'&&isPresentation)continue
   const value=field==='bedroomShotId'?shot:field==='nightLightingId'?light:s[field]
   if(value===undefined||value===null||value===''){
    if(required.has(field))
@@ -66,6 +68,7 @@ export function inspectSharedScene(s){
     'اختر قيمة من الخيارات المعرّفة أو عدل السجل المركزي قبل إضافتها.')
   }
  }
+ if(scope==='presentation')return out
  if(DEFERRED_EXPRESSION_IDS.includes(s.expressionVariantId))
   add('deferred-expression','biomechanics',['expressionVariantId'],
    'Expression '+s.expressionVariantId+' is Deferred Composite State and not selectable - light_fatigue is not available in pure expressions',
