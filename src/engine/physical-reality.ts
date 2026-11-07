@@ -50,6 +50,7 @@ export function evaluatePhysicalReality(ctx:CompilationContext):PhysicalReality{
   issues.push(issue('FRONT_SELFIE_REQUIRED','ضوء الشاشة فقط يتطلب تصويرًا أماميًا، لا تصوير المرآة أو المؤقت.',[{label:'إلغاء الوضع الصارم',patch:{phoneOnlyIlluminationMode:'OFF'}}]))
  if(mode!=='OFF'&&ctx.windowUncovered)
   warnings.push('النافذة مكشوفة في الإعدادات المحفوظة، لكن الوضع الصارم يفترض انعدام الضوء الخارجي؛ إذا كان الضوء يدخل فعليًا فلا يمكن إثبات حصرية الهاتف.')
+ if(mode!=='OFF'&&isLaptopSelfieShot(ctx.bedroomShotId))issues.push(issue('LAPTOP_SCREEN_CONFLICT','لقطة اللابتوب الحالية تفترض شاشة مضاءة؛ اختر لقطة هاتف مستقلة لتفعيل حصرية الضوء.'))
  if(mode==='OFF'&&lighting==='laptop_screen_only'&&!isLaptopSelfieShot(ctx.bedroomShotId))
   issues.push(issue('LAPTOP_REQUIRED','ضوء اللابتوب يستلزم لقطة لابتوب حقيقية.'))
  const effectiveLightingId=mode==='DARK_ROOM_REAR_FLASH_ONLY'?'rear_flash':mode==='DARK_ROOM_FRONT_SCREEN_ONLY'?'phone_screen_only':lighting
