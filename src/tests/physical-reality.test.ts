@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest'
 import type {CompilationContext} from '../domain/types'
-import {OPTION_REGISTRY,affectedFields,evaluatePhysicalReality,includeCompilerFindings,missingRegistrations} from '../engine/physical-reality'
+import {OPTION_REGISTRY,ROOM_OPTION_REGISTRY,affectedFields,evaluatePhysicalReality,includeCompilerFindings,missingRegistrations} from '../engine/physical-reality'
 import {compilePrompt} from '../compiler'
 import {bedroomShots} from '../data/bedroom-shots'
 import {nightLightingPresets} from '../data/night-lighting'
@@ -30,6 +30,23 @@ describe('Physical Reality Engine constraint graph',()=>{
   expect(OPTION_REGISTRY.nightLightingId.values).toEqual(nightLightingPresets.map(x=>x.id))
   for(const x of mirrorMovements)expect(OPTION_REGISTRY.mirrorMovementId.values).toContain(x.id)
   for(const x of mirrorDistances)expect(OPTION_REGISTRY.mirrorDistanceId.values).toContain(x.id)
+ })
+ it('registers every nested physical room control and checks every selectable value safely',()=>{
+  expect(Object.keys(ROOM_OPTION_REGISTRY).sort()).toEqual(['order','sessionLocked','surface','zones'])
+  for(const order of ROOM_OPTION_REGISTRY.order.values)
+   for(const surface of ROOM_OPTION_REGISTRY.surface.values){
+    const state={...DEFAULT_ROOM_PHYSICAL_STATE,order:order as typeof DEFAULT_ROOM_PHYSICAL_STATE.order,
+      surface:surface as typeof DEFAULT_ROOM_PHYSICAL_STATE.surface}
+    expect(()=>evaluatePhysicalReality({...base,roomPhysicalState:state})).not.toThrow()
+   }
+  for(const field of Object.keys(OPTION_REGISTRY) as (keyof CompilationContext)[]){
+   const item=OPTION_REGISTRY[field]
+   if(!item.values)continue
+   for(const value of item.values){
+    const ctx={...base,[field]:value}
+    expect(()=>evaluatePhysicalReality(ctx)).not.toThrow()
+   }
+  }
  })
  it('traverses transitive impacts without duplicate field IDs',()=>{
   const affected=affectedFields(['bedroomShotId'])
