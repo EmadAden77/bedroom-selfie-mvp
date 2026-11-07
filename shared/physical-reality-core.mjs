@@ -95,5 +95,32 @@ export function inspectSharedScene(s){
     add('room-lock','room',['roomPhysicalState'],'Invalid room session lock','حدد تثبيت الجلسة.')
   }
  }
+ if(shot&&s.poseId&&s.shotPosture&&s.poseId!==s.shotPosture)
+  out.push({id:'shot-posture',status:'WARNING',category:'biomechanics',
+   fields:['bedroomShotId','poseId'],
+   reason:'الوضعية العامة تختلف عن وضعية اللقطة؛ المترجم الحالي يعتمد وضعية اللقطة صراحةً.',
+   repair:'وحّد اختيار الوضعية مع وضعية اللقطة، أو ألغِ اختيار اللقطة.'})
+ if(mode==='mirror'&&shot){
+  if(!s.roomReferencePresent)
+   out.push({id:'mirror-reference',status:'UNKNOWN',category:'reference',
+    fields:['roomReferencePresent','bedroomShotId'],
+    reason:'صورة الغرفة غير متاحة؛ هندسة المرآة المحددة نصيًا لا تثبت أبعادها أو ما يظهر داخل الانعكاس.',
+    repair:'أضف صورة مرجعية للغرفة إذا كانت متاحة، وإلا تجنب ادعاء أبعاد دقيقة.'})
+  else
+   out.push({id:'mirror-measurements',status:'UNKNOWN',category:'geometry',
+    fields:['mirrorDistanceId','mirrorFramingId'],
+    reason:'لا توجد قياسات معايرة للمرآة أو المسافات أو مجال رؤية الكاميرا؛ لا يمكن إثبات خلو مسار الانعكاس من الحجب.',
+    repair:'استخدم وصفًا نسبيًا واحفظ مواقع الأثاث. يمكن إدخال قياسات موثوقة لاحقًا.'})
+ }
+ if(!s.referenceImagePresent)
+  out.push({id:'person-reference',status:'UNKNOWN',category:'reference',
+   fields:['referenceImagePresent'],
+   reason:'لم تُرفق صورة هوية؛ لا يمكن التحقق من تفاصيل الوجه أو خط الشعر أو الملابس المرجعية.',
+   repair:'أرفق صورة الهوية إن أردت مطابقة الملامح، دون اختراع تفاصيل مفقودة.'})
+ if(shot||s.poseId)
+  out.push({id:'unmeasured-contact',status:'UNKNOWN',category:'biomechanics',
+   fields:['bedroomShotId','poseId'],
+   reason:'التلامس والضغط ومركز الثقل مقيّدون وصفيًا، لكن لا توجد بيانات مفاصل أو كتل أو أسطح ثلاثية الأبعاد لإثباتهم عدديًا.',
+   repair:'استخدم أوصاف دعم الوزن والتلامس الحالية؛ لا تستنتج قياسات أو قوى رقمية.'})
  return out
 }
