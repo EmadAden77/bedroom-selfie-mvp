@@ -108,13 +108,13 @@ const functionWords=new Set([
  'this','that','these','those','its','their','for','then','also','therefore','clearly','each',
  'one','every','under','through','about','using','via','has','have','where','when','into'
 ])
-const keywords=(s:string)=>new Set((s.toLowerCase().match(/[a-z0-9]+/g)||[])
- .filter(t=>!functionWords.has(t)))
+const keywords=(s:string)=>(s.toLowerCase().match(/[a-z0-9]+/g)||[])
+ .filter(t=>!functionWords.has(t))
 /** Semantic guard for a limited editorial opening. Immutable scene sections are never rewritten. */
 export function editorialOpeningIsSafe(approved:string,edited:string):boolean{
  if(!edited||edited.length>approved.length+240||edited.length>1800)return false
  const a=keywords(approved),b=keywords(edited)
- if(a.size!==b.size||[...a].some(t=>!b.has(t)))return false
+ if(a.length!==b.length||a.some((t,i)=>t!==b[i]))return false
  const numbers=(s:string)=>(s.match(/\b\d+(?:\.\d+)?\b/g)||[]).sort().join(',')
  if(numbers(approved)!==numbers(edited))return false
  if(/\b(?:extra|additional|unknown|imaginary|new|second)\s+(?:person|window|lamp|camera|mirror|bed|sofa)\b/i.test(edited))return false
