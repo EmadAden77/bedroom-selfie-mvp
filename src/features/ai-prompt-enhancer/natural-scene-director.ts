@@ -2,6 +2,7 @@ import type {CompilationContext} from '../../domain/types'
 import {bedroomShots} from '../../data/bedroom-shots'
 import {isLaptopSelfieShot} from '../../data/laptop-selfie-physics'
 import {captureLightingIssues} from '../../data/scene-consistency'
+import {effectivePhysicalContext} from '../../engine/physical-reality'
 import {isLivedInClutter} from '../../data/bedroom-clutter'
 
 /**
@@ -43,5 +44,7 @@ export function buildNaturalSceneDirection(ctx:CompilationContext):string{
 
 /** A small preflight for unambiguously contradictory user selections. */
 export function naturalSceneSelectionIssues(ctx:CompilationContext):string[]{
- return captureLightingIssues(ctx)
+ // Option B: only the effective emitter is active; a saved inactive light
+ // must not block an otherwise valid exclusive scene at UI preflight.
+ return captureLightingIssues(effectivePhysicalContext(ctx))
 }
