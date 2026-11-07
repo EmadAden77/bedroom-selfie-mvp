@@ -13,7 +13,7 @@ type Props={ctx:CompilationContext;result:CompilationResult;validation:Validatio
 type MainReply={
  prompt?:string;source?:string;model?:string;error?:string;errorCode?:string
  sectionOrder?:string[];openingLineSelection?:'canonical'|'concise';integrity?:string;promptDigest?:string;sectionCount?:number;protectedUnitDigests?:{id:string;digest:string}[]
- validated?:boolean
+ validated?:boolean;authoritative?:boolean
 }
 
 export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,onPromptReady,onAdvisoryReady})=>{
