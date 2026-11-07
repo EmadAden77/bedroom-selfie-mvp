@@ -4,7 +4,7 @@ import {OPTION_REGISTRY,ROOM_OPTION_REGISTRY,affectedFields,evaluatePhysicalReal
 import {compilePrompt} from '../compiler'
 import {bedroomShots} from '../data/bedroom-shots'
 import {nightLightingPresets} from '../data/night-lighting'
-import {mirrorMovements,mirrorDistances} from '../data/mirror-controls'
+import {mirrorMovements,mirrorDistances,validateMirrorControls} from '../data/mirror-controls'
 import {DEFAULT_ROOM_PHYSICAL_STATE} from '../data/room-physical-state'
 
 const base:CompilationContext={
@@ -60,6 +60,11 @@ describe('Physical Reality Engine constraint graph',()=>{
   expect(result.status).toBe('CONFLICT')
   expect(result.findings.some(x=>x.category==='lighting'&&x.status==='CONFLICT')).toBe(true)
   expect(compilePrompt(ctx).validation.isValid).toBe(false)
+ })
+ it('legacy mirror validator does not promote missing reference evidence to an error',()=>{
+  const ctx={...base,bedroomShotId:'mirror_wardrobe',poseId:'standing',nightLightingId:'ceiling_neutral'}
+  expect(evaluatePhysicalReality(ctx).findings.some(f=>f.status==='UNKNOWN')).toBe(true)
+  expect(validateMirrorControls(ctx)).toEqual([])
  })
  it('keeps unmeasured mirror geometry UNKNOWN, rather than physically impossible',()=>{
   const ctx={...base,bedroomShotId:'mirror_wardrobe',poseId:'standing',nightLightingId:'ceiling_neutral'}
