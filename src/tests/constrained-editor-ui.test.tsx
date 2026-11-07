@@ -23,6 +23,10 @@ const build=(ctx:CompilationContext=base)=>{
  return {spec,...compiled}
 }
 const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:{'content-type':'application/json'}})
+const localAuthorization=(spec:ReturnType<typeof build>['spec'],prompt:string)=>json({
+ source:'local',prompt,validated:true,integrity:spec.integrity
+})
+
 const approved=async(spec:ReturnType<typeof build>['spec'])=>{
  const sectionOrder=[...spec.mandatoryUnitIds]
  const openingLineSelection='canonical' as const
@@ -59,9 +63,9 @@ describe('Main Gemini constrained prompt editor interface',()=>{
   const {spec,result,validation}=build()
   const onPromptReady=vi.fn()
   const accepted=await approved(spec)
-  vi.stubGlobal('fetch',vi.fn(async()=>json({
-   ...accepted,prompt:'A stylish studio photo with a different model and an invented window.'
-  })))
+  vi.stubGlobal('fetch',vi.fn(async(url:string)=>url==='/api/authorize-final-prompt'
+   ?localAuthorization(spec,result.promptText)
+   :json({...accepted,prompt:'A stylish studio photo with a different model and an invented window.'})))
   render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
   await waitFor(()=>expect(screen.getByText(/البرومبت المحلي — دون اعتماد تحرير Gemini/)).toBeTruthy())
@@ -70,9 +74,11 @@ describe('Main Gemini constrained prompt editor interface',()=>{
   expect(screen.queryByText('A stylish studio photo with a different model and an invented window.')).toBeNull()
  })
  it('falls back to local prompt on provider failure without changing user choices',async()=>{
-  const {result,validation}=build()
+  const {spec,result,validation}=build()
   const onPromptReady=vi.fn()
-  vi.stubGlobal('fetch',vi.fn(async()=>json({errorCode:'GEMINI_EDITOR_REJECTED',error:'مخرجات غير معتمدة'},422)))
+  vi.stubGlobal('fetch',vi.fn(async(url:string)=>url==='/api/authorize-final-prompt'
+   ?localAuthorization(spec,result.promptText)
+   :json({errorCode:'GEMINI_EDITOR_REJECTED',error:'مخرجات غير معتمدة'},422)))
   render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
   await waitFor(()=>expect(screen.getByText(/البرومبت المحلي — دون اعتماد تحرير Gemini/)).toBeTruthy())
@@ -80,11 +86,13 @@ describe('Main Gemini constrained prompt editor interface',()=>{
   expect(screen.getAllByRole('alert').some(x=>x.textContent?.includes('GEMINI_EDITOR_REJECTED'))).toBe(true)
  })
  it('reports serverless HTML 500 as a server failure and preserves the local validated prompt',async()=>{
-  const {result,validation}=build()
+  const {spec,result,validation}=build()
   const onPromptReady=vi.fn()
-  vi.stubGlobal('fetch',vi.fn(async()=>new Response('<html>FUNCTION_INVOCATION_FAILED</html>',{
-   status:500,headers:{'content-type':'text/html; charset=utf-8'}
-  })))
+  vi.stubGlobal('fetch',vi.fn(async(url:string)=>url==='/api/authorize-final-prompt'
+   ?localAuthorization(spec,result.promptText)
+   :new Response('<html>FUNCTION_INVOCATION_FAILED</html>',{
+    status:500,headers:{'content-type':'text/html; charset=utf-8'}
+   })))
   render(<AiPromptEnhancer ctx={base} result={result} validation={validation} onReset={vi.fn()} onPromptReady={onPromptReady} onAdvisoryReady={vi.fn()}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحرير البرومبت بواسطة Gemini'}))
   await waitFor(()=>expect(screen.getByText(/البرومبت المحلي — دون اعتماد تحرير Gemini/)).toBeTruthy())
