@@ -142,6 +142,24 @@ describe('PR2 Option B: authoritative active source and inactive saved preferenc
   expect(JSON.stringify(second.lighting)).toBe(JSON.stringify(first.lighting))
   expect(JSON.stringify(second)).toBe(JSON.stringify(first))
  })
+ it('C2 snapshot: saved lighting shows the exact inactive mirror flash mode label',()=>{
+  render(<NightLightingSelector
+   shotId="mirror_rear_flash" selectedId="phone_screen_only"
+   exclusiveMode="DARK_ROOM_REAR_FLASH_ONLY"
+   windowUncovered={false} onSelect={vi.fn()} onWindowChange={vi.fn()}
+  />)
+  expect(screen.getByRole('status').textContent?.trim())
+   .toMatchInlineSnapshot('"(inactive: mirror flash mode)"')
+ })
+ it('C2 snapshot: saved lighting shows the exact inactive front screen mode label',()=>{
+  render(<NightLightingSelector
+   shotId="bed_edge" selectedId="ceiling_neutral"
+   exclusiveMode="DARK_ROOM_FRONT_SCREEN_ONLY"
+   windowUncovered={false} onSelect={vi.fn()} onWindowChange={vi.fn()}
+  />)
+  expect(screen.getByRole('status').textContent?.trim())
+   .toMatchInlineSnapshot('"(inactive: front screen mode)"')
+ })
  it('C2: labels inactive preference visibly without mutating selected preset',()=>{
   const common={shotId:'mirror_rear_flash',selectedId:'phone_screen_only',
    windowUncovered:false,onSelect:vi.fn(),onWindowChange:vi.fn()}
