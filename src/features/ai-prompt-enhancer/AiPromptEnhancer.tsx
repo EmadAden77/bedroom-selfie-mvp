@@ -63,7 +63,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
    requestVersion.current++
    requestRef.current?.abort()
    setGenerated(prompt);setEngine('local');setAuditorSource('')
-   setError('البرومبت المحلي للعرض فقط — أبعاد الغرفة غير مؤكدة أو قياسات الهندسة غير مكتملة؛ لا يمكن اعتماده نهائيًا.')
+   setError((reason?reason+' ':'')+'البرومبت المحلي للعرض فقط — أبعاد الغرفة غير مؤكدة أو قياسات الهندسة غير مكتملة؛ لا يمكن اعتماده نهائيًا.')
    setCopied(false);onPromptReady('')
    return
   }
