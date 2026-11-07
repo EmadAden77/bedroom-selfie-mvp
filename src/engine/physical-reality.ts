@@ -59,7 +59,7 @@ export function evaluatePhysicalReality(ctx:CompilationContext):PhysicalReality{
  const effects=mode==='DARK_ROOM_REAR_FLASH_ONLY'?[
   'Only the actual rear LED fires during rear-camera mirror exposure. The phone display emits no scene light.',
   'Flash is aimed toward the existing wardrobe mirror. Reflected rays, real glass boundaries, hand and phone occlusion govern illumination of the photographer and room.',
-  'Concentrated flash reflection can clip local detail. Specular glare and shadows follow actual paths; no uniformly bright face, distant background fill, hidden ambient or studio light.',
+  'Concentrated flash reflection can clip local detail. Specular glare and shadows follow actual paths; no uniformly bright face, distant background fill, hidden ambient and studio light.',
   'Existing bedding, tiles, skin and clothes respond only where flash rays and their physically credible reflected paths reach them. Unlit regions remain dark.'
  ]:mode==='DARK_ROOM_FRONT_SCREEN_ONLY'?[
   'Only the phone display emits light during a front-camera capture; the rear LED is switched off.',
