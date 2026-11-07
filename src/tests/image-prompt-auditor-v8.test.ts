@@ -85,6 +85,25 @@ describe('V8 serverless endpoint',()=>{
   const huge=await handler.fetch(new Request(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...payload,extra:'x'.repeat(MAX_AUDIT_REQUEST_BYTES+1)})}))
   expect(huge.status).toBe(413)
  })
+ it('does not reject valid full-length Arabic prompt and scene descriptions by byte size',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','fake-key')
+  const arabicPrompt='وصف غرفة نوم طبيعية. '.repeat(700).slice(0,MAX_AUDIT_PROMPT_CHARS)
+  const arabicScene='شخص أمام مرآة الدولاب بإضاءة السقف. '.repeat(400).slice(0,MAX_AUDIT_BRIEF_CHARS)
+  expect(arabicPrompt.length).toBeLessThanOrEqual(MAX_AUDIT_PROMPT_CHARS)
+  expect(arabicScene.length).toBeLessThanOrEqual(MAX_AUDIT_BRIEF_CHARS)
+  let outgoing:any
+  vi.stubGlobal('fetch',vi.fn(async(_url:string,opts:{body:string})=>{
+   outgoing=JSON.parse(opts.body)
+   return provider()
+  }))
+  const response=await handler.fetch(request({...payload,prompt:arabicPrompt,sceneBrief:arabicScene},{
+   'x-forwarded-for':'audit-v8-arabic-utf8'
+  }))
+  expect(response.status).toBe(200)
+  const forwarded=JSON.parse(outgoing.contents[0].parts[0].text)
+  expect(forwarded.rawPromptToRepair).toBe(arabicPrompt)
+  expect(forwarded.selectedAppSceneContext).toBe(arabicScene)
+ })
  it('returns transparent JSON when Gemini API is not configured',async()=>{
   vi.stubEnv('GEMINI_API_KEY','')
   const response=await handler.fetch(request())
