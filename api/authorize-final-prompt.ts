@@ -6,6 +6,7 @@
 import {validateSceneSpec,MAX_SCENE_REQUEST_BYTES} from './generate-main-prompt.ts'
 import {assertAuthoritative} from '../shared/authoritative-prompt.ts'
 import {digestEditorialText} from '../shared/editorial-contract.ts'
+import {makeRoomAuditEntry} from '../shared/room-acknowledgement.ts'
 
 const respond=(errorCode:string,error:string,status=400)=>new Response(JSON.stringify({errorCode,error}),{
  status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}
@@ -34,8 +35,9 @@ export default {
   const data=raw as Record<string,unknown>
   // React state cannot be posted into authority. Reject attempts explicitly.
   if(Object.prototype.hasOwnProperty.call(data,'activeGeneratedPrompt'))return respond('FINAL_DIRECT_STATE_REJECTED','Untrusted activeGeneratedPrompt cannot be submitted')
-  if(Object.keys(data).sort().join(',')!=='candidate,sceneSpecification')
-   return respond('FINAL_REQUEST_SCHEMA','Expected exactly sceneSpecification and candidate')
+  const keys=Object.keys(data).sort().join(',')
+  if(keys!=='candidate,sceneSpecification'&&keys!=='candidate,roomAcknowledgement,sceneSpecification')
+   return respond('FINAL_REQUEST_SCHEMA','Expected sceneSpecification, candidate, and optional roomAcknowledgement')
   const candidate=data.candidate
   // Check sources before the spec to ensure advisory injection gets a clear code.
   if(candidate&&typeof candidate==='object'&&!Array.isArray(candidate)){
@@ -45,11 +47,20 @@ export default {
   }
   try{
    const spec=validateSceneSpec(data.sceneSpecification)
-   const final=assertAuthoritative(spec,candidate)
-   return success({...final,integrity:spec.integrity,promptDigest:await digestEditorialText(final.prompt)})
+   const final=assertAuthoritative(spec,candidate,data.roomAcknowledgement)
+   const audit=final.acknowledgedMeasurements?.length
+    ?makeRoomAuditEntry(spec.integrity,final.acknowledgedMeasurements,new Date().toISOString())
+    :undefined
+   // Structured server log is the operational audit trail. This project has
+   // no authenticated identity or durable database: actor is explicitly unverified.
+   if(audit)console.info('ROOM_ACK_AUDIT',JSON.stringify(audit))
+   return success({...final,integrity:spec.integrity,
+    promptDigest:await digestEditorialText(final.prompt),
+    ...(audit?{audit}:{})})
   }catch(error){
    const reason=error instanceof Error&&/^[A-Z_]+$/.test(error.message)?error.message:'FINAL_INVALID'
-   return respond(reason,'Final Prompt authority denied: '+reason,reason==='ADVISORY_NOT_AUTHORITATIVE'?403:400)
+   const forbidden=['ADVISORY_NOT_AUTHORITATIVE','ROOM_UNVERIFIED','ROOM_ACK_INVALID'].includes(reason)
+   return respond(reason,'Final Prompt authority denied: '+reason,forbidden?403:400)
   }
  }
 }
