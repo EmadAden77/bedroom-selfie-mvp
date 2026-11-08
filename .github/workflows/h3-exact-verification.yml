@@ -1,0 +1,35 @@
+name: Temporary H3 exact-command verification
+on:
+  push:
+    branches: ['fix/legacy-gemini-endpoint-hardening']
+permissions:
+  contents: read
+jobs:
+  exact-h3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Task 1 exact grep commands (before installing dependencies)
+        shell: bash
+        run: |
+          set +e
+          echo '$ grep -rn "generate-prompt" --include=*.ts --include=*.tsx .'
+          grep -rn "generate-prompt" --include=*.ts --include=*.tsx .
+          echo "grep_1_exit=$?"
+          echo '$ grep -rn "/api/generate-prompt" .'
+          grep -rn "/api/generate-prompt" .
+          echo "grep_2_exit=$?"
+          exit 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Exact npx tsc --noEmit
+        run: npx tsc --noEmit
+      - name: Exact npm run test:vitest
+        run: npm run test:vitest
+      - name: Exact npm run build
+        run: npm run build
