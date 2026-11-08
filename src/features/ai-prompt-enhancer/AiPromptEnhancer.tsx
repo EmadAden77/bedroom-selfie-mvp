@@ -8,8 +8,10 @@ import {
  buildSceneSpecification,validateConstrainedEditorReply,MAX_SCENE_SPEC_REQUEST_BYTES
 } from './scene-specification'
 import {roomInputStatus,roomGeometryIssues} from '../../../shared/room-geometry-rules'
+import {unverifiedRoomMeasurements,type RoomAuditEntry,type RoomAcknowledgement} from '../../../shared/room-acknowledgement'
 
 type Props={ctx:CompilationContext;result:CompilationResult;validation:ValidationResult;onReset:()=>void;onPromptReady:(prompt:string)=>void;onAdvisoryReady:(draft:string)=>void}
+type ConfirmableCandidate={source:'local'|'gemini-editor';prompt:string;sectionOrder?:string[];openingLineSelection?:'canonical'|'concise'}
 type MainReply={
  prompt?:string;source?:string;model?:string;error?:string;errorCode?:string
  sectionOrder?:string[];openingLineSelection?:'canonical'|'concise';integrity?:string;promptDigest?:string;sectionCount?:number;protectedUnitDigests?:{id:string;digest:string}[]
@@ -23,6 +25,10 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
  const [error,setError]=useState('')
  const [loading,setLoading]=useState(false)
  const [copied,setCopied]=useState(false)
+ const [confirmOpen,setConfirmOpen]=useState(false)
+ const [pendingCandidate,setPendingCandidate]=useState<ConfirmableCandidate|null>(null)
+ const [isAuthoritative,setIsAuthoritative]=useState(false)
+ const [auditEntry,setAuditEntry]=useState<RoomAuditEntry|null>(null)
  const requestRef=useRef<AbortController|null>(null)
  const requestVersion=useRef(0)
  const prompt=result.promptText
@@ -33,12 +39,14 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
  const spec=useMemo(()=>roomInput.status==='invalid'?null:buildSceneSpecification(ctx,result,validation),
   [ctx,result,validation,roomInput.status])
  const selectionIssues=naturalSceneSelectionIssues(ctx)
- const fallbackReady=roomInput.status==='valid'&&validation.isValid&&result.errors.length===0&&prompt.length>=100
+ const invalidRoom=!!spec&&roomGeometryIssues(spec.roomGeometry).some(x=>x.status==='invalid')
+ const fallbackReady=roomInput.status==='valid'&&!invalidRoom&&validation.isValid&&result.errors.length===0&&prompt.length>=100
  const specTooLong=!!spec&&typeof Blob!=='undefined'?new Blob([JSON.stringify({sceneSpecification:spec})]).size>MAX_SCENE_SPEC_REQUEST_BYTES:false
  const ready=!!spec&&fallbackReady&&!specTooLong&&selectionIssues.length===0&&spec.conflicts.length===0
  const targetLabels={gemini:'Gemini / Imagen',chatgpt:'ChatGPT / GPT Image',flux:'FLUX',midjourney:'Midjourney'} as const
  const selectedTarget=targetLabels[ctx.promptTarget||'gemini']
  const authorityEligible=!!spec&&spec.roomGeometry.userConfirmed&&roomGeometryIssues(spec.roomGeometry).length===0
+ const unverified=spec?unverifiedRoomMeasurements(spec.roomGeometry,spec.capture.posture):[]
 
  useEffect(()=>{
   // A changed selection invalidates all previously requested editor results.
@@ -46,6 +54,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
   requestRef.current?.abort()
   requestRef.current=null
   setGenerated('');setAuditorSource('');setEngine('');setError('');setLoading(false);setCopied(false)
+  setConfirmOpen(false);setPendingCandidate(null);setIsAuthoritative(false);setAuditEntry(null)
   onPromptReady('')
   onAdvisoryReady('')
  },[spec?.integrity,prompt,sceneBrief,ctx.promptTarget,onPromptReady,onAdvisoryReady])
@@ -63,6 +72,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
    requestVersion.current++
    requestRef.current?.abort()
    setGenerated(prompt);setEngine('local');setAuditorSource('')
+   setPendingCandidate({source:'local',prompt});setIsAuthoritative(false);setAuditEntry(null)
    setError((reason?reason+' ':'')+'البرومبت المحلي للعرض فقط — أبعاد الغرفة غير مؤكدة أو قياسات الهندسة غير مكتملة؛ لا يمكن اعتماده نهائيًا.')
    setCopied(false);onPromptReady('')
    return
@@ -87,6 +97,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
     throw Error('FINAL_AUTH_RESPONSE_MISMATCH')
    if(current()){
     setGenerated(prompt);setEngine('local');setError(reason)
+    setPendingCandidate(null);setIsAuthoritative(true);setAuditEntry(null)
     onPromptReady(prompt)
    }
   }catch(e){
@@ -118,12 +129,16 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
    const checked=await validateConstrainedEditorReply(spec,payload)
    if(current()){
     setGenerated(checked.prompt);setEngine('gemini')
+    setPendingCandidate({source:'gemini-editor',prompt:checked.prompt,
+     sectionOrder:checked.sectionOrder,openingLineSelection:checked.openingLineSelection})
+    setAuditEntry(null)
     // Editorial verification is distinct from promotion to Final Prompt.
     // Only the explicit server authority claim can update activeGeneratedPrompt.
     // Defense in depth: an incorrect/malformed server authority claim
     // cannot bypass the locally observed unconfirmed/unknown room state.
     const finalAllowed=payload.authoritative===true&&spec.roomGeometry.userConfirmed&&
      roomGeometryIssues(spec.roomGeometry).length===0
+    setIsAuthoritative(finalAllowed)
     onPromptReady(finalAllowed?checked.prompt:'')
     if(!finalAllowed)
      setError('تحرير Gemini صحيح نصيًا لكنه غير معتمد نهائيًا: تأكيد الغرفة والقياسات الناقصة مطلوبان.')
@@ -132,6 +147,50 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
    if(current()){
     const detail=e instanceof Error?e.message:'تعذر الاتصال بمحرر Gemini.'
     await authorizeLocal('لم يُعتمد تعديل Gemini: '+detail+' يمكن اعتماد البرومبت المحلي بعد تحقق الخادم.')
+   }
+  }finally{if(current())setLoading(false)}
+ }
+ /** PR7b-1: explicit opt-in, verified by the SAME final server authority gate. */
+ async function confirmMeasurements(){
+  if(!spec||!pendingCandidate||!generated||invalidRoom||unverified.length===0)return
+  setConfirmOpen(false)
+  requestRef.current?.abort()
+  const version=++requestVersion.current
+  const ctrl=new AbortController();requestRef.current=ctrl
+  const current=()=>version===requestVersion.current&&!ctrl.signal.aborted
+  setLoading(true);setError('')
+  const ack:RoomAcknowledgement={
+   accepted:true,sceneIntegrity:spec.integrity,measurements:[...unverified]
+  }
+  try{
+   const response=await fetch('/api/authorize-final-prompt',{
+    method:'POST',headers:{'content-type':'application/json'},signal:ctrl.signal,
+    body:JSON.stringify({sceneSpecification:spec,candidate:pendingCandidate,roomAcknowledgement:ack})
+   })
+   if(!(response.headers.get('content-type')||'').includes('application/json'))
+    throw Error('ROOM_ACK_NON_JSON')
+   const data=await response.json() as {
+    source?:string;prompt?:string;integrity?:string;validated?:boolean;
+    audit?:RoomAuditEntry;errorCode?:string;error?:string
+   }
+   if(!current())return
+   if(!response.ok)throw Error(data.errorCode||data.error||'ROOM_ACK_DENIED')
+   if(data.validated!==true||data.source!==pendingCandidate.source||
+      data.prompt!==pendingCandidate.prompt||data.integrity!==spec.integrity||
+      !data.audit||data.audit.event!=='ROOM_MEASUREMENTS_ACKNOWLEDGED'||
+      data.audit.actor!=='interactive_user_unverified'||data.audit.actorVerified!==false||
+      data.audit.sceneIntegrity!==spec.integrity||
+      !Number.isFinite(Date.parse(data.audit.confirmedAt))||
+      JSON.stringify(data.audit.unverifiedMeasurements)!==JSON.stringify(unverified))
+    throw Error('ROOM_ACK_RESPONSE_MISMATCH')
+   if(current()){
+    setIsAuthoritative(true);setAuditEntry(data.audit);setError('')
+    onPromptReady(pendingCandidate.prompt)
+   }
+  }catch(e){
+   if(current()){
+    setIsAuthoritative(false);onPromptReady('')
+    setError('لم يُعتمد إقرار القياسات غير المتحققة: '+(e instanceof Error?e.message:'ROOM_ACK_FAILED'))
    }
   }finally{if(current())setLoading(false)}
  }
@@ -154,6 +213,10 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
   </p>
   {specTooLong&&<p role="alert" style={{fontSize:12,color:'#b91c1c'}}>مواصفات المشهد تتجاوز حجم الطلب الآمن. البرومبت المحلي ما زال متاحًا.</p>}
   {selectionIssues.length>0&&<div role="alert" style={{fontSize:12,color:'#b91c1c'}}>{selectionIssues.map(x=><p key={x}>{x}</p>)}</div>}
+  {unverified.length>0&&<div role="alert" aria-label="Room measurements provisional warning" style={{fontSize:12,color:'#92400e'}}>
+   <strong>Provisional — unverified measurements.</strong>
+   {unverified.map(name=><p key={name}>{name}. Authoritative status requires verification or explicit acknowledgement.</p>)}
+  </div>}
   {roomInput.status==='invalid'&&<p role="alert" style={{fontSize:12,color:'#b91c1c'}}>
    {roomInput.reason} — لم يُرسل شيء إلى Gemini.
   </p>}
@@ -179,13 +242,43 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
   {generated&&<div style={{marginTop:16}}>
    <p style={{fontSize:12,fontWeight:650,margin:'0 0 8px'}}>
     {engine==='gemini'
-     ?(authorityEligible?'✓ نتيجة Gemini المحررة والمعتمدة برمجيًا — ':'نتيجة Gemini المحررة — غير معتمدة نهائيًا — ')+selectedTarget
-     :(authorityEligible?'✓ البرومبت المحلي — دون اعتماد تحرير Gemini':'البرومبت المحلي — للعرض فقط، غير معتمد')}
+     ?(isAuthoritative?'✓ نتيجة Gemini المحررة والمعتمدة برمجيًا — ':'نتيجة Gemini المحررة — غير معتمدة نهائيًا — ')+selectedTarget
+     :(isAuthoritative?'✓ البرومبت المحلي — دون اعتماد تحرير Gemini':'البرومبت المحلي — للعرض فقط، غير معتمد')}
+    {' — '}{isAuthoritative?'Authoritative':'Provisional'}
    </p>
    <div dir="ltr" className="preview-box" style={{textAlign:'left',whiteSpace:'pre-wrap',overflowWrap:'anywhere',maxHeight:520,overflowY:'auto'}}>{generated}</div>
    <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}>
-    <button type="button" className="btn" onClick={()=>void copy()}>{copied?'✓ تم النسخ':authorityEligible?'نسخ البرومبت النهائي':'نسخ المسودة غير المعتمدة'}</button>
+    <button type="button" className="btn" onClick={()=>void copy()}>{copied?'✓ تم النسخ':isAuthoritative?'نسخ البرومبت النهائي':'نسخ المسودة غير المعتمدة'}</button>
     <button type="button" className="btn btn-secondary" onClick={onReset}>إعادة تعيين الخيارات</button>
+   </div>
+   {!isAuthoritative&&pendingCandidate&&unverified.length>0&&!invalidRoom&&
+    <button type="button" className="btn btn-secondary" style={{marginTop:10}}
+     onClick={()=>setConfirmOpen(true)} disabled={loading}>
+     Confirm and mark as authoritative (acknowledges unverified measurements)
+    </button>}
+   {auditEntry&&<p role="status" style={{fontSize:11,color:'var(--muted)'}}>
+    Audit: {auditEntry.confirmedAt} — {auditEntry.actor} — {auditEntry.unverifiedMeasurements.join('; ')}
+   </p>}
+  </div>}
+  {confirmOpen&&<div role="presentation" style={{
+   position:'fixed',inset:0,zIndex:9999,background:'rgba(0,0,0,0.64)',
+   display:'flex',alignItems:'center',justifyContent:'center',padding:16
+  }}>
+   <div role="dialog" aria-modal="true" aria-label="Confirm unverified room measurements"
+    className="card" style={{maxWidth:540,width:'100%',maxHeight:'85vh',overflowY:'auto'}}>
+    <h3>Confirm unverified room measurements</h3>
+    <p>These measurements are NOT verified. Your explicit acknowledgement authorizes
+     this exact provisional prompt without changing any RG result. The audit actor
+     will be recorded as an unauthenticated interactive user.</p>
+    <ul>{unverified.map(name=><li key={name}>{name}</li>)}</ul>
+    <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+     <button type="button" className="btn btn-secondary" onClick={()=>setConfirmOpen(false)}>
+      Cancel confirmation
+     </button>
+     <button type="button" className="btn" onClick={()=>void confirmMeasurements()}>
+      I acknowledge every unverified measurement and confirm
+     </button>
+    </div>
    </div>
   </div>}
   <GhalyonPromptOptimizer sourcePrompt={generated} scenePrompt={sceneBrief} phoneOnlyMode={ctx.phoneOnlyIlluminationMode||'OFF'} initialTarget={ctx.promptTarget==='chatgpt'?'chatgpt':'gemini'} onAdvisoryReady={text=>{setAuditorSource(text);onAdvisoryReady(text)}}/>
