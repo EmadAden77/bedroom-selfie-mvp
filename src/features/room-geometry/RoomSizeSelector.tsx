@@ -1,5 +1,6 @@
 import React from 'react'
 import type {CompilationContext} from '../../domain/types'
+import {unverifiedRoomMeasurements} from '../../../shared/room-acknowledgement'
 import {
  ROOM_SIZE_PRESETS,deriveRoomGeometry,roomGeometryIssues,roomInputStatus,
  type RoomSizePreset
@@ -24,6 +25,7 @@ export const RoomSizeSelector:React.FC<Props>=({ctx,posture,activeLighting,onCha
  const geometry=deriveRoomGeometry(ctx,posture,activeLighting,
   (ctx.bedroomShotId||'').startsWith('mirror_')&&posture==='standing')
  const issues=geometry?roomGeometryIssues(geometry):[]
+ const unverified=geometry?unverifiedRoomMeasurements(geometry,posture):[]
  const unconfirmed=!!geometry&&!geometry.userConfirmed
  function choose(next:RoomSizePreset){
   onChange({roomSizePreset:next,roomSizeConfirmed:false,
@@ -60,6 +62,10 @@ export const RoomSizeSelector:React.FC<Props>=({ctx,posture,activeLighting,onCha
    {presetId==='medium_bedroom'
     ?'Room size assumed as medium. Confirm for accuracy.'
     :'Room size assumed as '+presetId.replace('_bedroom','')+'. Confirm for accuracy.'}
+  </div>}
+  {unverified.length>0&&<div role="alert" aria-label="Unverified room measurements" style={{fontSize:12,marginTop:8,color:'#92400e'}}>
+   <strong>Provisional — measurements require verification.</strong>
+   {unverified.map(name=><p key={name} style={{margin:'4px 0'}}>{name}. Authoritative status requires verification or explicit acknowledgement.</p>)}
   </div>}
   {input.status==='invalid'&&<div role="alert" style={{fontSize:12,marginTop:8,color:'#b91c1c'}}>{input.reason}</div>}
   {issues.length>0&&<div role="alert" style={{fontSize:12,marginTop:8,color:'#92400e'}}>
