@@ -6,7 +6,7 @@
 import {evaluateBodyMechanics,renderBodyMechanics,type BodyMechanicalState} from '../shared/body-mechanics.ts'
 import {getCanonicalShotPosture} from '../shared/body-shot-postures.ts'
 import {evaluateBedding,renderBedding,validBeddingSelection,type BeddingState} from '../shared/bedding-physics.ts'
-import {validateLightingDecision,type LightingDecision} from '../shared/lighting-decision.ts'
+import {validateLightingDecision,isLightingPresetId,lightingSectionText,physicalRealityText,type LightingDecision} from '../shared/lighting-decision.ts'
 import {EDITORIAL_INSTRUCTIONS,OPENING_LINE_IDS,assembleEditorialPrompt,digestEditorialText} from '../shared/editorial-contract.ts'
 import {assertAuthoritative} from '../shared/authoritative-prompt.ts'
 import {mirrorRearFlashNeedsSource,captureAllowsRearFlash,rearCaptureScreenOnlyConflict} from '../shared/capture-lighting-rules.ts'
@@ -143,27 +143,22 @@ export function validateSceneSpec(v:unknown):SceneSpec{
  if(JSON.stringify(canonicalBedding)!==JSON.stringify(s.beddingPhysics))throw Error('SPEC_BEDDING_DERIVATION')
  const beddingUnit=s.derivedUnits.find(u=>u.id==='bedding_physics_v22')
  if(!beddingUnit||beddingUnit.text!==renderBedding(canonicalBedding))throw Error('SPEC_BEDDING_UNIT')
- const mandatory=['reference_identity','identity_fidelity','facial_identity_guard','hair_identity_guard','clothing_output_guard','bedroom_environment_lock','background_continuity','light_pose_geometry','body_pose_physics','camera_physics','realism_intensity','night_lighting_'+cap.lighting,'upper_'+String(s.selections.upperGarmentId)]
+ const mandatory=['reference_identity','identity_fidelity','facial_identity_guard','hair_identity_guard','clothing_output_guard','bedroom_environment_lock','background_continuity','light_pose_geometry','body_pose_physics','camera_physics','realism_intensity','night_lighting_'+cap.lighting,'physical_reality','upper_'+String(s.selections.upperGarmentId)]
  if(cap.mode==='mirror')mandatory.push('mirror_composition')
  if(cap.mode==='mirror'&&mirrorRearFlashNeedsSource(cap.shotId,cap.lighting))throw Error('SPEC_FLASH')
- if(cap.lighting==='rear_flash'&&!captureAllowsRearFlash(cap.mode))throw Error('SPEC_FLASH')
+ if(cap.lighting==='camera_flash'&&!captureAllowsRearFlash(cap.mode))throw Error('SPEC_FLASH')
  if(rearCaptureScreenOnlyConflict(cap.mode,cap.lighting))throw Error('SPEC_LIGHT')
  const phoneMode=s.selections.phoneOnlyIlluminationMode||'OFF'
- if(!['OFF','DARK_ROOM_REAR_FLASH_ONLY','DARK_ROOM_FRONT_SCREEN_ONLY'].includes(String(phoneMode)))throw Error('SPEC_PHONE_MODE')
- // Input validation only: Gemini never resolves lighting decisions.
+ // A deprecated override is rejected: the user's selected one-of-four light is authoritative.
  validateLightingDecision(s.lighting,phoneMode,cap.lighting)
- if(phoneMode!=='OFF'){
-  if(!ids.includes('physical_reality'))throw Error('SPEC_PHYSICAL_REALITY')
-  const expected=phoneMode==='DARK_ROOM_REAR_FLASH_ONLY'?'phone_rear_led':'phone_display'
-  const expectedLight=phoneMode==='DARK_ROOM_REAR_FLASH_ONLY'?'rear_flash':'phone_screen_only'
-  if(cap.lighting!==expectedLight)throw Error('SPEC_PHONE_SOURCE')
-  if(phoneMode==='DARK_ROOM_REAR_FLASH_ONLY'&&(cap.mode!=='mirror'||cap.shotId!=='mirror_rear_flash'))throw Error('SPEC_PHONE_CAMERA')
-  if(phoneMode==='DARK_ROOM_FRONT_SCREEN_ONLY'&&cap.mode!=='front')throw Error('SPEC_PHONE_CAMERA')
-  const approved=s.derivedUnits.find(u=>u.id==='physical_reality')?.text||''
-  if(!approved.includes('Active physical emitters: '+expected+' at ')||
-     approved.includes('Active physical emitters: '+expected+',')||
-     !approved.includes('No exact ray tracing'))throw Error('SPEC_PHONE_EXCLUSIVITY')
- }
+ if(!isLightingPresetId(cap.lighting))throw Error('SPEC_LIGHTING_OPTION')
+ const lightUnits=s.derivedUnits.filter(u=>u.id.startsWith('night_lighting_'))
+ if(lightUnits.length!==1||lightUnits[0].id!=='night_lighting_'+cap.lighting||
+    lightUnits[0].text!==lightingSectionText(cap.lighting))
+  throw Error('SPEC_LIGHTING_UNIT')
+ const physicalUnits=s.derivedUnits.filter(u=>u.id==='physical_reality')
+ if(physicalUnits.length!==1||physicalUnits[0].text!==physicalRealityText(cap.lighting))
+  throw Error('SPEC_PHYSICAL_REALITY')
  if(s.selections.roomPhysicalState)mandatory.push('physical_room_state')
  if(mandatory.some(id=>!ids.includes(id)))throw Error('SPEC_MANDATORY')
  const byId=new Map(s.derivedUnits.map(unit=>[unit.id,unit.text]))
@@ -219,13 +214,13 @@ export const validatePhysicalPrompt=(prompt:string,context:ShotContext):void=>{
  if(context.mode==='mirror'&&/\b(?:front-camera mirror selfie|front-facing camera (?:captures|records|photographs) (?:the|a) mirror|mirror selfie (?:captured|taken|shot|photographed) (?:using|with|on) (?:the )?front(?:-facing)? camera)\b/i.test(prompt)){
   throw Error('mirror_front_camera_conflict')
  }
- if(context.mode==='mirror'&&context.lighting==='rear_flash'&&!/\b(?:flash|LED)\b/i.test(prompt)){
+ if(context.mode==='mirror'&&context.lighting==='camera_flash'&&!/\b(?:flash|LED)\b/i.test(prompt)){
   throw Error('missing_rear_flash')
  }
  if(context.mode==='timer'&&/\b(?:handheld selfie|holding the recording phone|phone held in (?:his|her|their) hand)\b/i.test(prompt)){
   throw Error('timer_grip_conflict')
  }
- if(['phone_screen_only','laptop_screen_only'].includes(context.lighting)&&/\b(?:ceiling lights? (?:illuminat(?:e|es)|lit)|daylight (?:illuminat(?:e|es)|fills)|sunlight (?:floods|fills)|lamp (?:illuminat(?:e|es)|lights up)|softbox (?:illuminat(?:e|es)|lights up)|window light (?:fills|falls|streams|illuminates)|warm lamp glow (?:fills|falls|illuminates))\b/i.test(prompt)){
+ if(['phone_screen','laptop_screen'].includes(context.lighting)&&/\b(?:ceiling lights? (?:illuminat(?:e|es)|lit)|daylight (?:illuminat(?:e|es)|fills)|sunlight (?:floods|fills)|lamp (?:illuminat(?:e|es)|lights up)|softbox (?:illuminat(?:e|es)|lights up)|window light (?:fills|falls|streams|illuminates)|warm lamp glow (?:fills|falls|illuminates))\b/i.test(prompt)){
   throw Error('screen_light_conflict')
  }
  if(/\b(?:invisible (?:lamp|light source)|physically impossible|impossible camera angle)\b/i.test(prompt)){
