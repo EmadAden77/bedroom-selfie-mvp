@@ -13,7 +13,7 @@ const ctx:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'mirror_wardrobe',nightLightingId:'ceiling_neutral',poseId:'standing'
+ bedroomShotId:'mirror_wardrobe',nightLightingId:'led_spotlight',poseId:'standing'
 }
 const spec=()=>{
  const compiled=compilePrompt(ctx)
@@ -88,7 +88,7 @@ describe('Production Vercel legacy Gemini function regression',()=>{
   const response=await geminiHandler.fetch(post(scene))
   expect(response.status).toBe(200)
   expect(outboundUrl).toContain('gemini-3.5-flash-lite')
-  expect(outboundBody).toContain('ceiling_neutral')
+  expect(outboundBody).toContain('led_spotlight')
   expect(outboundBody).not.toContain(privateSection)
   expect(outboundBody).not.toContain(scene.integrity)
   const result=await response.json() as Record<string,unknown>

@@ -22,7 +22,7 @@ const ctx:CompilationContext={
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,
  roomReferencePresent:true,bedroomShotId:'mirror_wardrobe',poseId:'standing',
- nightLightingId:'ceiling_neutral'
+ nightLightingId:'led_spotlight'
 }
 const scene=(change:Partial<CompilationContext>={})=>{
  const options={...ctx,...change}
@@ -80,9 +80,9 @@ describe('PR7b: explicit dimensions and strict tri-state room authority',()=>{
    .toEqual({status:'invalid',reason:'mirror wider than available right wall'})
  })
  it('e: RG-3 rejects a ceiling light when custom room height is 2.1m',()=>{
-  expect(lightingReachability({widthMeters:4,depthMeters:4,heightMeters:2.1},'ceiling_neutral'))
+  expect(lightingReachability({widthMeters:4,depthMeters:4,heightMeters:2.1},'led_spotlight'))
    .toEqual({status:'invalid',reason:'ceiling light requires room height at least 2.2m'})
-  expect(lightingReachability({widthMeters:4,depthMeters:4,heightMeters:2.1},'phone_screen_only'))
+  expect(lightingReachability({widthMeters:4,depthMeters:4,heightMeters:2.1},'phone_screen'))
    .toEqual({status:'valid'})
  })
  it('f: RG-1 unknown is caused by the actual unmeasured POSE footprint, NEVER mirror width',()=>{
@@ -101,14 +101,14 @@ describe('PR7b: explicit dimensions and strict tri-state room authority',()=>{
    .toEqual({status:'valid'})
  })
  it('PR8 deferral: implicit depth cues remain untouched and small/medium mirror room is unknown, NOT rejected',()=>{
-  const small=deriveRoomGeometry({roomSizePreset:'small_bedroom',roomSizeConfirmed:true},'standing','rear_flash',true)!
-  const medium=deriveRoomGeometry({roomSizePreset:'medium_bedroom',roomSizeConfirmed:true},'standing','rear_flash',true)!
+  const small=deriveRoomGeometry({roomSizePreset:'small_bedroom',roomSizeConfirmed:true},'standing','camera_flash',true)!
+  const medium=deriveRoomGeometry({roomSizePreset:'medium_bedroom',roomSizeConfirmed:true},'standing','camera_flash',true)!
   expect(small.bedFitValid).toEqual({status:'unknown',reason:'implicit distances pending PR8'})
   expect(medium.bedFitValid).toEqual({status:'unknown',reason:'implicit distances pending PR8'})
   // Even 5.5m cannot establish the simultaneous 3m/5m cue geometry:
   // positions are approximate, with no shared measured coordinate system.
   const large=deriveRoomGeometry({roomSizePreset:'large_bedroom',roomSizeConfirmed:true},
-   'standing','rear_flash',true)!
+   'standing','camera_flash',true)!
   expect(large.bedFitValid).toEqual({status:'unknown',reason:'implicit distances pending PR8'})
   expect(small.mirrorFitValid.status).toBe('unknown')
  })
@@ -130,7 +130,7 @@ describe('PR7b: explicit dimensions and strict tri-state room authority',()=>{
  })
  it('h: RG-3 invalid is rejected by server before Gemini fetch is invoked',async()=>{
   const {spec}=scene({roomSizePreset:'custom',roomCustomWidthMeters:4,
-   roomCustomDepthMeters:4,roomCustomHeightMeters:2.1,nightLightingId:'ceiling_neutral'})
+   roomCustomDepthMeters:4,roomCustomHeightMeters:2.1,nightLightingId:'led_spotlight'})
   expect(spec.roomGeometry.lightingFitValid.status).toBe('invalid')
   vi.stubEnv('GEMINI_API_KEY','test-only')
   const upstream=vi.fn()

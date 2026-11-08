@@ -23,7 +23,7 @@ const base:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',stateId:'observed_natural_state',
  color:'apparent dark charcoal-gray as observed',surface:'apparent knit-like surface character',
  referenceImagePresent:true,roomReferencePresent:true,bedroomShotId:'mirror_wardrobe',
- nightLightingId:'ceiling_neutral',poseId:'standing'
+ nightLightingId:'led_spotlight',poseId:'standing'
 }
 const getSpec=(ctx:CompilationContext=base)=>{
  const compiled=compilePrompt(ctx)
@@ -100,7 +100,7 @@ describe('Vercel standalone constrained editor',()=>{
   expect(providerCall).toHaveBeenCalledTimes(1)
   for(const tamper of [
    {...spec,selections:{...spec.selections,phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY'}},
-   {...spec,capture:{...spec.capture,lighting:'phone_screen_only'}},
+   {...spec,capture:{...spec.capture,lighting:'phone_screen'}},
    {...spec,derivedUnits:spec.derivedUnits.filter(u=>u.id!=='physical_reality')}
   ]){
    const unsigned=(({integrity,...rest})=>rest)(tamper)
@@ -111,11 +111,11 @@ describe('Vercel standalone constrained editor',()=>{
   expect(providerCall).toHaveBeenCalledTimes(1)
  })
  it('accepts a front-only screen scene and rejects cross-mode client tampering before Gemini',async()=>{
-  const ctx:CompilationContext={...base,bedroomShotId:'bed_edge',nightLightingId:'bedside_warm',
+  const ctx:CompilationContext={...base,bedroomShotId:'bed_edge',nightLightingId:'led_spotlight',
    phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY'}
   const spec=getSpec(ctx)
   expect(spec.capture.mode).toBe('front')
-  expect(spec.capture.lighting).toBe('phone_screen_only')
+  expect(spec.capture.lighting).toBe('phone_screen')
   vi.stubEnv('GEMINI_API_KEY','test-key')
   const outbound=vi.fn(async()=>provider(spec))
   vi.stubGlobal('fetch',outbound)
@@ -123,7 +123,7 @@ describe('Vercel standalone constrained editor',()=>{
   expect(response.status).toBe(200)
   const tampered=[
    {...spec,capture:{...spec.capture,mode:'mirror' as const}},
-   {...spec,capture:{...spec.capture,lighting:'rear_flash'}},
+   {...spec,capture:{...spec.capture,lighting:'camera_flash'}},
    {...spec,selections:{...spec.selections,phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY'}}
   ]
   for(const item of tampered){
@@ -270,7 +270,7 @@ describe('Vercel standalone constrained editor',()=>{
   for(const input of [
    {...spec,integrity:'broken'},
    {...spec,conflicts:['Invalid posture']},
-   {...spec,capture:{...spec.capture,lighting:'rear_flash'}},
+   {...spec,capture:{...spec.capture,lighting:'camera_flash'}},
    {...spec,derivedUnits:spec.derivedUnits.filter(u=>u.id!=='mirror_composition')},
    {...spec,selections:{...spec.selections,upperColor:'neon magenta'}}
   ]){
@@ -311,9 +311,9 @@ describe('Vercel standalone constrained editor',()=>{
   expect(floor.references.userConfirmedLayout).toEqual(mirror.references.userConfirmedLayout)
  })
  it('retains screen-only light, clothing selections and locked room objects unchanged',()=>{
-  const ctx:CompilationContext={...base,bedroomShotId:'bed_edge',nightLightingId:'phone_screen_only'}
+  const ctx:CompilationContext={...base,bedroomShotId:'bed_edge',nightLightingId:'phone_screen'}
   const s=getSpec(ctx)
-  expect(s.derivedUnits.find(u=>u.id==='night_lighting_phone_screen_only')?.text).toContain('sole active light source')
+  expect(s.derivedUnits.find(u=>u.id==='night_lighting_phone_screen')?.text).toContain('sole active light source')
   expect(s.selections.upperColor).toBe('apparent dark charcoal-gray as observed')
   expect(s.derivedUnits.find(u=>u.id==='upper_reference_garment_preserved')?.text).toContain('charcoal')
   const locked={...base,roomPhysicalState:{order:'clear' as const,surface:'dust' as const,zones:['bed','floor','dresser','nightstand'] as ('bed'|'floor'|'dresser'|'nightstand')[],sessionLocked:true}}
@@ -333,9 +333,9 @@ describe('Vercel standalone constrained editor',()=>{
   expect(EDITORIAL_INSTRUCTIONS).not.toContain('creative freedom over composition')
  })
  it('keeps physical contradiction checks for explicit mirror and screen lighting errors',()=>{
-  expect(()=>validatePhysicalPrompt('Floating camera beside the person with the wardrobe mirror visible.',{mode:'mirror',lighting:'ceiling_neutral'})).toThrow('mechanically_impossible')
-  expect(()=>validatePhysicalPrompt('A handheld selfie with the recording phone.',{mode:'timer',lighting:'ceiling_neutral'})).toThrow('timer_grip_conflict')
-  expect(()=>validatePhysicalPrompt('Daylight fills the whole room.',{mode:'front',lighting:'phone_screen_only'})).toThrow('screen_light_conflict')
+  expect(()=>validatePhysicalPrompt('Floating camera beside the person with the wardrobe mirror visible.',{mode:'mirror',lighting:'led_spotlight'})).toThrow('mechanically_impossible')
+  expect(()=>validatePhysicalPrompt('A handheld selfie with the recording phone.',{mode:'timer',lighting:'led_spotlight'})).toThrow('timer_grip_conflict')
+  expect(()=>validatePhysicalPrompt('Daylight fills the whole room.',{mode:'front',lighting:'phone_screen'})).toThrow('screen_light_conflict')
  })
 })
 
@@ -352,14 +352,14 @@ describe('Concise creative scene selection',()=>{
   color:'white',surface:'solid',
   referenceImagePresent:true,roomReferencePresent:true,
   bedroomShotId:'dresser_mirror',
-  nightLightingId:'ceiling_neutral',
+  nightLightingId:'led_spotlight',
   realismIntensity:'natural'
  }
  it('uses selected clothing and hair, not the huge assembled local prompt',()=>{
   const brief=buildCreativeSceneBrief(ctx)
   expect(brief).toContain('slightly tousled')
   expect(brief).toContain('white')
-  expect(brief).toContain('ceiling_neutral')
+  expect(brief).toContain('led_spotlight')
   expect(brief).not.toContain('IDENTITY FIDELITY ENGINE')
   expect(brief).not.toContain('BEDROOM ENVIRONMENT LOCK')
   expect(brief.length).toBeLessThan(4500)
@@ -379,7 +379,7 @@ describe('Selected hairstyle genuinely reaches ChatGPT via Gemini',()=>{
   materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
   stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
   surface:'apparent knit-like surface character',referenceImagePresent:true,
-  nightLightingId:'ceiling_neutral'
+  nightLightingId:'led_spotlight'
  }
  it('puts clear apply instructions and every advanced control into the concise Gemini brief',()=>{
   const brief=buildCreativeSceneBrief(base)
