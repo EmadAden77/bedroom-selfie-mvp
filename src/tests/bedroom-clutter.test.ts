@@ -48,7 +48,7 @@ describe('Optional realistic lived-in bedroom clutter',()=>{
  it('does not add unselected daylight or replace the selected screen-only light',()=>{
   const c=compilePrompt({...base,bedroomClutterId:'lived_in_messy',nightLightingId:'phone_screen'})
   expect(c.validation.isValid).toBe(true)
-  expect(c.result.sections.find(s=>s.id==='night_lighting_phone_screen')?.content).toContain('the ONLY active light')
+  expect(c.result.sections.find(s=>s.id==='night_lighting_phone_screen')?.content).toContain('The ONLY light source is')
   expect(c.result.sections.filter(s=>s.id.startsWith('night_lighting_'))).toHaveLength(1)
   expect(c.result.sections.find(s=>s.id==='lived_in_bedroom_clutter')?.content).toContain('selected lighting')
  })

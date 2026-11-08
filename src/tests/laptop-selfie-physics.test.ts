@@ -51,7 +51,7 @@ describe('Laptop selfie physical poses and light integration',()=>{
   const laptop=compilePrompt({...base,bedroomShotId,nightLightingId:'laptop_screen'})
   expect(laptop.validation.isValid).toBe(true)
   expect(laptop.result.sections.find(x=>x.id==='laptop_selfie_physics')?.content).toContain('LAPTOP DISPLAY ILLUMINATION:')
-  expect(laptop.result.promptText).toContain('The hinged laptop base rests securely')
+  expect(laptop.result.promptText).toContain('a glowing laptop screen')
   const phone=compilePrompt({...base,bedroomShotId,nightLightingId:'phone_screen'})
   expect(phone.validation.isValid).toBe(true)
   expect(phone.result.sections.find(x=>x.id==='laptop_selfie_physics')?.content).toContain('PHONE DISPLAY ILLUMINATION:')

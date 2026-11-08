@@ -160,7 +160,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
 
   it('Night lighting defaults to screen only and excludes invented fixtures', () => {
     const { result } = compilePrompt(defaultCtx)
-    expect(result.promptText).toContain('recording phone display, the ONLY active light')
+    expect(result.promptText).toContain('The ONLY light source is the soft, diffused light from a smartphone screen')
     expect(result.sections.filter(s=>s.id.startsWith('night_lighting_'))).toHaveLength(1)
   })
   it('Rejects windows and every deprecated source; keeps one selected spotlight',()=>{
@@ -172,7 +172,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(invalidWindow.validation.isValid).toBe(false)
     const compiled=compilePrompt({...defaultCtx,nightLightingId:'led_spotlight'})
     expect(compiled.validation.isValid).toBe(true)
-    expect(compiled.result.sections.find(x=>x.id==='night_lighting_led_spotlight')?.content).toContain('one real white ceiling LED spotlight')
+    expect(compiled.result.sections.find(x=>x.id==='night_lighting_led_spotlight')?.content).toContain('a single white LED ceiling spotlight')
     expect(compiled.result.sections.find(x=>x.id==='light_pose_geometry')?.content).toContain('Ceiling fixtures remain above')
     expect(compiled.result.sections.filter(x=>x.id.startsWith('night_lighting_'))).toHaveLength(1)
   })
@@ -202,7 +202,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
   it('Phone-only pose cannot imply ceiling light', () => {
     const result = compilePrompt({ ...defaultCtx, poseId: 'supine', nightLightingId: 'phone_screen' })
     expect(result.validation.isValid).toBe(true)
-    expect(result.result.promptText).toContain('recording phone display, the ONLY active light')
+    expect(result.result.promptText).toContain('The ONLY light source is the soft, diffused light from a smartphone screen')
     expect(result.result.sections.filter(s=>s.id==='light_pose_geometry')).toHaveLength(1)
   })
   it('Offers exactly 98 unique bedroom shots and five groups', async () => {
