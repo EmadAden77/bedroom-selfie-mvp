@@ -92,6 +92,9 @@ describe('PR7b-1 provisional opt-in, strict physics, and server-issued audit',()
   expect(onPromptReady).not.toHaveBeenCalledWith(result.promptText)
   fireEvent.click(screen.getByRole('button',{name:'I acknowledge every unverified measurement and confirm'}))
   await waitFor(()=>expect(fetcher).toHaveBeenCalledTimes(1))
+  // Await the mock's real asynchronous server call; call count alone does not
+  // prove that response.json() and the audit bridge have completed.
+  await (fetcher.mock.results[0].value as Promise<Response>)
   expect(auditResponse.status).toBe(200)
   await waitFor(()=>expect(onPromptReady).toHaveBeenCalledWith(result.promptText))
   expect(screen.getByText('Authoritative')).toBeTruthy()
