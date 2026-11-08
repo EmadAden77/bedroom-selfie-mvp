@@ -5,7 +5,7 @@ import { realismPresets } from '../data/realism-intensity'
 import { hairDirections,hairVolumes,hairTextures } from '../data/hair-advanced'
 import { expressionVariants, deferredCompositeStates } from '../data/expressions'
 import { gazeChoices, microChoices } from '../data/gaze-micro'
-import { poseOptions, faceOptions, lampSideOptions } from '../data/light-geometry'
+import { poseOptions, faceOptions } from '../data/light-geometry'
 import { bedroomShots } from '../data/bedroom-shots'
 import { validateMirrorControls } from '../data/mirror-controls'
 import { nightLightingPresets } from '../data/night-lighting'
@@ -129,7 +129,6 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
 
   if (!poseOptions.some(p=>p.id===(ctx.poseId || 'seated_bed'))) errors.push('Invalid pose geometry')
   if (!faceOptions.some(p=>p.id===(ctx.faceDirectionId || 'toward_camera'))) errors.push('Invalid face direction')
-  if (!lampSideOptions.some(p=>p.id===(ctx.lampSideId || 'left'))) errors.push('Invalid lamp side')
 
   if (ctx.bedroomShotId) {
     const shot=bedroomShots.find(s=>s.id===ctx.bedroomShotId)

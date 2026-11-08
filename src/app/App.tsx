@@ -49,7 +49,6 @@ const defaultContext: CompilationContext = {
   roomSizePreset:'medium_bedroom',
   roomSizeConfirmed:false, 
   nightLightingId: 'phone_screen',
-  phoneOnlyIlluminationMode:'OFF',
   windowUncovered: false,
   poseId: 'seated_bed',
   bodyHoldingHand: 'auto',
@@ -58,7 +57,6 @@ const defaultContext: CompilationContext = {
   bodyFeetVisibility: 'unknown',
   beddingSelection: {sheet:'reference',pillow:'reference',blanket:'reference'},
   faceDirectionId: 'toward_camera',
-  lampSideId: 'left',
   bedroomShotId: ''
 }
 
@@ -116,7 +114,7 @@ export const App: React.FC = () => {
       <BodyMechanicsSelector ctx={ctxWithImage} onChange={handleContextChange}/>
       <BeddingPhysicsSelector ctx={ctxWithImage} onChange={handleContextChange}/>
       <NightLightingSelector shotId={ctx.bedroomShotId} selectedId={ctx.nightLightingId || 'phone_screen'} onSelect={id=>handleContextChange({nightLightingId:id})}/>
-      <LightGeometrySelector poseId={ctx.poseId || 'seated_bed'} faceDirectionId={ctx.faceDirectionId || 'toward_camera'} lampSideId={ctx.lampSideId || 'left'} onChange={patch=>handleContextChange(patch)}/>
+      <LightGeometrySelector poseId={ctx.poseId || 'seated_bed'} faceDirectionId={ctx.faceDirectionId || 'toward_camera'} onChange={patch=>handleContextChange(patch)}/>
       <BedroomShotsSelector value={ctx.bedroomShotId || ''} onChange={id=>handleContextChange({bedroomShotId:id})}/>
       <MirrorSelfieSelector ctx={ctxWithImage} onChange={handleContextChange} onShotChange={id=>handleContextChange({bedroomShotId:id})}/>
       <div className="card">

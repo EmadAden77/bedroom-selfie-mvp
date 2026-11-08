@@ -1,7 +1,7 @@
 import React from 'react'
-import { poseOptions, faceOptions, lampSideOptions } from '../../data/light-geometry'
-type Props = { poseId: string; faceDirectionId: string; lampSideId: string; onChange: (patch: { poseId?: string; faceDirectionId?: string; lampSideId?: string })=>void }
-export const LightGeometrySelector: React.FC<Props> = ({poseId,faceDirectionId,lampSideId,onChange}) => (
+import { poseOptions, faceOptions } from '../../data/light-geometry'
+type Props = { poseId: string; faceDirectionId: string; onChange: (patch: { poseId?: string; faceDirectionId?: string; })=>void }
+export const LightGeometrySelector: React.FC<Props> = ({poseId,faceDirectionId,onChange}) => (
  <section className="card" aria-label="ربط الإضاءة بالوضعية">
   <div style={{fontWeight:600,fontSize:'14px',marginBottom:'6px'}}>٦. هندسة الوضعية واتجاه الضوء</div>
   <p style={{fontSize:'12px',color:'var(--muted)'}}>تتحرك الظلال بحسب وضعية الجسم واتجاه الوجه والمصدر الوحيد المختار. لا تُنقل مصادر الضوء لتغيير الجانب المضيء.</p>

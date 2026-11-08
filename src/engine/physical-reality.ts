@@ -3,17 +3,13 @@ import {bedroomShots} from '../data/bedroom-shots'
 import {isLaptopSelfieShot} from '../data/laptop-selfie-physics'
 import {isLightingPresetId,LIGHTING_EMITTER,LIGHTING_FRAGMENTS,physicalRealityText,type LightingOption} from '../../shared/lighting-decision'
 
-/** Historical ingress type only: legacy overrides are no longer selectable or applied. */
-export type PhoneOnlyMode='OFF'|'DARK_ROOM_REAR_FLASH_ONLY'|'DARK_ROOM_FRONT_SCREEN_ONLY'
 export type EmitterId='ceiling'|'phone_rear_led'|'phone_display'|'laptop'
 export type PhysicalEmitter={id:EmitterId;enabled:boolean;origin:string;direction:string;character:string;certainty:'known'|'estimated'|'unknown'}
 export type PhysicalIssue={code:string;message:string;corrections:{label:string;patch:Partial<CompilationContext>}[]}
-export type PhysicalReality={mode:PhoneOnlyMode;effectiveLightingId:string;emitters:PhysicalEmitter[];effects:string[];issues:PhysicalIssue[];warnings:string[];certainty:'known'|'estimated'|'unknown'}
-export const PHONE_ONLY_ILLUMINATION=true
+export type PhysicalReality={effectiveLightingId:LightingOption;emitters:PhysicalEmitter[];effects:string[];issues:PhysicalIssue[];warnings:string[];certainty:'known'|'estimated'|'unknown'}
 
 const issue=(code:string,message:string,corrections:PhysicalIssue['corrections']=[]):PhysicalIssue=>({code,message,corrections})
 export function evaluatePhysicalReality(ctx:CompilationContext):PhysicalReality{
- const mode=ctx.phoneOnlyIlluminationMode||'OFF'
  const shot=bedroomShots.find(s=>s.id===ctx.bedroomShotId)
  const capture=shot?.mode||'front'
  const lighting=ctx.nightLightingId||'phone_screen'
@@ -21,8 +17,6 @@ export function evaluatePhysicalReality(ctx:CompilationContext):PhysicalReality{
  const warnings:string[]=[]
  if(!isLightingPresetId(lighting))
   issues.push(issue('UNKNOWN_LIGHTING_PREFERENCE','مصدر إضاءة غير معروف. اختر واحدًا من المصادر الأربعة الجديدة.'))
- if(mode!=='OFF')
-  issues.push(issue('LEGACY_LIGHTING_OVERRIDE','أُلغيت أوضاع الإضاءة التلقائية القديمة؛ اختر مصدر الإضاءة مباشرة.',[{label:'إيقاف وضع الإضاءة القديم',patch:{phoneOnlyIlluminationMode:'OFF'}}]))
  if(ctx.windowUncovered)
   issues.push(issue('BLACKOUT_WINDOW','الغرفة يجب أن تكون معتمة تمامًا؛ لا يسمح بدخول أي ضوء من النافذة.',[{label:'إغلاق الستائر',patch:{windowUncovered:false}}]))
  if(lighting==='camera_flash'&&capture!=='mirror'&&capture!=='rear')
@@ -44,7 +38,7 @@ export function evaluatePhysicalReality(ctx:CompilationContext):PhysicalReality{
   issues.push(issue('SINGLE_LIGHT_REQUIRED','يجب تحديد مصدر إضاءة واحد فقط.'))
  if(lighting==='led_spotlight'&&!ctx.roomReferencePresent)
   warnings.push('موضع سبوت السقف غير موثّق بصورة غرفة؛ لا يجوز اختراع مكانه أو قياسه.')
- return {mode,effectiveLightingId:lighting,emitters,
+ return {effectiveLightingId:lighting,emitters,
   effects:isLightingPresetId(lighting)?[LIGHTING_FRAGMENTS[lighting]]:[],
   issues,warnings,certainty:'estimated'}
 }
@@ -59,10 +53,14 @@ export function renderPhysicalReality(ctx:CompilationContext):string{
 }
 
 /** A bounded safety check for free-form AI output. Does not claim full semantic verification. */
-export function explicitUnauthorizedEmitter(text:string,mode:PhoneOnlyMode):string|null{
- // The single-source rule applies even when legacy override mode is OFF.
- const sources=/\b(?:ceiling lights?|ceiling leds?|ceiling fixtures?|bedside lamps?|room lamps?|window daylight|window light|streetlights?|laptop screens?|television screens?|decorative leds?|ring lights?|studio lights?|studio fill|ambient fill|hidden fill)\b/gi
+export function explicitUnauthorizedEmitter(text:string,selectedLight:LightingOption):string|null{
+ const sources=/\b(?:ceiling lights?|ceiling leds?|ceiling fixtures?|ceiling spotlight|led spotlight|bedside lamps?|room lamps?|window daylight|window light|daylight|streetlights?|laptop screens?|laptop display|phone screens?|smartphone screens?|camera flash|rear flash|rear led|television screens?|decorative leds?|ring lights?|studio lights?|studio fill|ambient fill|ambient light|hidden fill)\b/gi
  for(const hit of text.matchAll(sources)){
+  const found=hit[0].toLowerCase()
+  if(selectedLight==='led_spotlight'&&/^(?:ceiling light|ceiling led|ceiling fixture|ceiling spotlight|led spotlight)$/.test(found))continue
+  if(selectedLight==='camera_flash'&&/^(?:camera flash|rear flash|rear led)$/.test(found))continue
+  if(selectedLight==='phone_screen'&&/^(?:phone screen|smartphone screen)$/.test(found))continue
+  if(selectedLight==='laptop_screen'&&/^(?:laptop screen|laptop display)$/.test(found))continue
   const at=hit.index
   const prefix=text.slice(Math.max(0,at-55),at).split(/[.!?;\n]/).pop()||''
   const suffix=text.slice(at+hit[0].length,at+hit[0].length+65).split(/[.!?;\n]/)[0]

@@ -54,8 +54,7 @@ export function physicalRealityText(light:LightingOption):string{
   'No exact ray tracing, force values, geometry measurements and unseen furniture are asserted.'
  ].join(' ')
 }
-export function validateLightingDecision(raw:unknown,mode:unknown,captureLight:unknown):LightingDecision{
- if(mode!=='OFF')throw Error('SPEC_LIGHTING_MODE_DISABLED')
+export function validateLightingDecision(raw:unknown,captureLight:unknown):LightingDecision{
  if(!raw||typeof raw!=='object'||Array.isArray(raw))throw Error('SPEC_LIGHTING_SCHEMA')
  const actual=raw as Record<string,unknown>
  if(Object.keys(actual).sort().join(',')!=='activeLightSource,savedLightingPreference,savedLightingPreferenceActive')

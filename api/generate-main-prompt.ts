@@ -148,9 +148,9 @@ export function validateSceneSpec(v:unknown):SceneSpec{
  if(cap.mode==='mirror'&&mirrorRearFlashNeedsSource(cap.shotId,cap.lighting))throw Error('SPEC_FLASH')
  if(cap.lighting==='camera_flash'&&!captureAllowsRearFlash(cap.mode))throw Error('SPEC_FLASH')
  if(rearCaptureScreenOnlyConflict(cap.mode,cap.lighting))throw Error('SPEC_LIGHT')
- const phoneMode=s.selections.phoneOnlyIlluminationMode||'OFF'
- // A deprecated override is rejected: the user's selected one-of-four light is authoritative.
- validateLightingDecision(s.lighting,phoneMode,cap.lighting)
+ // Reject unexpected lighting fields rather than accepting hidden secondary sources.
+ if(Object.keys(s.selections).some(key=>/light|illumination/i.test(key)))throw Error('SPEC_LIGHTING_SCHEMA')
+ validateLightingDecision(s.lighting,cap.lighting)
  if(!isLightingPresetId(cap.lighting))throw Error('SPEC_LIGHTING_OPTION')
  const lightUnits=s.derivedUnits.filter(u=>u.id.startsWith('night_lighting_'))
  if(lightUnits.length!==1||lightUnits[0].id!=='night_lighting_'+cap.lighting||

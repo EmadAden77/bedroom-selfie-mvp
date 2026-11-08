@@ -281,7 +281,7 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
     </div>
    </div>
   </div>}
-  <GhalyonPromptOptimizer sourcePrompt={generated} scenePrompt={sceneBrief} phoneOnlyMode={ctx.phoneOnlyIlluminationMode||'OFF'} initialTarget={ctx.promptTarget==='chatgpt'?'chatgpt':'gemini'} onAdvisoryReady={text=>{setAuditorSource(text);onAdvisoryReady(text)}}/>
+  <GhalyonPromptOptimizer sourcePrompt={generated} scenePrompt={sceneBrief} selectedLighting={ctx.nightLightingId||'phone_screen'} initialTarget={ctx.promptTarget==='chatgpt'?'chatgpt':'gemini'} onAdvisoryReady={text=>{setAuditorSource(text);onAdvisoryReady(text)}}/>
   <ImagePromptAuditorV8 ctx={ctx} sourcePrompt={auditorSource||generated} sceneBrief={sceneBrief} onAdvisoryReady={onAdvisoryReady}/>
  </section>
 }

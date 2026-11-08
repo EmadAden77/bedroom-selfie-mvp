@@ -43,7 +43,7 @@ export const ImagePromptAuditorV8:React.FC<Props>=({ctx,sourcePrompt,sceneBrief,
  useEffect(()=>{
   version.current++;pending.current?.abort();pending.current=null
   setLoading(false);setResult(null);setError('');setCopied(false)
- },[sourcePrompt,sceneBrief,ctx.bedroomShotId,ctx.nightLightingId,ctx.phoneOnlyIlluminationMode])
+ },[sourcePrompt,sceneBrief,ctx.bedroomShotId,ctx.nightLightingId])
  useEffect(()=>()=>{version.current++;pending.current?.abort()},[])
 
  async function audit(){
@@ -72,7 +72,7 @@ export const ImagePromptAuditorV8:React.FC<Props>=({ctx,sourcePrompt,sceneBrief,
    if(!Array.isArray(data.repairNotes)||typeof data.sceneCameraSurfaceDetails!=='string'||
       typeof data.finalImagePrompt!=='string'||!data.finalImagePrompt.trim())
     throw Error('مدقق v8 أعاد بيانات غير مكتملة.')
-   const forbidden=explicitUnauthorizedEmitter(data.finalImagePrompt,ctx.phoneOnlyIlluminationMode||'OFF')
+   const forbidden=explicitUnauthorizedEmitter(data.finalImagePrompt,ctx.nightLightingId||'phone_screen')
    if(forbidden)throw Error('رفضت إضاءة غير مصرّح بها في نتيجة التدقيق: '+forbidden)
    setResult(data)
   }catch(reason){

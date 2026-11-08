@@ -16,17 +16,11 @@ export const faceOptions = [
   { id: 'toward_door', label: 'نحو الباب', text: 'Head oriented toward the doorway.' },
   { id: 'toward_window', label: 'نحو النافذة', text: 'Head oriented toward the existing curtained window; the window emits no light.' }
 ] as const
-export const lampSideOptions = [
-  { id: 'left', label: 'الجانب الأيسر من الوجه', text: 'subject left face side, only if attainable with the actual lamp and head orientation' },
-  { id: 'right', label: 'الجانب الأيمن من الوجه', text: 'subject right face side, only if attainable with the actual lamp and head orientation' }
-] as const
-
 export function renderLightGeometry(ctx: CompilationContext): string {
   const shot = bedroomShots.find(s=>s.id===ctx.bedroomShotId)
   const actualPosture=shot?(getShotPosture(shot.id)||ctx.poseId):ctx.poseId
   const pose = poseOptions.find(x=>x.id===(actualPosture || 'seated_bed'))!
   const face = faceOptions.find(x=>x.id===(ctx.faceDirectionId || 'toward_camera'))!
-  const side = lampSideOptions.find(x=>x.id===(ctx.lampSideId || 'left'))!
   const lighting = ctx.nightLightingId || 'phone_screen'
   const stationary = shot?.mode === 'timer'
   const reflected = shot?.mode === 'mirror'

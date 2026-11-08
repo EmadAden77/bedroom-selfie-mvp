@@ -4,7 +4,7 @@ import {bedroomShots} from '../../data/bedroom-shots'
 import {isLaptopSelfieShot} from '../../data/laptop-selfie-physics'
 import type {LightingOption} from '../../../shared/lighting-decision'
 
-type Props={shotId?:string;selectedId:string;onSelect:(id:LightingOption)=>void}
+type Props={shotId?:string;selectedId:LightingOption;onSelect:(id:LightingOption)=>void}
 export const NightLightingSelector:React.FC<Props>=({shotId,selectedId,onSelect})=>{
  const mode=bedroomShots.find(s=>s.id===shotId)?.mode||'front'
  const incompatible=(id:LightingOption)=>
