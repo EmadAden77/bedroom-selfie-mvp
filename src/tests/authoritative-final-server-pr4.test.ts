@@ -2,6 +2,7 @@
 import {describe,it,expect} from 'vitest'
 import endpoint from '../../api/authorize-final-prompt'
 import {assertAuthoritative,ALLOWED_LOCAL_EXCLUSIONS} from '../../shared/authoritative-prompt'
+import {unverifiedRoomMeasurements} from '../../shared/room-acknowledgement'
 import {assembleEditorialPrompt} from '../../shared/editorial-contract'
 import {compilePrompt} from '../compiler'
 import {buildSceneSpecification} from '../features/ai-prompt-enhancer/scene-specification'
@@ -120,8 +121,10 @@ describe('PR4 unified server-side Final Prompt authority gate',()=>{
    mirrorFitValid:{status:'valid' as const},
    lightingFitValid:{status:'valid' as const}
   }}
-  const final=assertAuthoritative(syntheticEligibleSpec,{source:'local',prompt})
-  expect(final).toEqual({source:'local',prompt,validated:true})
+  const gaps=unverifiedRoomMeasurements(syntheticEligibleSpec.roomGeometry,spec.capture.posture)
+  const roomAcknowledgement={accepted:true,sceneIntegrity:spec.integrity,measurements:gaps}
+  const final=assertAuthoritative(syntheticEligibleSpec,{source:'local',prompt},roomAcknowledgement)
+  expect(final).toEqual({source:'local',prompt,validated:true,acknowledgedMeasurements:gaps})
  })
  it('C1 Case C: room_geometry text cannot leak into an otherwise byte-identical local prompt',()=>{
   const {spec,prompt}=getReady()
