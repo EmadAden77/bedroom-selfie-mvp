@@ -2,6 +2,7 @@
 import {describe,it,expect} from 'vitest'
 import endpoint from '../../api/authorize-final-prompt'
 import {assertAuthoritative,ALLOWED_LOCAL_EXCLUSIONS} from '../../shared/authoritative-prompt'
+import {unverifiedRoomMeasurements} from '../../shared/room-acknowledgement'
 import {assembleEditorialPrompt} from '../../shared/editorial-contract'
 import {compilePrompt} from '../compiler'
 import {buildSceneSpecification} from '../features/ai-prompt-enhancer/scene-specification'
@@ -28,16 +29,16 @@ describe('PR4 unified server-side Final Prompt authority gate',()=>{
  it('server accepts exactly the approved local compiler output, independently of React state',async()=>{
   const {spec,prompt}=getReady()
   const result=await endpoint.fetch(post({sceneSpecification:spec,candidate:{source:'local',prompt}}))
-  // PR7b Category 1 (former success): userConfirmed=false for the declared
-  // medium preset. The exact local compiler bytes remain valid, but the PR4
-  // final authority gate MUST now refuse promotion (FINAL_ROOM_UNCONFIRMED).
+  // PR7b-1 Category 1: former HTTP 400 FINAL_ROOM_UNCONFIRMED → HTTP 403
+  // ROOM_UNVERIFIED without an explicit scene-bound acknowledgement.
+  // Exact compiler bytes and provenance remain asserted without weakening.
   expect(spec.roomGeometry.userConfirmed).toBe(false)
   expect(prompt).toBe(spec.derivedUnits
    .filter(u=>u.id!=='natural_scene_director'&&u.id!=='room_geometry')
    .map(u=>u.text).join('\n\n'))
-  expect(result.status).toBe(400)
-  expect((await result.json() as {errorCode:string}).errorCode).toBe('FINAL_ROOM_UNCONFIRMED')
-  expect(()=>assertAuthoritative(spec,{source:'local',prompt})).toThrow('FINAL_ROOM_UNCONFIRMED')
+  expect(result.status).toBe(403)
+  expect((await result.json() as {errorCode:string}).errorCode).toBe('ROOM_UNVERIFIED')
+  expect(()=>assertAuthoritative(spec,{source:'local',prompt})).toThrow('ROOM_UNVERIFIED')
  })
  it.each(['ghalyon','auditor-v8'])('server HTTP 403 refuses a %s advisory draft as active final prompt',async source=>{
   const {spec,prompt}=getReady()
@@ -73,13 +74,13 @@ describe('PR4 unified server-side Final Prompt authority gate',()=>{
   const prompt=assembleEditorialPrompt(spec,{sectionOrder:order,openingLineSelection:'canonical'}).prompt
   const candidate={source:'gemini-editor',prompt,sectionOrder:order,openingLineSelection:'canonical'}
   const response=await endpoint.fetch(post({sceneSpecification:spec,candidate}))
-  // PR7b Category 1: editorial assembly is STILL exact but an unconfirmed
-  // room (and RG-1/2 unknown measurements) cannot gain PR4 authority.
+  // PR7b-1 Category 1: former HTTP 400 FINAL_ROOM_UNCONFIRMED → HTTP 403
+  // ROOM_UNVERIFIED before explicit acknowledgement; strict section checks remain.
   expect(prompt).toBe(assembleEditorialPrompt(spec,{sectionOrder:order,openingLineSelection:'canonical'}).prompt)
   expect(spec.roomGeometry.userConfirmed).toBe(false)
-  expect(response.status).toBe(400)
-  expect((await response.json() as {errorCode:string}).errorCode).toBe('FINAL_ROOM_UNCONFIRMED')
-  expect(()=>assertAuthoritative(spec,candidate)).toThrow('FINAL_ROOM_UNCONFIRMED')
+  expect(response.status).toBe(403)
+  expect((await response.json() as {errorCode:string}).errorCode).toBe('ROOM_UNVERIFIED')
+  expect(()=>assertAuthoritative(spec,candidate)).toThrow('ROOM_UNVERIFIED')
  })
  it('server rejects an altered or extra body in a forged editor response',async()=>{
   const {spec}=getReady()
@@ -120,8 +121,10 @@ describe('PR4 unified server-side Final Prompt authority gate',()=>{
    mirrorFitValid:{status:'valid' as const},
    lightingFitValid:{status:'valid' as const}
   }}
-  const final=assertAuthoritative(syntheticEligibleSpec,{source:'local',prompt})
-  expect(final).toEqual({source:'local',prompt,validated:true})
+  const gaps=unverifiedRoomMeasurements(syntheticEligibleSpec.roomGeometry,spec.capture.posture)
+  const roomAcknowledgement={accepted:true,sceneIntegrity:spec.integrity,measurements:gaps}
+  const final=assertAuthoritative(syntheticEligibleSpec,{source:'local',prompt},roomAcknowledgement)
+  expect(final).toEqual({source:'local',prompt,validated:true,acknowledgedMeasurements:gaps})
  })
  it('C1 Case C: room_geometry text cannot leak into an otherwise byte-identical local prompt',()=>{
   const {spec,prompt}=getReady()
