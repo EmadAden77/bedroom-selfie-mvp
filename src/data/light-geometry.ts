@@ -14,7 +14,7 @@ export const poseOptions = [
 export const faceOptions = [
   { id: 'toward_camera', label: 'نحو الكاميرا', text: 'Face oriented toward the actual recording camera, matching front, rear, timer and reflected capture.' },
   { id: 'toward_door', label: 'نحو الباب', text: 'Head oriented toward the doorway.' },
-  { id: 'toward_window', label: 'نحو النافذة', text: 'Head oriented toward the uncovered window.' }
+  { id: 'toward_window', label: 'نحو النافذة', text: 'Head oriented toward the existing curtained window; the window emits no light.' }
 ] as const
 export const lampSideOptions = [
   { id: 'left', label: 'الجانب الأيسر من الوجه', text: 'subject left face side, only if attainable with the actual lamp and head orientation' },
@@ -58,6 +58,6 @@ export function renderLightGeometry(ctx: CompilationContext): string {
   if (usesCeiling) pieces.push('Ceiling fixtures remain above the physical room even when the head is horizontal; their projection onto face and bedding changes with posture.')
   if (lighting === 'laptop_screen') pieces.push('An open laptop must be positioned in front of the subject within viewing distance and aimed toward the face; face rotation and the laptop-screen normal determine exposure.')
   if (lighting === 'camera_flash') pieces.push('Rear LED flash is emitted from the actual rear camera module during exposure. Respect hard shadows, specular reflections and direct flash falloff.')
-  pieces.push('PITCH-BLACK ROOM: Only the selected source emits photons. No ambient light, window light, daylight, second fixture, hidden fill or selectively brightened face. Contact shadows, exposure and sensor noise follow this source.')
+  pieces.push('PITCH-BLACK ROOM: Only the selected source emits photons. No ambient light, window light, daylight, second fixture, hidden fill and no selectively brightened face. Contact shadows, exposure and sensor noise follow this source.')
   return pieces.join(' ')
 }
