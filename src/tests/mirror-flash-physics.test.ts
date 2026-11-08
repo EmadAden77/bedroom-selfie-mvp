@@ -17,7 +17,7 @@ const base:CompilationContext={
  surface:'apparent knit-like surface character',
  referenceImagePresent:false,
  bedroomShotId:'mirror_wardrobe',
- nightLightingId:'camera_flash',
+ nightLightingId:'camera_flash' as const,
  faceDirectionId:'toward_camera'
 }
 
@@ -53,8 +53,8 @@ describe('Mirror rear LED flash optics',()=>{
  })
  it('does not activate mirror flash physics in nonflash or nonmirror captures',()=>{
   for(const c of [
-   {...base,nightLightingId:'led_spotlight'},
-   {...base,bedroomShotId:'bed_edge',nightLightingId:'camera_flash'}
+   {...base,nightLightingId:'led_spotlight' as const},
+   {...base,bedroomShotId:'bed_edge',nightLightingId:'camera_flash' as const}
   ]){
    expect(isMirrorFlash(c)).toBe(false)
    const compiled=compilePrompt(c)
@@ -70,7 +70,7 @@ describe('Mirror rear LED flash optics',()=>{
   expect(()=>validatePhysicalPrompt(realFlash,context)).not.toThrow()
  })
  it('does not permit disabling flash on the fixed flash shot in the local compiler',()=>{
-  const c=compilePrompt({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'led_spotlight'})
+  const c=compilePrompt({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'led_spotlight' as const})
   expect(c.validation.isValid).toBe(false)
  })
 })

@@ -14,14 +14,14 @@ const base:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'mirror_wardrobe',poseId:'seated_bed',nightLightingId:'led_spotlight'
+ bedroomShotId:'mirror_wardrobe',poseId:'seated_bed',nightLightingId:'led_spotlight' as const
 }
 const mirrors=bedroomShots.filter(s=>s.mode==='mirror')
 describe('Extreme physical mirror capture consistency',()=>{
  it('has 15 canonical and completely local + Gemini mirrored camera contracts',()=>{
   expect(mirrors).toHaveLength(15)
   for(const shot of mirrors){
-   const ctx={...base,bedroomShotId:shot.id,nightLightingId:shot.id==='mirror_rear_flash'?'camera_flash':'led_spotlight'}
+   const ctx={...base,bedroomShotId:shot.id,nightLightingId:(shot.id==='mirror_rear_flash'?'camera_flash':'led_spotlight') as CompilationContext['nightLightingId']}
    const local=compilePrompt(ctx)
    expect(local.validation.errors,shot.id).toEqual([])
    expect(local.result.errors,shot.id).toEqual([])
@@ -65,7 +65,7 @@ describe('Extreme physical mirror capture consistency',()=>{
  })
  it('shapes real light and flash exclusively from selected sources',()=>{
   const without=buildMirrorOpticsMechanics(base)
-  const withFlash=buildMirrorOpticsMechanics({...base,nightLightingId:'camera_flash'})
+  const withFlash=buildMirrorOpticsMechanics({...base,nightLightingId:'camera_flash' as const})
   expect(without).toContain('rear LED is OFF')
   expect(without).not.toContain('FLASH: only the real rear LED fires')
   expect(withFlash).toContain('FLASH: only the real rear LED fires')
@@ -86,7 +86,7 @@ describe('Extreme physical mirror capture consistency',()=>{
   expect(()=>validatePhysicalPrompt('Real rear-camera Xiaomi 15 Ultra mirror selfie, the phone screen faces the holder and the wardrobe glass reflects the scene.',{mode:'mirror',lighting:'led_spotlight'})).not.toThrow()
  })
  it('excludes mirror-only physics from ordinary front selfies',()=>{
-  const ctx={...base,bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'led_spotlight'}
+  const ctx={...base,bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'led_spotlight' as const}
   expect(buildMirrorOpticsMechanics(ctx)).toBe('')
   expect(buildCreativeSceneBrief(ctx)).not.toContain('MIRROR OPTICS AND BIOMECHANICS CONTRACT:')
   expect(compilePrompt(ctx).result.sections.some(s=>s.id==='mirror_composition')).toBe(false)

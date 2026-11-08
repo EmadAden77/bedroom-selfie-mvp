@@ -20,7 +20,7 @@ describe('Cross-engine scene invariants',()=>{
  it('uses the same real Xiaomi 15 Ultra in direct and mirror captures',()=>{
   for(const shotId of ['mirror_wardrobe','mirror_rear_flash','bed_edge']){
    const mirror=shotId.startsWith('mirror_')
-   const ctx={...base,bedroomShotId:shotId,nightLightingId:shotId==='mirror_rear_flash'?'camera_flash':'led_spotlight'}
+   const ctx={...base,bedroomShotId:shotId,nightLightingId:(shotId==='mirror_rear_flash'?'camera_flash':'led_spotlight') as CompilationContext['nightLightingId']}
    const {validation,result}=compilePrompt(ctx)
    expect(validation.isValid).toBe(true)
    expect(result.promptText).toContain('Xiaomi 15 Ultra')

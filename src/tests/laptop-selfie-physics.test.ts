@@ -15,7 +15,7 @@ const base:CompilationContext={
  color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',
  referenceImagePresent:true,roomReferencePresent:true,bedroomClutterId:'reference',
- nightLightingId:'led_spotlight',poseId:'seated_bed'
+ nightLightingId:'led_spotlight' as const,poseId:'seated_bed'
 }
 const laptopShots=bedroomShots.filter(shot=>isLaptopSelfieShot(shot.id))
 describe('Laptop selfie physical poses and light integration',()=>{
@@ -48,15 +48,15 @@ describe('Laptop selfie physical poses and light integration',()=>{
  })
  it('renders screen illumination only when explicitly chosen',()=>{
   const bedroomShotId='laptop_reclined_reading'
-  const laptop=compilePrompt({...base,bedroomShotId,nightLightingId:'laptop_screen'})
+  const laptop=compilePrompt({...base,bedroomShotId,nightLightingId:'laptop_screen' as const})
   expect(laptop.validation.isValid).toBe(true)
   expect(laptop.result.sections.find(x=>x.id==='laptop_selfie_physics')?.content).toContain('LAPTOP DISPLAY ILLUMINATION:')
   expect(laptop.result.promptText).toContain('a glowing laptop screen')
-  const phone=compilePrompt({...base,bedroomShotId,nightLightingId:'phone_screen'})
+  const phone=compilePrompt({...base,bedroomShotId,nightLightingId:'phone_screen' as const})
   expect(phone.validation.isValid).toBe(true)
   expect(phone.result.sections.find(x=>x.id==='laptop_selfie_physics')?.content).toContain('PHONE DISPLAY ILLUMINATION:')
   expect(phone.result.sections.find(x=>x.id==='laptop_selfie_physics')?.content).toContain('laptop display stays dark')
-  const room=compilePrompt({...base,bedroomShotId,nightLightingId:'led_spotlight'})
+  const room=compilePrompt({...base,bedroomShotId,nightLightingId:'led_spotlight' as const})
   expect(room.validation.isValid).toBe(true)
   expect(room.result.sections.find(x=>x.id==='laptop_selfie_physics')?.content).toContain('HOUSEHOLD LIGHTING:')
   expect(room.result.sections.find(x=>x.id==='laptop_selfie_physics')?.content).not.toContain('LAPTOP DISPLAY ILLUMINATION:')
@@ -70,7 +70,7 @@ describe('Laptop selfie physical poses and light integration',()=>{
   expect(nextLaptopLighting('mirror_rear_flash','camera_flash')).toBe('camera_flash')
  })
  it('sends a laptop-specific coherent Gemini brief for the selected action, no other shot',()=>{
-  const ctx={...base,bedroomShotId:'laptop_high_angle_keyboard',nightLightingId:'laptop_screen'}
+  const ctx={...base,bedroomShotId:'laptop_high_angle_keyboard',nightLightingId:'laptop_screen' as const}
   const brief=buildCreativeSceneBrief(ctx)
   expect(brief).toContain('SELECTED LAPTOP SELFIE:')
   expect(brief).toContain('partial face')
@@ -84,7 +84,7 @@ describe('Laptop selfie physical poses and light integration',()=>{
   expect(compilePrompt({...base,bedroomShotId:'bed_edge'}).result.sections.some(s=>s.id==='laptop_selfie_physics')).toBe(false)
  })
  it('timer laptop pose never claims handheld phone or additional arms',()=>{
-  const c=compilePrompt({...base,bedroomShotId:'laptop_dresser_typing_timer',poseId:'standing',nightLightingId:'laptop_screen'})
+  const c=compilePrompt({...base,bedroomShotId:'laptop_dresser_typing_timer',poseId:'standing',nightLightingId:'laptop_screen' as const})
   expect(c.validation.isValid).toBe(true)
   const text=c.result.promptText
   expect(text).toContain('TIMER CAPTURE:')

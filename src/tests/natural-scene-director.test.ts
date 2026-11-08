@@ -21,7 +21,7 @@ const base:CompilationContext={
  referenceImagePresent:true,
  roomReferencePresent:true,
  bedroomShotId:'bed_edge',
- nightLightingId:'phone_screen'
+ nightLightingId:'phone_screen' as const
 }
 
 describe('Natural Scene Director integration',()=>{
@@ -36,7 +36,7 @@ describe('Natural Scene Director integration',()=>{
   expect(brief.length).toBeLessThan(6500)
  })
  it('uses a real supported laptop and occupied hand only in selected laptop shots',()=>{
-  const brief=buildCreativeSceneBrief({...base,bedroomShotId:'laptop_cross_legs_trackpad',nightLightingId:'laptop_screen'})
+  const brief=buildCreativeSceneBrief({...base,bedroomShotId:'laptop_cross_legs_trackpad',nightLightingId:'laptop_screen' as const})
   expect(brief).toContain('one supported, hinged laptop')
   expect(brief).toContain('only the actually available hand')
   expect(brief).toContain('LAPTOP')
@@ -48,7 +48,7 @@ describe('Natural Scene Director integration',()=>{
   expect(line).toContain('Do not turn this into a handheld capture')
  })
  it('uses correct mirror text optics and does not force a smile',()=>{
-  const line=buildNaturalSceneDirection({...base,bedroomShotId:'mirror_dresser',nightLightingId:'led_spotlight'})
+  const line=buildNaturalSceneDirection({...base,bedroomShotId:'mirror_dresser',nightLightingId:'led_spotlight' as const})
   expect(line).toContain('mirror-selfie action')
   expect(line).toContain('reverse printed lettering')
   expect(line).toContain('smile that was not selected')
@@ -62,10 +62,10 @@ describe('Natural Scene Director integration',()=>{
   expect(messy).toContain('physically supported small loose items')
  })
  it('stops contradictory flash and laptop lighting selections',()=>{
-  expect(naturalSceneSelectionIssues({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'led_spotlight'})).toHaveLength(1)
-  expect(naturalSceneSelectionIssues({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash'})).toEqual([])
-  expect(naturalSceneSelectionIssues({...base,bedroomShotId:'bed_edge',nightLightingId:'laptop_screen'})).toHaveLength(1)
-  expect(naturalSceneSelectionIssues({...base,bedroomShotId:'laptop_cross_legs_trackpad',nightLightingId:'laptop_screen'})).toEqual([])
+  expect(naturalSceneSelectionIssues({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'led_spotlight' as const})).toHaveLength(1)
+  expect(naturalSceneSelectionIssues({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash' as const})).toEqual([])
+  expect(naturalSceneSelectionIssues({...base,bedroomShotId:'bed_edge',nightLightingId:'laptop_screen' as const})).toHaveLength(1)
+  expect(naturalSceneSelectionIssues({...base,bedroomShotId:'laptop_cross_legs_trackpad',nightLightingId:'laptop_screen' as const})).toEqual([])
  })
  it('the local spec fixes natural actions while Gemini edits language and Ghalyon stays independent',()=>{
   const local=compilePrompt(base)
@@ -104,7 +104,7 @@ describe('Server-side natural activity preflight',()=>{
    {shotId:'mirror_rear_flash',mode:'mirror',lighting:'led_spotlight'},
    {shotId:'bed_edge',mode:'front',lighting:'laptop_screen'}
   ]){
-   const ctx={...base,bedroomShotId:selection.shotId,nightLightingId:selection.lighting}
+   const ctx={...base,bedroomShotId:selection.shotId,nightLightingId:selection.lighting as CompilationContext['nightLightingId']}
    const compiled=compilePrompt(ctx)
    expect(compiled.validation.isValid).toBe(false)
    const spec=buildSceneSpecification(ctx,compiled.result,compiled.validation)
