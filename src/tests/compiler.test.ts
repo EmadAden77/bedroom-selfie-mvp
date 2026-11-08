@@ -7,6 +7,8 @@ import { expressionVariants, deferredCompositeStates } from '../data/expressions
 import { bedroomShots,getShotPosture } from '../data/bedroom-shots'
 import { garmentRecords } from '../data/clothing'
 
+const allowedBlackoutShots=bedroomShots.filter(s=>!['curtain_shadows','door_light_strip','silhouette','half_light'].includes(s.id))
+
 const defaultCtx: CompilationContext = {
   hairVariantId: 'reference_natural_dry',
   expressionVariantId: 'reference_expression_preserved',
@@ -158,105 +160,49 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
 
   it('Night lighting defaults to screen only and excludes invented fixtures', () => {
     const { result } = compilePrompt(defaultCtx)
-    expect(result.promptText).toContain('Phone display is the sole active light source')
+    expect(result.promptText).toContain('The ONLY light source is the soft, diffused light from a smartphone screen')
     expect(result.sections.filter(s=>s.id.startsWith('night_lighting_'))).toHaveLength(1)
   })
-  it('Streetlight is blocked if curtains cover the window', () => {
-    const invalid = compilePrompt({ ...defaultCtx, nightLightingId: 'window_streetlight', windowUncovered: false })
-    expect(invalid.validation.isValid).toBe(false)
-    expect(invalid.result.promptText).toBe('')
-    const valid = compilePrompt({ ...defaultCtx, nightLightingId: 'window_streetlight', windowUncovered: true })
-    expect(valid.validation.isValid).toBe(true)
-  })
-  it('New 4500K ceiling LED is a single independent preset with physical light falloff', () => {
-    const compiled = compilePrompt({ ...defaultCtx, nightLightingId: 'ceiling_led_neutral' })
-    expect(compiled.validation.isValid).toBe(true)
-    const lightingSections = compiled.result.sections.filter(s => s.id.startsWith('night_lighting_'))
-    expect(lightingSections).toHaveLength(1)
-    expect(lightingSections[0].id).toBe('night_lighting_ceiling_led_neutral')
-    expect(lightingSections[0].content).toContain('4500K neutral-white')
-    expect(lightingSections[0].content).toContain('CRI 95+')
-    expect(lightingSections[0].content).toContain('inverse-square tendency')
-    expect(lightingSections[0].content).toContain('contact shadows')
-    expect(lightingSections[0].content).toContain('ISO sensor noise')
-    expect(compiled.result.sections.find(s => s.id === 'light_pose_geometry')?.content).toContain('Ceiling fixtures remain above the physical room')
-    expect(compiled.result.promptText).not.toContain('Phone display is the sole active light source')
-  })
-  it.each(['mirror_wardrobe', 'side_knee_tucked', 'edge_one_knee_raised'])('4500K ceiling LED remains valid with %s camera geometry', bedroomShotId => {
-    const compiled = compilePrompt({ ...defaultCtx, bedroomShotId, nightLightingId: 'ceiling_led_neutral' })
-    expect(compiled.validation.isValid).toBe(true)
-    expect(compiled.result.errors).toHaveLength(0)
-    if (bedroomShotId === 'mirror_wardrobe') {
-      expect(compiled.result.promptText).toContain('MIRROR CAPTURE:')
-      expect(compiled.result.promptText).not.toContain('Face oriented toward the held front camera')
+  it('Rejects windows and every deprecated source; keeps one selected spotlight',()=>{
+    for(const removed of ['window_streetlight','bedside_warm','ceiling_neutral','ceiling_led_neutral','ceiling_dim','near_darkness']){
+      const invalid=compilePrompt({...defaultCtx,nightLightingId:removed as CompilationContext['nightLightingId']})
+      expect(invalid.validation.isValid).toBe(false)
     }
-  })
-  const additionalWhiteLedModes = [
-    { id: 'ceiling_led_soft_diffused', anchor: 'DIFFUSED OVERHEAD', geometry: 'Multiple installed downlights' },
-    { id: 'ceiling_led_bed_side', anchor: 'BED-SIDE CEILING', geometry: 'LEFT-wall bed' },
-    { id: 'ceiling_led_wardrobe_side', anchor: 'WARDROBE-SIDE CEILING', geometry: 'RIGHT-wall wardrobe' },
-    { id: 'ceiling_led_single_downlight', anchor: 'SINGLE CEILING DOWNLIGHT', geometry: 'single installed central ceiling spot' }
-  ] as const
-
-  it('Four additional white LED presets are independently selectable and retain the existing 4500K option', async () => {
-    const { nightLightingPresets } = await import('../data/night-lighting')
-    const ids = nightLightingPresets.map(p => p.id)
-    expect(new Set(ids).size).toBe(ids.length)
-    expect(ids).toContain('ceiling_led_neutral')
-    for (const mode of additionalWhiteLedModes) expect(ids).toContain(mode.id)
-    expect(ids.filter(id => additionalWhiteLedModes.some(m => m.id === id))).toHaveLength(4)
-  })
-
-  it.each(additionalWhiteLedModes)('White LED $id selects one real light setup without additional sources', mode => {
-    const compiled = compilePrompt({ ...defaultCtx, nightLightingId: mode.id })
+    const invalidWindow=compilePrompt({...defaultCtx,nightLightingId:'led_spotlight' as const,windowUncovered:true})
+    expect(invalidWindow.validation.isValid).toBe(false)
+    const compiled=compilePrompt({...defaultCtx,nightLightingId:'led_spotlight' as const})
     expect(compiled.validation.isValid).toBe(true)
-    expect(compiled.result.errors).toHaveLength(0)
-    const selectedLighting = compiled.result.sections.filter(s => s.id.startsWith('night_lighting_'))
-    expect(selectedLighting).toHaveLength(1)
-    expect(selectedLighting[0].id).toBe('night_lighting_' + mode.id)
-    expect(selectedLighting[0].content).toContain(mode.anchor)
-    expect(selectedLighting[0].content).toContain('4500K')
-    expect(selectedLighting[0].content).not.toContain('phone display is the sole active light source')
-    const geometry = compiled.result.sections.find(s => s.id === 'light_pose_geometry')?.content || ''
-    expect(geometry).toContain('Ceiling fixtures remain above the physical room')
-    expect(geometry).toContain(mode.geometry)
-    expect(geometry).not.toContain('Phone display faces the subject near the camera optical axis')
+    expect(compiled.result.sections.find(x=>x.id==='night_lighting_led_spotlight')?.content).toContain('a single white LED ceiling spotlight')
+    expect(compiled.result.sections.find(x=>x.id==='light_pose_geometry')?.content).toContain('Ceiling fixtures remain above')
+    expect(compiled.result.sections.filter(x=>x.id.startsWith('night_lighting_'))).toHaveLength(1)
   })
-
-  it.each(additionalWhiteLedModes)('White LED $id maintains camera and pose geometry across shots', mode => {
-    for (const bedroomShotId of ['mirror_wardrobe','side_knee_tucked','edge_one_knee_raised','phone_on_floor']) {
-      const compiled = compilePrompt({ ...defaultCtx, bedroomShotId, nightLightingId: mode.id })
-      expect(compiled.validation.isValid).toBe(true)
-      expect(compiled.result.errors).toHaveLength(0)
-      expect(compiled.result.sections.filter(s => s.id.startsWith('night_lighting_'))).toHaveLength(1)
-      if (bedroomShotId === 'mirror_wardrobe') {
-        expect(compiled.result.promptText).toContain('MIRROR CAPTURE:')
-        expect(compiled.result.promptText).not.toContain('Face oriented toward the held front camera')
-      }
-      if (bedroomShotId === 'phone_on_floor') {
-        expect(compiled.result.promptText).toContain('TIMER CAPTURE:')
-      }
-    }
+  it.each(['mirror_wardrobe','side_knee_tucked','edge_one_knee_raised'])('Single ceiling spotlight supports %s geometry',bedroomShotId=>{
+    const compiled=compilePrompt({...defaultCtx,bedroomShotId,nightLightingId:'led_spotlight' as const})
+    expect(compiled.validation.isValid).toBe(true)
+    expect(compiled.result.errors).toEqual([])
   })
-
+  it('The four choices are the only selectable sources',async()=>{
+    const {nightLightingPresets}=await import('../data/night-lighting')
+    expect(nightLightingPresets.map(p=>p.id)).toEqual(['led_spotlight','camera_flash','phone_screen','laptop_screen'])
+  })
   it('Unknown lighting preset is rejected', () => {
-    expect(compilePrompt({ ...defaultCtx, nightLightingId: 'invented_fill' }).validation.isValid).toBe(false)
+    expect(compilePrompt({ ...defaultCtx, nightLightingId: 'invented_fill' as CompilationContext['nightLightingId'] }).validation.isValid).toBe(false)
   })
-  it('Changes geometry for side-lying while keeping the lamp fixed', () => {
-    const right = compilePrompt({ ...defaultCtx, nightLightingId: 'bedside_warm', poseId: 'side_lying_right', lampSideId: 'left' })
-    const left = compilePrompt({ ...defaultCtx, nightLightingId: 'bedside_warm', poseId: 'side_lying_left', lampSideId: 'left' })
+  it('Changes geometry for side-lying while keeping the only spotlight fixed', () => {
+    const right = compilePrompt({ ...defaultCtx, nightLightingId:'led_spotlight' as const, poseId: 'side_lying_right' })
+    const left = compilePrompt({ ...defaultCtx, nightLightingId:'led_spotlight' as const, poseId: 'side_lying_left' })
     expect(right.validation.isValid).toBe(true)
     expect(right.result.promptText).toContain('right cheek and shoulder')
     expect(left.result.promptText).toContain('left cheek and shoulder')
-    expect(right.result.promptText).toContain('subject left face side')
+    expect(right.result.promptText).toContain('Ceiling fixtures remain above')
   })
   it('Rejects unrecognized pose configurations', () => {
     expect(compilePrompt({ ...defaultCtx, poseId: 'floating' }).validation.isValid).toBe(false)
   })
   it('Phone-only pose cannot imply ceiling light', () => {
-    const result = compilePrompt({ ...defaultCtx, poseId: 'supine', nightLightingId: 'phone_screen_only' })
+    const result = compilePrompt({ ...defaultCtx, poseId: 'supine', nightLightingId:'phone_screen' as const })
     expect(result.validation.isValid).toBe(true)
-    expect(result.result.promptText).toContain('Phone display is the sole active light source')
+    expect(result.result.promptText).toContain('The ONLY light source is the soft, diffused light from a smartphone screen')
     expect(result.result.sections.filter(s=>s.id==='light_pose_geometry')).toHaveLength(1)
   })
   it('Offers exactly 98 unique bedroom shots and five groups', async () => {
@@ -267,22 +213,22 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
   })
   it('Rejects mirror flash shot without actual flash lighting', () => {
     expect(compilePrompt({...defaultCtx, bedroomShotId:'mirror_rear_flash'}).validation.isValid).toBe(false)
-    expect(compilePrompt({...defaultCtx, bedroomShotId:'mirror_rear_flash',nightLightingId:'rear_flash'}).validation.isValid).toBe(true)
+    expect(compilePrompt({...defaultCtx, bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash' as const}).validation.isValid).toBe(true)
   })
   it('Timer shot never claims hand held camera in pose geometry', () => {
     const result=compilePrompt({...defaultCtx,bedroomShotId:'phone_on_floor'})
     expect(result.validation.isValid).toBe(true)
     expect(result.result.sections.find(s=>s.id==='light_pose_geometry')?.content).toContain('fixed support')
   })
-  it.each(bedroomShots)('Synchronizes posture for $id without contradictory base pose', (shot) => {
+  it.each(allowedBlackoutShots)('Synchronizes posture for $id without contradictory base pose', (shot) => {
     const posture = getShotPosture(shot.id)
     expect(posture).toBeTruthy()
-    const lighting = shot.id === 'mirror_rear_flash' ? 'rear_flash'
-      : shot.id === 'silhouette' ? 'bedside_warm'
-      : shot.id === 'half_light' ? 'bedside_warm'
-      : shot.id === 'curtain_shadows' ? 'window_streetlight' : 'ceiling_dim'
+    const lighting = shot.id === 'mirror_rear_flash' ? 'camera_flash'
+      : shot.id === 'silhouette' ? 'led_spotlight'
+      : shot.id === 'half_light' ? 'led_spotlight'
+      : shot.id === 'curtain_shadows' ? 'led_spotlight' : 'led_spotlight'
     const result = compilePrompt({...defaultCtx, poseId:'standing', bedroomShotId:shot.id, nightLightingId:lighting,
-      windowUncovered:true})
+      windowUncovered:false})
     expect(result.validation.isValid).toBe(true)
     const geometry = result.result.sections.find(s=>s.id==='light_pose_geometry')?.content || ''
     expect(geometry).toContain('Selfie pose geometry:')
@@ -300,7 +246,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
 
   it('Selecting supine shot overrides old seated state throughout prompt geometry', () => {
     const {result,validation} = compilePrompt({...defaultCtx,poseId:'seated_bed',
-      bedroomShotId:'supine_high_phone',nightLightingId:'ceiling_dim'})
+      bedroomShotId:'supine_high_phone',nightLightingId:'led_spotlight' as const})
     expect(validation.isValid).toBe(true)
     expect(result.promptText).toContain('Lying on the back')
     expect(result.promptText).not.toContain('Seated on the bed; upright')
@@ -324,23 +270,23 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     const compiled=compilePrompt({...defaultCtx,hairVariantId:'wind_blown_natural',hairstyleMode:mode})
     expect(compiled.result.sections.filter(s=>s.id.startsWith('hair_') && s.id!=='hair_identity_guard')).toHaveLength(1)
   })
-  it.each(bedroomShots.filter(s=>s.mode === 'mirror'))('Mirror $id uses the same Xiaomi 15 Ultra as other selfie modes', shot => {
-    const {result,validation}=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:shot.id==='mirror_rear_flash'?'rear_flash':'ceiling_dim'})
+  it.each(allowedBlackoutShots.filter(s=>s.mode === 'mirror'))('Mirror $id uses the same Xiaomi 15 Ultra as other selfie modes', shot => {
+    const {result,validation}=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:shot.id==='mirror_rear_flash'?'camera_flash':'led_spotlight'})
     expect(validation.isValid).toBe(true)
     expect(result.promptText).toContain('Xiaomi 15 Ultra')
     expect(result.promptText).toContain('genuine rear camera module')
     expect(result.promptText).not.toContain('LiDAR')
   })
-  it.each(bedroomShots.filter(s=>s.mode !== 'mirror'))('Non-mirror $id has no iPhone model lock',shot => {
-    const lighting = shot.id==='silhouette'||shot.id==='half_light'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
-    const {result,validation}=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:true})
+  it.each(allowedBlackoutShots.filter(s=>s.mode !== 'mirror'))('Non-mirror $id has no iPhone model lock',shot => {
+    const lighting = shot.id==='silhouette'||shot.id==='half_light'?'led_spotlight':shot.id==='curtain_shadows'?'led_spotlight':'led_spotlight'
+    const {result,validation}=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:false})
     expect(validation.isValid).toBe(true)
     expect(result.promptText).not.toContain('iPhone 15 Pro Max')
   })
   it('Bedroom geometry is fixed across all 60 shots', () => {
-    for (const shot of bedroomShots) {
-      const lighting=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='silhouette'||shot.id==='half_light'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
-      const compiled=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:true})
+    for (const shot of allowedBlackoutShots) {
+      const lighting=shot.id==='mirror_rear_flash'?'camera_flash':shot.id==='silhouette'||shot.id==='half_light'?'led_spotlight':shot.id==='curtain_shadows'?'led_spotlight':'led_spotlight'
+      const compiled=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:false})
       expect(compiled.validation.isValid).toBe(true)
       expect(compiled.result.sections.filter(s=>s.id==='bedroom_environment_lock')).toHaveLength(1)
       expect(compiled.result.promptText).toContain('original bed against the LEFT wall')
@@ -363,9 +309,9 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     const result=compilePrompt({...defaultCtx,promptTarget:'chatgpt',hairstyleMode:'preserve'})
     expect(result.result.promptText).not.toContain('ChatGPT hairstyle priority:')
   })
-  it.each(bedroomShots)('Camera physics follows $id capture mode', shot => {
-    const lighting=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
-    const compiled=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:true})
+  it.each(allowedBlackoutShots)('Camera physics follows $id capture mode', shot => {
+    const lighting=shot.id==='mirror_rear_flash'?'camera_flash':shot.id==='half_light'||shot.id==='silhouette'?'led_spotlight':shot.id==='curtain_shadows'?'led_spotlight':'led_spotlight'
+    const compiled=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:false})
     expect(compiled.validation.isValid).toBe(true)
     const physics=compiled.result.sections.filter(s=>s.id==='camera_physics')
     expect(physics).toHaveLength(1)
@@ -387,8 +333,8 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(content).toContain('No beauty smoothing')
     expect(content).toContain('physically credible camera-to-subject distance')
   })
-  it.each(bedroomShots.filter(s => s.mode === 'mirror'))('Mirror $id has no front-camera face direction', shot => {
-    const lighting = shot.id === 'mirror_rear_flash' ? 'rear_flash' : 'ceiling_neutral'
+  it.each(allowedBlackoutShots.filter(s => s.mode === 'mirror'))('Mirror $id has no front-camera face direction', shot => {
+    const lighting = shot.id === 'mirror_rear_flash' ? 'camera_flash' : 'led_spotlight'
     const compiled = compilePrompt({...defaultCtx, bedroomShotId:shot.id, nightLightingId:lighting, faceDirectionId:'toward_camera'})
     expect(compiled.validation.isValid).toBe(true)
     const geometry = compiled.result.sections.find(s => s.id === 'light_pose_geometry')?.content || ''
@@ -402,13 +348,13 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(compiled.result.promptText).not.toMatch(/Face oriented toward the held front camera|FRONT SELFIE CAPTURE:|Subject holds front-facing smartphone/)
   })
   it('Front selfie preserves its own camera-facing text', () => {
-    const compiled=compilePrompt({...defaultCtx,bedroomShotId:'edge_one_knee_raised',nightLightingId:'ceiling_neutral'})
+    const compiled=compilePrompt({...defaultCtx,bedroomShotId:'edge_one_knee_raised',nightLightingId:'led_spotlight' as const})
     expect(compiled.validation.isValid).toBe(true)
     expect(compiled.result.sections.find(s=>s.id==='light_pose_geometry')?.content).toContain('Face oriented toward the actual recording camera')
   })
   it('Final realism rejects any front-camera instructions leaked into a mirror prompt', async () => {
     const {validateFinalRealism}=await import('../compiler/final-realism')
-    const ctx={...defaultCtx,bedroomShotId:'mirror_wardrobe',nightLightingId:'ceiling_neutral'}
+    const ctx={...defaultCtx,bedroomShotId:'mirror_wardrobe',nightLightingId:'led_spotlight' as const}
     const compiled=compilePrompt(ctx)
     expect(compiled.validation.isValid).toBe(true)
     const sections=compiled.result.sections.map(s=>s.id==='light_pose_geometry'
@@ -423,9 +369,9 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(compiled.validation.isValid).toBe(true)
     expect(compiled.result.sections.find(s=>s.id==='camera_physics')?.content).toContain('FRONT SELFIE CAPTURE:')
   })
-  it.each(bedroomShots)('Body contact and arm ownership consistent for $id', shot => {
-    const lighting=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
-    const compiled=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:true,poseId:'standing'})
+  it.each(allowedBlackoutShots)('Body contact and arm ownership consistent for $id', shot => {
+    const lighting=shot.id==='mirror_rear_flash'?'camera_flash':shot.id==='half_light'||shot.id==='silhouette'?'led_spotlight':shot.id==='curtain_shadows'?'led_spotlight':'led_spotlight'
+    const compiled=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:false,poseId:'standing'})
     expect(compiled.validation.isValid).toBe(true)
     const section=compiled.result.sections.filter(s=>s.id==='body_pose_physics')
     expect(section).toHaveLength(1)
@@ -443,9 +389,9 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     const {result}=compilePrompt(defaultCtx)
     expect(result.sections.find(s=>s.id==='body_pose_physics')?.content).toContain('BODY AND POSE PHYSICS:')
   })
-  it.each(bedroomShots)('Final realism accepts coherent $id', shot => {
-    const light = shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
-    const output=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:light,windowUncovered:true})
+  it.each(allowedBlackoutShots)('Final realism accepts coherent $id', shot => {
+    const light = shot.id==='mirror_rear_flash'?'camera_flash':shot.id==='half_light'||shot.id==='silhouette'?'led_spotlight':shot.id==='curtain_shadows'?'led_spotlight':'led_spotlight'
+    const output=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:light,windowUncovered:false})
     expect(output.validation.isValid).toBe(true)
     expect(output.result.errors).toHaveLength(0)
   })
@@ -501,9 +447,9 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(compiled.validation.isValid).toBe(true)
     expect(compiled.result.promptText).toContain('ROOM IMAGE REFERENCE:')
   })
-  it.each(bedroomShots)('Room reference leaves shot $id valid',shot=>{
-    const light=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
-    const compiled=compilePrompt({...defaultCtx,roomReferencePresent:true,bedroomShotId:shot.id,nightLightingId:light,windowUncovered:true})
+  it.each(allowedBlackoutShots)('Room reference leaves shot $id valid',shot=>{
+    const light=shot.id==='mirror_rear_flash'?'camera_flash':shot.id==='half_light'||shot.id==='silhouette'?'led_spotlight':shot.id==='curtain_shadows'?'led_spotlight':'led_spotlight'
+    const compiled=compilePrompt({...defaultCtx,roomReferencePresent:true,bedroomShotId:shot.id,nightLightingId:light,windowUncovered:false})
     expect(compiled.validation.isValid).toBe(true)
     expect(compiled.result.errors).toEqual([])
   })
@@ -525,9 +471,9 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(result.result.promptText).toContain('room reference is authoritative for surroundings')
     expect(result.result.promptText).toContain('IDENTITY FIDELITY ENGINE:')
   })
-  it.each(bedroomShots)('Identity fidelity present for shot $id',shot=>{
-    const light=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
-    const result=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:light,windowUncovered:true})
+  it.each(allowedBlackoutShots)('Identity fidelity present for shot $id',shot=>{
+    const light=shot.id==='mirror_rear_flash'?'camera_flash':shot.id==='half_light'||shot.id==='silhouette'?'led_spotlight':shot.id==='curtain_shadows'?'led_spotlight':'led_spotlight'
+    const result=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:light,windowUncovered:false})
     expect(result.validation.isValid).toBe(true)
     expect(result.result.errors).toEqual([])
     expect(result.result.sections.filter(s=>s.id==='identity_fidelity')).toHaveLength(1)
@@ -553,9 +499,9 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(result.result.promptText).toContain('ROOM REFERENCE PRIORITY:')
     expect(result.result.promptText).toContain('Do not replace the subject identity')
   })
-  it.each(bedroomShots)('Background continuity remains compatible with $id',shot=>{
-    const light=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
-    const out=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:light,windowUncovered:true})
+  it.each(allowedBlackoutShots)('Background continuity remains compatible with $id',shot=>{
+    const light=shot.id==='mirror_rear_flash'?'camera_flash':shot.id==='half_light'||shot.id==='silhouette'?'led_spotlight':shot.id==='curtain_shadows'?'led_spotlight':'led_spotlight'
+    const out=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:light,windowUncovered:false})
     expect(out.validation.isValid).toBe(true)
     expect(out.result.errors).toEqual([])
     expect(out.result.sections.filter(s=>s.id==='background_continuity')).toHaveLength(1)
@@ -578,9 +524,9 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(compilePrompt({...defaultCtx,gazeId:'wrong' as any}).validation.isValid).toBe(false)
     expect(compilePrompt({...defaultCtx,microExpressionId:'wrong' as any}).validation.isValid).toBe(false)
   })
-  it.each(bedroomShots)('Gaze and wink compile with $id',shot=>{
-    const lighting=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
-    const output=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:true,gazeId:'lens',microExpressionId:'wink_right'})
+  it.each(allowedBlackoutShots)('Gaze and wink compile with $id',shot=>{
+    const lighting=shot.id==='mirror_rear_flash'?'camera_flash':shot.id==='half_light'||shot.id==='silhouette'?'led_spotlight':shot.id==='curtain_shadows'?'led_spotlight':'led_spotlight'
+    const output=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:false,gazeId:'lens',microExpressionId:'wink_right'})
     expect(output.validation.isValid).toBe(true)
     expect(output.result.errors).toEqual([])
   })
@@ -598,9 +544,9 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(result.validation.isValid).toBe(false)
     expect(result.result.promptText).toBe('')
   })
-  it.each(bedroomShots)('Realism remains valid for $id',shot=>{
-    const lighting=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
-    const out=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:true,realismIntensity:'raw',promptTarget:'chatgpt'})
+  it.each(allowedBlackoutShots)('Realism remains valid for $id',shot=>{
+    const lighting=shot.id==='mirror_rear_flash'?'camera_flash':shot.id==='half_light'||shot.id==='silhouette'?'led_spotlight':shot.id==='curtain_shadows'?'led_spotlight':'led_spotlight'
+    const out=compilePrompt({...defaultCtx,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:false,realismIntensity:'raw',promptTarget:'chatgpt'})
     expect(out.validation.isValid).toBe(true)
     expect(out.result.errors).toEqual([])
   })

@@ -22,7 +22,8 @@ import { renderLaptopSelfiePhysics } from '../data/laptop-selfie-physics'
 import { renderLightGeometry } from '../data/light-geometry'
 import {renderPhysicalReality} from '../engine/physical-reality'
 import { bedroomShots,renderBedroomShot } from '../data/bedroom-shots'
-import { nightLightingPresets } from '../data/night-lighting'
+import {nightLightingPresets} from '../data/night-lighting'
+import {lightingSectionText} from '../../shared/lighting-decision'
 import { garmentRecords, materialProfiles, fitProfiles, garmentStates } from '../data/clothing'
 
 export function renderSections(ctx: CompilationContext): PromptSection[] {
@@ -109,15 +110,15 @@ export function renderSections(ctx: CompilationContext): PromptSection[] {
   // 8. Clothing output guard - must be last
   sections.push({ id: 'clothing_output_guard', content: clothingOutputGuard.fragment })
 
-  const lighting = nightLightingPresets.find(p => p.id === (ctx.nightLightingId || 'phone_screen_only'))
-  if (lighting) sections.push({ id: `night_lighting_${lighting.id}`, content: 'Night bedroom lighting: ' + lighting.renderableFragment })
+  const lighting = nightLightingPresets.find(p => p.id === (ctx.nightLightingId || 'phone_screen'))
+  if (lighting) sections.push({ id: `night_lighting_${lighting.id}`, content: lightingSectionText(lighting.id) })
 
   sections.push({ id: 'bedroom_environment_lock', content: renderBedroomEnvironment(ctx) })
   sections.push({ id: 'background_continuity', content: renderBackgroundContinuity(ctx) })
   if(ctx.roomPhysicalState){sections.push({id:'physical_room_state',content:renderRoomPhysicalState(ctx)})}
   else {const clutter=renderBedroomClutter(ctx)
    if(clutter)sections.push({id:'lived_in_bedroom_clutter',content:clutter})}
-  if(ctx.phoneOnlyIlluminationMode&&ctx.phoneOnlyIlluminationMode!=='OFF')sections.push({id:'physical_reality',content:renderPhysicalReality(ctx)})
+  sections.push({id:'physical_reality',content:renderPhysicalReality(ctx)})
   sections.push({ id: 'light_pose_geometry', content: renderLightGeometry(ctx) })
   sections.push({ id: 'body_pose_physics', content: renderBodyPosePhysics(ctx) })
   sections.push({ id: 'body_mechanics_v21', content: renderValidatedBodyScene(ctx) })

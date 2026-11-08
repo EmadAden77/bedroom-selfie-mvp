@@ -11,7 +11,7 @@ const ctx:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:false,
- bedroomShotId:'bed_edge',nightLightingId:'phone_screen_only',poseId:'seated_bed'
+ bedroomShotId:'bed_edge',nightLightingId:'phone_screen' as const,poseId:'seated_bed'
 }
 describe('Arabic RTL body mechanics UI',()=>{
  it('shows derived bed support without requiring exact physical measurements',()=>{

@@ -23,7 +23,6 @@ export type SceneSpecification={
   upperGarmentId:string;upperColor:string;upperMaterialId:string;upperFitId:string
   lowerGarmentId:string;lowerColor:string
   mirrorMovementId:string;mirrorPhoneHeightId:string;mirrorDistanceId:string;mirrorFramingId:string;mirrorGazeId:string
-  phoneOnlyIlluminationMode:string
   bodyHoldingHand:string;bodySupportChoice:string;bodyFreeHandTask:string;bodyFeetVisibility:string
   roomPhysicalState:CompilationContext['roomPhysicalState']|null
   beddingSelection:BeddingSelection
@@ -77,7 +76,7 @@ export function buildSceneSpecification(ctx:CompilationContext,result:Compilatio
  // Invalid saved IDs already block compilation. Keep the UI stable while reporting
  // those errors; only validated scenes can carry an authoritative lighting block.
  const savedForInvalidScene=ctx.nightLightingId&&!isLightingPresetId(ctx.nightLightingId)?undefined:ctx.nightLightingId
- const lighting=deriveLightingDecision(savedForInvalidScene,ctx.phoneOnlyIlluminationMode||'OFF')
+ const lighting=deriveLightingDecision(savedForInvalidScene)
  const shot=bedroomShots.find(item=>item.id===ctx.bedroomShotId)
  const capture:SceneCapture={
   mode:shot?.mode||'front',shotId:shot?.id||'',
@@ -94,7 +93,6 @@ export function buildSceneSpecification(ctx:CompilationContext,result:Compilatio
   lowerGarmentId:ctx.lowerGarmentId||'',lowerColor:ctx.lowerGarmentId?code(ctx.lowerColor):'',
   mirrorMovementId:code(ctx.mirrorMovementId),mirrorPhoneHeightId:code(ctx.mirrorPhoneHeightId),
   mirrorDistanceId:code(ctx.mirrorDistanceId),mirrorFramingId:code(ctx.mirrorFramingId),mirrorGazeId:code(ctx.mirrorGazeId),
-  phoneOnlyIlluminationMode:ctx.phoneOnlyIlluminationMode||'OFF',
   bodyHoldingHand:ctx.bodyHoldingHand||'auto',bodySupportChoice:ctx.bodySupportChoice||'auto',
   bodyFreeHandTask:ctx.bodyFreeHandTask||'auto',bodyFeetVisibility:ctx.bodyFeetVisibility||'unknown',
   roomPhysicalState:ctx.roomPhysicalState?{...ctx.roomPhysicalState,zones:[...ctx.roomPhysicalState.zones]}:null,

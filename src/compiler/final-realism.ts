@@ -4,6 +4,7 @@ import { isMirrorFlash } from '../data/mirror-flash-physics'
 import { isLivedInClutter } from '../data/bedroom-clutter'
 import { isLaptopSelfieShot } from '../data/laptop-selfie-physics'
 import {mirrorRearFlashNeedsSource} from '../../shared/capture-lighting-rules'
+import {isLightingPresetId,lightingSectionText,physicalRealityText} from '../../shared/lighting-decision'
 
 /** Final deterministic consistency gate. Only proven contradictions block export. */
 export function validateFinalRealism(ctx: CompilationContext, sections: PromptSection[]): ValidationResult {
@@ -16,7 +17,7 @@ export function validateFinalRealism(ctx: CompilationContext, sections: PromptSe
   const camera = byId.get('camera_physics') || ''
   const body = byId.get('body_pose_physics') || ''
   const room = byId.get('bedroom_environment_lock') || ''
-  const light = ctx.nightLightingId || 'phone_screen_only'
+  const light = ctx.nightLightingId || 'phone_screen'
   if (!geometry || !camera || !body || !room) errors.push('Final realism: a required physics section is missing')
   if (!posture) errors.push('Final realism: shot posture was not resolved')
   if (posture === 'supine' && !body.includes('Back, pelvis and head are supported')) errors.push('Final realism: supine body support conflicts with shot')
@@ -45,14 +46,20 @@ export function validateFinalRealism(ctx: CompilationContext, sections: PromptSe
     if(isLivedInClutter(ctx)&&!byId.get('lived_in_bedroom_clutter')?.includes('LIVED-IN BEDROOM CLUTTER:'))errors.push('Final realism: selected lived-in clutter instructions missing')
     if(!isLivedInClutter(ctx)&&byId.has('lived_in_bedroom_clutter'))errors.push('Final realism: unselected clutter leaked into prompt')
   }
-  if (light === 'phone_screen_only' && !byId.get('night_lighting_phone_screen_only')?.includes('sole active light source')) errors.push('Final realism: phone-only lighting contradicts source')
-  if (light === 'window_streetlight' && !ctx.windowUncovered) errors.push('Final realism: external streetlight blocked by closed curtains')
+  if(!isLightingPresetId(light))errors.push('Final realism: unknown single-source lighting')
+  else {
+   const selected=sections.filter(s=>s.id.startsWith('night_lighting_'))
+   if(selected.length!==1||selected[0].id!=='night_lighting_'+light||
+      selected[0].content!==lightingSectionText(light))errors.push('Final realism: lighting section conflicts with selected source')
+   if(byId.get('physical_reality')!==physicalRealityText(light))errors.push('Final realism: physical source contract mismatch')
+  }
+  if(ctx.windowUncovered)errors.push('Final realism: window blackout violated')
   if (mirrorRearFlashNeedsSource(shot?.id,light)) errors.push('Final realism: mirror flash requires rear LED source')
   if (isMirrorFlash(ctx) && !byId.get('mirror_flash_physics')?.includes('MIRROR FLASH OPTICS:')) errors.push('Final realism: mirror flash ray path missing')
   if (!isMirrorFlash(ctx) && byId.has('mirror_flash_physics')) errors.push('Final realism: mirror flash instructions leaked into a non-flash capture')
   if(isLaptopSelfieShot(ctx.bedroomShotId)&&!byId.get('laptop_selfie_physics')?.includes('LAPTOP SELFIE PHYSICS:'))errors.push('Final realism: laptop support physics missing')
   if(!isLaptopSelfieShot(ctx.bedroomShotId)&&byId.has('laptop_selfie_physics'))errors.push('Final realism: laptop pose instructions leaked into unrelated shot')
-  if (ctx.faceDirectionId === 'toward_window' && !ctx.windowUncovered) warnings.push('Final realism: gaze points toward a curtained window')
-  if (light === 'phone_screen_only' && shot?.mode === 'timer') warnings.push('Final realism: timer setup with phone screen as the only illuminant may be underexposed')
+  if (ctx.faceDirectionId === 'toward_window') warnings.push('Final realism: curtains remain shut; no outside light reaches the face')
+  if (light === 'phone_screen' && shot?.mode === 'timer') warnings.push('Final realism: timer setup with phone screen as the only illuminant may be underexposed')
   return { isValid: errors.length === 0, errors, warnings }
 }

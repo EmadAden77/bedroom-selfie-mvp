@@ -35,9 +35,9 @@ describe('Gemini vs ChatGPT comparison',()=>{
      expect(output.result.promptText).toContain('ROOM IMAGE REFERENCE:')
    }
  })
- it.each(bedroomShots)('comparison works with shot $id',shot=>{
-   const lighting=shot.id==='mirror_rear_flash'?'rear_flash':shot.id==='half_light'||shot.id==='silhouette'?'bedside_warm':shot.id==='curtain_shadows'?'window_streetlight':'ceiling_dim'
-   const result=compareTargets({...base,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:true})
+ it.each(bedroomShots.filter(s=>!['curtain_shadows','door_light_strip','silhouette','half_light'].includes(s.id)))('comparison works with shot $id',shot=>{
+   const lighting=shot.id==='mirror_rear_flash'?'camera_flash':shot.id==='half_light'||shot.id==='silhouette'?'led_spotlight':shot.id==='curtain_shadows'?'led_spotlight':'led_spotlight'
+   const result=compareTargets({...base,bedroomShotId:shot.id,nightLightingId:lighting,windowUncovered:false})
    expect(result.gemini.validation.isValid).toBe(true)
    expect(result.chatgpt.validation.isValid).toBe(true)
    expect(isCopyable(result.gemini)).toBe(true)

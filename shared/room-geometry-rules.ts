@@ -130,8 +130,7 @@ export function mirrorReachability(room:RoomDimensions,mirror:MirrorPlacement):R
  */
 export function lightingReachability(room:RoomDimensions,lightingPreset:string):RuleResult{
  if(!validRoom(room))return {status:'invalid',reason:'room dimensions must be within 2.0–12.0m'}
- const ceiling=lightingPreset==='ceiling_dim'||lightingPreset==='ceiling_neutral'||
-  lightingPreset==='ceiling_and_screen'||lightingPreset.startsWith('ceiling_led_')
+ const ceiling=lightingPreset==='led_spotlight'
  if(ceiling&&room.heightMeters<2.2)
   return {status:'invalid',reason:'ceiling light requires room height at least 2.2m'}
  return {status:'valid'}

@@ -5,24 +5,20 @@ import {bedroomShots} from './bedroom-shots'
 export function isLaptopSelfieShot(id:string|undefined):boolean{
  return Boolean(id&&id.startsWith('laptop_')&&id!=='laptop_reflection')
 }
-export function nextLaptopLighting(id:string,current:string):string{
- if(isLaptopSelfieShot(id)&&current==='phone_screen_only')return 'laptop_screen_only'
- if(!isLaptopSelfieShot(id)&&current==='laptop_screen_only'){
-  const mirror=bedroomShots.find(s=>s.id===id)?.mode==='mirror'
-  return mirror?'ceiling_neutral':'phone_screen_only'
- }
+/** Selecting a laptop activity must never change the lighting choice. */
+export function nextLaptopLighting(_id:string,current:string):string{
  return current
 }
 export function renderLaptopSelfiePhysics(ctx:CompilationContext):string{
  if(!isLaptopSelfieShot(ctx.bedroomShotId))return ''
  const shot=bedroomShots.find(s=>s.id===ctx.bedroomShotId)
  const timer=shot?.mode==='timer'
- const lighting=ctx.nightLightingId||'phone_screen_only'
- const lightRule=lighting==='laptop_screen_only'
+ const lighting=ctx.nightLightingId||'phone_screen'
+ const lightRule=lighting==='laptop_screen'
   ? 'LAPTOP DISPLAY ILLUMINATION: Its open powered display is the real sole active scene light. Cast weak directionally plausible light on screen-facing hands, face and nearby bedding, with rapidly falling brightness, dim room and exposure-dependent noise. Phone display, ceiling fixtures and nightstand lamp add no competing illumination.'
-  : lighting==='phone_screen_only'
+  : lighting==='phone_screen'
   ? 'PHONE DISPLAY ILLUMINATION: The recording handset screen is the only significant active light. The laptop display stays dark and does not contribute face illumination. Keep the laptop and background severely underexposed, with genuine phone-screen falloff.'
-  : 'HOUSEHOLD LIGHTING: The selected room-light preset alone controls scene visibility and shadows. A laptop display can show a modest practical image but cannot secretly brighten the entire face, ceiling and room.'
+  : 'HOUSEHOLD LIGHTING: Only the selected white ceiling LED spotlight controls room visibility. The laptop display is OFF and cannot secretly brighten any surface.'
  return [
   'LAPTOP SELFIE PHYSICS: Include exactly one normal functional laptop with a continuous base, attached hinged screen, physically supported underside and correct keyboard, trackpad and real hinge rotation. Keep a plausible screen aspect, normal laptop thickness, believable viewing direction and correct occlusion from the chosen camera position.',
   'POSITION AND SUPPORT: Follow the selected shot precisely. The laptop base maintains real contact with the specified thigh, mattress, room floor, existing rug and dresser support from the shot. Its center of mass stays above its actual support area; screen hinge stiffness counters its lid weight. Unsupported hovering, impossible diagonal balance and missing hinge are forbidden. Bedding compression exists only beneath genuine contact.',
@@ -37,17 +33,17 @@ export function renderLaptopSelfiePhysics(ctx:CompilationContext):string{
 export function buildLaptopGeminiBrief(ctx:CompilationContext):string{
  if(!isLaptopSelfieShot(ctx.bedroomShotId))return ''
  const mode=bedroomShots.find(s=>s.id===ctx.bedroomShotId)?.mode
- const light=ctx.nightLightingId||'phone_screen_only'
+ const light=ctx.nightLightingId||'phone_screen'
  return [
   'SELECTED LAPTOP SELFIE: The laptop is the real physical object interacting with the person, not a floating foreground graphic. Use the exact selected shot action, camera viewpoint and support location. A single hinged laptop base rests stably on the specified thighs, mattress, floor, rug or existing dresser; hands, contact, display viewing angle, key reach, gravity and camera line of sight agree.',
   mode==='timer'
    ? 'Camera method: real smartphone on a stable physical support, timer shutter, both hands free to type. Do not depict a hand holding the phone.'
    : 'Camera method: hand-held Xiaomi 15 Ultra front-camera selfie at attainable arm reach. Exactly one hand is occupied holding the phone; only the other hand can type briefly, scroll, touch the screen edge or rest naturally. Never show both hands typing with a hand-held phone.',
-  light==='laptop_screen_only'
+  light==='laptop_screen'
    ? 'Laptop screen is the sole physical light source. It faces the subject and lights only nearby surfaces weakly with realistic falloff; no other room or phone light.'
-   : light==='phone_screen_only'
+   : light==='phone_screen'
    ? 'Phone display alone provides real illumination; laptop screen stays dark and does not light the face. Dim objects and natural noise must remain physically credible.'
-   : 'Respect the selected household light preset. Laptop display contributes at most minor physically plausible glow, not an invented new light source.',
+   : 'Only the selected white ceiling LED spotlight illuminates the scene. The laptop display is OFF and is not an additional source.',
   'Keep true room geometry and object anchors; avoid duplicated laptops, phantom grips, transparent lid, floating keyboard, perfect readable fake interface, invented fixed optics, beautified skin and stylized cinematic lighting.'
  ].join('\n')
 }

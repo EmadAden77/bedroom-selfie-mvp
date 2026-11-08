@@ -14,7 +14,7 @@ const base:CompilationContext={
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,
  roomReferencePresent:true,bedroomShotId:'mirror_wardrobe',poseId:'standing',
- nightLightingId:'ceiling_neutral'
+ nightLightingId:'led_spotlight'
 }
 const getSpec=()=>{
  const {validation,result}=compilePrompt(base)

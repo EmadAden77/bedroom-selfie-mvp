@@ -7,12 +7,13 @@ export const BedroomShotsSelector:React.FC<Props>=({value,onChange})=>{
   const selected=bedroomShots.find(s=>s.id===value)
   if(selected&&selected.category!==1)setCategory(selected.category)
  },[value])
- const list=bedroomShots.filter(s=>s.category===category&&s.mode!=='mirror')
+ const available=bedroomShots.filter(s=>!['curtain_shadows','door_light_strip','silhouette','half_light'].includes(s.id))
+ const list=available.filter(s=>s.category===category&&s.mode!=='mirror')
  return <section className="card" aria-label="وضعيات تصوير داخل غرفة النوم">
-  <div style={{fontWeight:600,fontSize:'14px',marginBottom:'5px'}}>٧. {bedroomShots.filter(s=>s.mode!=='mirror').length} وضعية للسيلفي داخل الغرفة</div>
+  <div style={{fontWeight:600,fontSize:'14px',marginBottom:'5px'}}>٧. {available.filter(s=>s.mode!=='mirror').length} وضعية للسيلفي داخل الغرفة</div>
   <p style={{fontSize:'11px',color:'var(--muted)'}}>اختر وضعية واحدة. يتطابق موضع اليد والهاتف والمنظور مع نوع اللقطة، دون تغيير أثاث الغرفة.</p>
   <div style={{display:'flex',gap:'6px',flexWrap:'wrap',marginBottom:'12px'}}>
-   {shotCategories.filter((_,i)=>i!==1).map((cat,j)=>{const i=j===0?0:j+1;return <button type="button" key={cat} onClick={()=>setCategory(i)} className={`option ${category===i?'selected':''}`} style={{fontSize:'11px'}} aria-pressed={category===i}>{cat} ({bedroomShots.filter(s=>s.category===i).length})</button>})}
+   {shotCategories.filter((_,i)=>i!==1).map((cat,j)=>{const i=j===0?0:j+1;return <button type="button" key={cat} onClick={()=>setCategory(i)} className={`option ${category===i?'selected':''}`} style={{fontSize:'11px'}} aria-pressed={category===i}>{cat} ({available.filter(s=>s.category===i).length})</button>})}
   </div>
   <button type="button" className={`option ${!value?'selected':''}`} onClick={()=>onChange('')} style={{width:'100%',marginBottom:'8px'}}>بدون وضعية إضافية</button>
   {category===4&&<p style={{fontSize:'11px',color:'var(--muted)',marginBottom:'10px'}}>💻 اللابتوب يرتكز على الفخذين أو السرير أو السجادة أو التسريحة بحسب اللقطة. التصوير بالهاتف باليد الواحدة، إلا وضعيات المؤقت. إضاءة الشاشة لا تظهر إلا إذا اخترت مصدرها.</p>}

@@ -19,7 +19,7 @@ const scene:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'mirror_wardrobe',nightLightingId:'ceiling_neutral',poseId:'standing'
+ bedroomShotId:'mirror_wardrobe',nightLightingId:'led_spotlight' as const,poseId:'standing'
 }
 const errorCodes=(data:ReturnType<typeof body>)=>data.issues.map(i=>i.code)
 
@@ -149,14 +149,14 @@ describe('Physical Reality Engine V2.1 — deterministic body contacts and mecha
   expect(x.deformations).toEqual([expect.objectContaining({region:'elbow_contact'})])
  })
  it('27 V1 strict rear LED flash remains sole light after biomechanics derivation',()=>{
-  const c={...scene,bedroomShotId:'mirror_rear_flash',phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY' as const}
+  const c={...scene,bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash' as const}
   const before=c.nightLightingId
   deriveBodyScene(c)
   expect(evaluatePhysicalReality(c).emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual(['phone_rear_led'])
   expect(c.nightLightingId).toBe(before)
  })
  it('28 V1 strict front display light remains sole light',()=>{
-  const c={...scene,bedroomShotId:'bed_edge',phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY' as const}
+  const c={...scene,bedroomShotId:'bed_edge',nightLightingId:'phone_screen' as const}
   deriveBodyScene(c)
   expect(evaluatePhysicalReality(c).emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual(['phone_display'])
  })

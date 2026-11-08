@@ -13,14 +13,14 @@ describe('Physical bedroom pose interactions',()=>{
  })
  it.each(bedroomShots.filter(s=>s.id in poseInteractionRules))('Interaction $id has posture and valid compiled prompt',s=>{
    expect(getShotPosture(s.id)).toBeDefined()
-   const compiled=compilePrompt({...ctx,bedroomShotId:s.id,nightLightingId:'ceiling_dim'})
+   const compiled=compilePrompt({...ctx,bedroomShotId:s.id,nightLightingId:'led_spotlight'})
    expect(compiled.validation.isValid).toBe(true)
    expect(compiled.result.errors).toHaveLength(0)
    expect(compiled.result.sections.find(v=>v.id==='pose_interaction')?.content).toContain(poseInteractionRules[s.id])
    if(s.mode==='timer')expect(compiled.result.promptText).toContain('stable phone support')
  })
  it('previous poses do not acquire additional interaction commands',()=>{
-   const compiled=compilePrompt({...ctx,bedroomShotId:'bed_edge',nightLightingId:'ceiling_dim'})
+   const compiled=compilePrompt({...ctx,bedroomShotId:'bed_edge',nightLightingId:'led_spotlight'})
    expect(compiled.result.sections.some(s=>s.id==='pose_interaction')).toBe(false)
  })
 })
@@ -39,7 +39,7 @@ describe('15 physically coherent wardrobe mirror poses',()=>{
   }
  })
  it.each(mirrors)('$id compiles with only one consistent rear-camera mirror setup',shot=>{
-  const light=shot.id==='mirror_rear_flash'?'rear_flash':'ceiling_neutral'
+  const light=shot.id==='mirror_rear_flash'?'camera_flash':'led_spotlight'
   const compiled=compilePrompt({...ctx,bedroomShotId:shot.id,poseId:'supine',faceDirectionId:'toward_camera',nightLightingId:light})
   expect(compiled.validation.isValid).toBe(true)
   expect(compiled.result.errors).toHaveLength(0)
@@ -55,7 +55,7 @@ describe('15 physically coherent wardrobe mirror poses',()=>{
   if(shot.id==='mirror_dresser')expect(getShotPosture(shot.id)).toBe('standing')
  })
  it('mirror phone gaze refers to the real display on the subject side',()=>{
-  const compiled=compilePrompt({...ctx,bedroomShotId:'mirror_phone_gaze',nightLightingId:'ceiling_neutral'})
+  const compiled=compilePrompt({...ctx,bedroomShotId:'mirror_phone_gaze',nightLightingId:'led_spotlight'})
   const geometry=compiled.result.sections.find(s=>s.id==='light_pose_geometry')?.content||''
   expect(geometry).toContain('actual handset display facing the subject')
   expect(geometry).not.toContain('screen as seen in the wardrobe mirror')

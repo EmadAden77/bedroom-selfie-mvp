@@ -102,6 +102,7 @@ export type ReferenceImageMeta = {
 
 import type {RoomPhysicalState} from '../data/room-physical-state'
 import type {BeddingSelection} from '../../shared/bedding-physics'
+import type {LightingOption} from '../../shared/lighting-decision'
 
 export type CompilationContext = {
   hairVariantId: string
@@ -133,8 +134,7 @@ export type CompilationContext = {
   roomCustomDepthMeters?:number|null
   roomCustomHeightMeters?:number|null
   beddingSelection?:BeddingSelection
-  phoneOnlyIlluminationMode?: 'OFF' | 'DARK_ROOM_REAR_FLASH_ONLY' | 'DARK_ROOM_FRONT_SCREEN_ONLY'
-  nightLightingId?: string
+  nightLightingId?: LightingOption
   windowUncovered?: boolean
   bodyHoldingHand?: 'auto' | 'left' | 'right' | 'none'
   bodySupportChoice?: 'auto' | 'floor' | 'mattress' | 'none' | 'unknown'
@@ -142,7 +142,6 @@ export type CompilationContext = {
   bodyFeetVisibility?: 'visible' | 'occluded' | 'outside_crop' | 'unknown' | 'absent'
   poseId?: string
   faceDirectionId?: string
-  lampSideId?: string
   bedroomShotId?: string
   mirrorMovementId?: string
   mirrorPhoneHeightId?: string

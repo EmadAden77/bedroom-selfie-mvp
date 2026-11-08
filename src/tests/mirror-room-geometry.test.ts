@@ -10,7 +10,7 @@ const base:CompilationContext={
  upperGarmentId:'reference_garment_preserved',lowerGarmentId:null,
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'gray',surface:'knit',
- referenceImagePresent:false,roomReferencePresent:true,nightLightingId:'ceiling_neutral',
+ referenceImagePresent:false,roomReferencePresent:true,nightLightingId:'led_spotlight',
  bedroomShotId:'mirror_wardrobe'
 }
 

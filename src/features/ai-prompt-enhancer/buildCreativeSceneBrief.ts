@@ -15,7 +15,7 @@ import {buildMirrorFlashGeminiBrief} from '../../data/mirror-flash-physics'
 import {buildBedroomClutterGeminiBrief} from '../../data/bedroom-clutter'
 import {buildLaptopGeminiBrief} from '../../data/laptop-selfie-physics'
 import {buildNaturalSceneDirection} from './natural-scene-director'
-import {effectivePhysicalContext,renderPhysicalReality} from '../../engine/physical-reality'
+import {effectivePhysicalContext} from '../../engine/physical-reality'
 import {renderValidatedBodyScene} from '../../engine/body-mechanics'
 import {renderValidatedBedding} from '../../engine/bedding-physics'
 
@@ -62,9 +62,8 @@ export function buildCreativeSceneBrief(selectedContext:CompilationContext):stri
     (lower?'; '+(lowerMaterial?.englishName||'')+'; '+(lowerFit?.englishName||'')+
       '; '+(lowerState?.englishName?.replace(/_/g,' ')||'')+
       '; color '+(ctx.lowerColor||'as selected')+'; fabric '+(ctx.lowerSurface||'natural'):'')+'.',
-  ...(ctx.phoneOnlyIlluminationMode&&ctx.phoneOnlyIlluminationMode!=='OFF'?[renderPhysicalReality(ctx)]:[]),
-  'Real-world illumination choice: '+(light?.id||'natural')+
-    '. '+(light?.description||'Only plausible real room light sources.')+'.',
+  'BLACKOUT PHYSICS: The bedroom is pitch black without ambient light, daylight or window light. The selected physical emitter is the sole active source; distance, orientation, occlusion, real surface reflections and phone exposure govern visibility.',
+  'Real-world illumination choice (sole emitter): '+(light?.id||'invalid')+'. '+(light?.description||'The source is invalid; generation must stop.'),
   ...(shot?.mode==='mirror'
     ?['Eye direction and head position must follow the selected mirror-specific gaze and reachable rear-camera sightline; generic front-selfie gaze is not authoritative.']
     :['Gaze '+plain(ctx.gazeId)+'; face direction '+plain(ctx.faceDirectionId)+
@@ -75,7 +74,7 @@ export function buildCreativeSceneBrief(selectedContext:CompilationContext):stri
   'Subject image reference: '+(ctx.referenceImagePresent?'provided separately to the final image generator; Gemini does not receive or see it':'not supplied')+'.',
   'Bedroom image reference: '+(ctx.roomReferencePresent?'provided separately to the final image generator; Gemini does not receive or see it':'not supplied')+'.',
   ...(shot?.mode==='mirror'?[buildMirrorGeminiBrief(ctx)]:[]),
-  ...(shot?.mode==='mirror'&&ctx.nightLightingId==='rear_flash'?[buildMirrorFlashGeminiBrief(ctx)]:[]),
+  ...(shot?.mode==='mirror'&&ctx.nightLightingId==='camera_flash'?[buildMirrorFlashGeminiBrief(ctx)]:[]),
   'Treat these selections as scene guidance, not literal text to paste. Express the selected candid moment naturally; only improvise details that do not add new identifiable objects, furniture, lighting or facial anatomy. Subject and room references outrank generic scene defaults, and real physics constrains all visible actions.'
  ]
  return details.join('\n')

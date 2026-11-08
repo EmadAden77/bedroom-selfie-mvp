@@ -13,7 +13,7 @@ const base:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',stateId:'observed_natural_state',
  color:'apparent dark charcoal-gray as observed',surface:'apparent knit-like surface character',
  referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'mirror_wardrobe',nightLightingId:'ceiling_neutral',
+ bedroomShotId:'mirror_wardrobe',nightLightingId:'led_spotlight',
  roomPhysicalState:{...DEFAULT_ROOM_PHYSICAL_STATE,zones:[...DEFAULT_ROOM_PHYSICAL_STATE.zones]}
 }
 describe('Physical room state (user configured)',()=>{
@@ -26,8 +26,8 @@ describe('Physical room state (user configured)',()=>{
  })
  it('keeps the exact same object anchors and positions across camera angles',()=>{
   const normal=renderRoomPhysicalState(base)
-  const mirror=renderRoomPhysicalState({...base,bedroomShotId:'mirror_floor',nightLightingId:'rear_flash'})
-  const front=renderRoomPhysicalState({...base,bedroomShotId:'bed_edge',nightLightingId:'phone_screen_only'})
+  const mirror=renderRoomPhysicalState({...base,bedroomShotId:'mirror_floor',nightLightingId:'camera_flash'})
+  const front=renderRoomPhysicalState({...base,bedroomShotId:'bed_edge',nightLightingId:'phone_screen'})
   expect(normal).toBe(mirror)
   expect(normal).toBe(front)
   expect(normal).toContain('SESSION CONTINUITY:')

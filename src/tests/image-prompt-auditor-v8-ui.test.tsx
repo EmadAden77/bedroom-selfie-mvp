@@ -11,10 +11,10 @@ const base:CompilationContext={
  upperGarmentId:'reference_garment_preserved',lowerGarmentId:null,
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',stateId:'observed_natural_state',
  color:'dark gray',surface:'knit',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'mirror_wardrobe',nightLightingId:'ceiling_neutral'
+ bedroomShotId:'mirror_wardrobe',nightLightingId:'led_spotlight' as const
 }
-const brief='Selected wardrobe mirror selfie with the Xiaomi rear camera, natural grip, physical bedroom layout and the real light sources.'
-const final='A natural reference-preserving mirror selfie made with the rear cameras of one Xiaomi phone, held against a steady right-wall wardrobe mirror. Real floor tile joints converge correctly, shadows come only from the true ceiling fixtures, and the person remains physically balanced. No added facial marks, fake sources, improbable limbs or invented furniture.'
+const brief='Selected wardrobe mirror selfie with the Xiaomi rear camera, natural grip, physical bedroom layout and the single real light source.'
+const final='A natural reference-preserving mirror selfie made with the rear cameras of one Xiaomi phone, held against a steady right-wall wardrobe mirror. Real floor tile joints converge correctly, shadows come only from the single white LED ceiling spotlight, and the person remains physically balanced. No added facial marks, fake sources, improbable limbs or invented furniture.'
 const response={repairNotes:['تناقض: موضع الكاميرا؛ الإصلاح: توجيه العدسات الخلفية إلى المرآة.'],sceneCameraSurfaceDetails:'سيلفي مرآة خلفية، مواد الغرفة ثابتة وغبار خافت إذا ظهر فعليًا.',finalImagePrompt:final}
 const ok=(data:unknown=response,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json'}})
 

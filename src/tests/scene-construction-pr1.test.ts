@@ -51,13 +51,13 @@ const baseline:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- poseId:'seated_bed',bedroomShotId:'bed_edge',nightLightingId:'phone_screen_only'
+ poseId:'seated_bed',bedroomShotId:'bed_edge',nightLightingId:'phone_screen' as const
 }
 const cases:[string,Partial<CompilationContext>][]=[
- ['front camera + phone-screen-only lighting',{bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'phone_screen_only',phoneOnlyIlluminationMode:'OFF'}],
- ['exclusive mirror rear flash + saved ceiling preference',{bedroomShotId:'mirror_rear_flash',poseId:'standing',nightLightingId:'ceiling_neutral',phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY'}],
- ['regular wardrobe mirror + neutral ceiling lighting',{bedroomShotId:'mirror_wardrobe',poseId:'standing',nightLightingId:'ceiling_neutral',phoneOnlyIlluminationMode:'OFF'}],
- ['laptop typing with timer + laptop screen light',{bedroomShotId:'laptop_edge_typing_timer',poseId:'seated_bed',nightLightingId:'laptop_screen_only',phoneOnlyIlluminationMode:'OFF'}]
+ ['front camera + phone-screen-only lighting',{bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'phone_screen' as const}],
+ ['mirror rear flash selected explicitly',{bedroomShotId:'mirror_rear_flash',poseId:'standing',nightLightingId:'camera_flash' as const}],
+ ['regular wardrobe mirror + neutral ceiling lighting',{bedroomShotId:'mirror_wardrobe',poseId:'standing',nightLightingId:'led_spotlight' as const}],
+ ['laptop typing with timer + laptop screen light',{bedroomShotId:'laptop_edge_typing_timer',poseId:'seated_bed',nightLightingId:'laptop_screen' as const}]
 ]
 describe('PR1 local scene-construction boundary — exact baseline behavior',()=>{
  it.each(cases)('%s: byte-identical output and repeat determinism',(name,patch)=>{
