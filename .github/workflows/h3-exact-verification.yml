@@ -29,6 +29,8 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Exact npx tsc --noEmit
         run: npx tsc --noEmit
+      - name: Native Node ESM legacy route import smoke
+        run: node --experimental-strip-types --input-type=module -e "const route = await import('./api/generate-prompt.ts'); if (typeof route.default?.fetch !== 'function') process.exit(1)"
       - name: Exact npm run test:vitest
         run: npm run test:vitest
       - name: Exact npm run build
