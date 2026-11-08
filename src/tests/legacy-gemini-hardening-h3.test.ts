@@ -23,11 +23,11 @@ const getSpec=()=>{
 }
 const setup=()=>{
  vi.stubEnv('GEMINI_API_KEY','H3_SECRET_API_KEY_MUST_NEVER_LEAK')
- vi.stubEnv('PROMPT_ENGINE_ACCESS_TOKEN','H3_TEST_CALLER_TOKEN')
+ vi.stubEnv('PROMPT_ENGINE_ACCESS_TOKEN','H3_TEST_CALLER_TOKEN_0123456789_0123456789_0123456789')
 }
 const post=(body:unknown,headers:Record<string,string>={})=>new Request(url,{
  method:'POST',
- headers:{'content-type':'application/json','x-prompt-engine-access':'H3_TEST_CALLER_TOKEN',...headers},
+ headers:{'content-type':'application/json','x-prompt-engine-access':'H3_TEST_CALLER_TOKEN_0123456789_0123456789_0123456789',...headers},
  body:JSON.stringify(body)
 })
 const providerReply=()=>new Response(JSON.stringify({
@@ -119,10 +119,98 @@ describe('H3 legacy Gemini endpoint: defensively bounded, advisory only',()=>{
   expect(body).not.toHaveProperty('enhancedPrompt')
   expect(body).not.toHaveProperty('validated',true)
   expect(raw).not.toContain('H3_SECRET_API_KEY_MUST_NEVER_LEAK')
-  expect(raw).not.toContain('H3_TEST_CALLER_TOKEN')
+  expect(raw).not.toContain('H3_TEST_CALLER_TOKEN_0123456789_0123456789_0123456789')
   expect(upstream).toHaveBeenCalledTimes(1)
-  expect(outgoing).not.toContain('H3_TEST_CALLER_TOKEN')
+  expect(outgoing).not.toContain('H3_TEST_CALLER_TOKEN_0123456789_0123456789_0123456789')
   expect(outgoing).not.toContain(spec.derivedUnits[0].text)
   expect(spec).toEqual(before)
+ })
+})
+
+
+describe('Token hardening: minimum secret and per-IP quota',()=>{
+ it('returns 503 when PROMPT_ENGINE_ACCESS_TOKEN is absent, without calling Gemini',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','FAKE_GEMINI_KEY_FOR_TESTING')
+  vi.stubEnv('PROMPT_ENGINE_ACCESS_TOKEN','')
+  const upstream=vi.fn(async()=>providerReply())
+  vi.stubGlobal('fetch',upstream)
+  const result=await endpoint.fetch(post({sceneSpecification:getSpec()}, {'x-real-ip':'203.0.113.10'}))
+  expect(result.status).toBe(503)
+  expect((await result.json() as {errorCode:string}).errorCode).toBe('GEMINI_NOT_CONFIGURED')
+  expect(upstream).not.toHaveBeenCalled()
+ })
+ it('returns 503 for a short token even if the caller provides it correctly',async()=>{
+  vi.stubEnv('GEMINI_API_KEY','FAKE_GEMINI_KEY_FOR_TESTING')
+  vi.stubEnv('PROMPT_ENGINE_ACCESS_TOKEN','short-token')
+  const upstream=vi.fn(async()=>providerReply())
+  vi.stubGlobal('fetch',upstream)
+  const result=await endpoint.fetch(post({sceneSpecification:getSpec()},{
+   'x-prompt-engine-access':'short-token','x-real-ip':'203.0.113.11'
+  }))
+  expect(result.status).toBe(503)
+  expect((await result.json() as {errorCode:string}).errorCode).toBe('GEMINI_NOT_CONFIGURED')
+  expect(upstream).not.toHaveBeenCalled()
+ })
+ it.each(['test','dev','changeme'])('returns 503 for insecure default token %s',async insecure=>{
+  vi.stubEnv('GEMINI_API_KEY','FAKE_GEMINI_KEY_FOR_TESTING')
+  vi.stubEnv('PROMPT_ENGINE_ACCESS_TOKEN',insecure)
+  const upstream=vi.fn(async()=>providerReply())
+  vi.stubGlobal('fetch',upstream)
+  const result=await endpoint.fetch(post({sceneSpecification:getSpec()},{
+   'x-prompt-engine-access':insecure,'x-real-ip':'203.0.113.12'
+  }))
+  expect(result.status).toBe(503)
+  expect((await result.json() as {errorCode:string}).errorCode).toBe('GEMINI_NOT_CONFIGURED')
+  expect(upstream).not.toHaveBeenCalled()
+ })
+ it('permits ten authorized requests per IP then returns 429 with Retry-After',async()=>{
+  setup()
+  const scene=getSpec()
+  const upstream=vi.fn(async()=>providerReply())
+  vi.stubGlobal('fetch',upstream)
+  for(let i=0;i<10;i++){
+   const response=await endpoint.fetch(post({sceneSpecification:scene},{'x-real-ip':'203.0.113.20'}))
+   expect(response.status).toBe(200)
+  }
+  const blocked=await endpoint.fetch(post({sceneSpecification:scene},{'x-real-ip':'203.0.113.20'}))
+  expect(blocked.status).toBe(429)
+  expect((await blocked.json() as {errorCode:string}).errorCode).toBe('PROMPT_RATE_LIMIT')
+  const retry=Number(blocked.headers.get('retry-after'))
+  expect(retry).toBeGreaterThanOrEqual(1)
+  expect(retry).toBeLessThanOrEqual(60)
+  expect(blocked.headers.get('cache-control')).toBe('no-store')
+  expect(upstream).toHaveBeenCalledTimes(10)
+  const differentIp=await endpoint.fetch(post({sceneSpecification:scene},{'x-real-ip':'203.0.113.21'}))
+  expect(differentIp.status).toBe(200)
+  expect(upstream).toHaveBeenCalledTimes(11)
+ })
+ it('limits repeated invalid access attempts before any upstream call',async()=>{
+  setup()
+  const upstream=vi.fn(async()=>providerReply())
+  vi.stubGlobal('fetch',upstream)
+  const scene=getSpec()
+  for(let i=0;i<10;i++){
+   const result=await endpoint.fetch(post({sceneSpecification:scene},{
+    'x-prompt-engine-access':'incorrect','x-real-ip':'203.0.113.22'
+   }))
+   expect(result.status).toBe(401)
+  }
+  const blocked=await endpoint.fetch(post({sceneSpecification:scene},{
+   'x-prompt-engine-access':'incorrect','x-real-ip':'203.0.113.22'
+  }))
+  expect(blocked.status).toBe(429)
+  expect(blocked.headers.get('retry-after')).toBeTruthy()
+  expect(upstream).not.toHaveBeenCalled()
+ })
+ it('returns 200 with a strong configured token and never echoes it',async()=>{
+  setup()
+  const upstream=vi.fn(async()=>providerReply())
+  vi.stubGlobal('fetch',upstream)
+  const response=await endpoint.fetch(post({sceneSpecification:getSpec()},{'x-real-ip':'203.0.113.23'}))
+  expect(response.status).toBe(200)
+  const raw=await response.text()
+  expect(raw).not.toContain('H3_TEST_CALLER_TOKEN_0123456789_0123456789_0123456789')
+  expect(raw).toContain('"authoritative":false')
+  expect(upstream).toHaveBeenCalledTimes(1)
  })
 })

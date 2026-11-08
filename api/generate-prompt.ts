@@ -76,6 +76,40 @@ const secretMatches = (provided: string, expected: string): boolean => {
   return timingSafeEqual(a, b)
 }
 
+// Bound memory even under high-cardinality source addresses. This limiter is
+// per warm serverless instance, not a distributed global quota.
+const RATE_WINDOW_MS = 60_000
+const RATE_LIMIT = 10
+const MAX_RATE_BUCKETS = 2048
+const requestBuckets = new Map<string,{count:number;resetsAt:number}>()
+
+function retryAfterForIp(request:Request, accessToken:string):number|null{
+  // These IP headers must originate from the trusted reverse proxy. Never
+  // include the raw address or token hash in diagnostics or response bodies.
+  const ip=(request.headers.get('x-real-ip') ||
+    request.headers.get('x-forwarded-for')?.split(',')[0] || 'anonymous').trim().slice(0,128)
+  const tokenHashPrefix=createHash('sha256').update(accessToken).digest('hex').slice(0,12)
+  const bucketKey=createHash('sha256').update(ip+'|'+tokenHashPrefix).digest('hex')
+  const now=Date.now()
+  const active=requestBuckets.get(bucketKey)
+  if(active && now<active.resetsAt){
+    if(active.count>=RATE_LIMIT) return Math.max(1,Math.ceil((active.resetsAt-now)/1000))
+    active.count++
+    return null
+  }
+  if(requestBuckets.size>=MAX_RATE_BUCKETS){
+    for(const [key,value] of requestBuckets){
+      if(value.resetsAt<=now) requestBuckets.delete(key)
+    }
+    if(requestBuckets.size>=MAX_RATE_BUCKETS){
+      const oldest=requestBuckets.keys().next().value
+      if(oldest) requestBuckets.delete(oldest)
+    }
+  }
+  requestBuckets.set(bucketKey,{count:1,resetsAt:now+RATE_WINDOW_MS})
+  return null
+}
+
 // Server logs contain only categorized errors. Never log prompts, access tokens,
 // provider keys, request bodies, headers or provider error response contents.
 const safeFailure = (code: string, message: string, status = 502) =>
@@ -109,7 +143,20 @@ export default {
     // This is a server-configured shared secret, NOT a user login/session token.
     // Retain the existing header authentication before parsing attacker-controlled JSON.
     const accessToken = process.env.PROMPT_ENGINE_ACCESS_TOKEN
-    if (!accessToken) return safeFailure('GEMINI_NOT_CONFIGURED', 'ميزة Gemini غير مفعلة؛ تحقق من إعدادات الخادم.', 503)
+    // Fail closed: no missing/short/common-default bearer credentials.
+    // Validate per request so rotations in a warm process take effect.
+    if (!accessToken || accessToken.trim().length<32 ||
+        ['test','dev','changeme'].includes(accessToken.trim().toLowerCase()))
+      return safeFailure('GEMINI_NOT_CONFIGURED', 'ميزة Gemini غير مفعلة؛ تحقق من إعدادات الخادم.', 503)
+
+    // Count attempted requests before verifying the bearer header, preventing
+    // an attacker from making unlimited incorrect-token attempts per IP.
+    const retryAfter=retryAfterForIp(request,accessToken)
+    if(retryAfter!==null){
+      const response=safeFailure('PROMPT_RATE_LIMIT', 'تم تجاوز حد الطلبات. حاول لاحقًا.', 429)
+      response.headers.set('Retry-After',String(retryAfter))
+      return response
+    }
     const token = request.headers.get('x-prompt-engine-access') || ''
     if (!token || !secretMatches(token, accessToken))
       return json({ error: 'رمز الوصول غير صحيح.' }, 401)

@@ -22,7 +22,7 @@ const spec=()=>{
 }
 const post=(sceneSpecification:unknown,headers:Record<string,string>={})=>new Request(endpoint,{
  method:'POST',headers:{
-  'content-type':'application/json','x-prompt-engine-access':'test-access-code-not-real',...headers
+  'content-type':'application/json','x-prompt-engine-access':'test-access-code-not-real-0123456789abcdef',...headers
  },body:JSON.stringify({sceneSpecification})
 })
 const fakeSelection=()=>new Response(JSON.stringify({candidates:[{content:{parts:[{
@@ -30,7 +30,7 @@ const fakeSelection=()=>new Response(JSON.stringify({candidates:[{content:{parts
 }]}}]}),{status:200,headers:{'content-type':'application/json'}})
 const auth=()=>{
  vi.stubEnv('GEMINI_API_KEY','test-key-not-real')
- vi.stubEnv('PROMPT_ENGINE_ACCESS_TOKEN','test-access-code-not-real')
+ vi.stubEnv('PROMPT_ENGINE_ACCESS_TOKEN','test-access-code-not-real-0123456789abcdef')
 }
 afterEach(()=>{ vi.unstubAllEnvs(); vi.unstubAllGlobals() })
 
