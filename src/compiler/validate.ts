@@ -123,7 +123,7 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
     errors.push(`Fit invalid: ${ctx.fitId}`)
   }
 
-  const lighting = nightLightingPresets.find(p => p.id === (ctx.nightLightingId || 'phone_screen_only'))
+  const lighting = nightLightingPresets.find(p => p.id === (ctx.nightLightingId || 'phone_screen'))
   if (!lighting) errors.push('Night lighting preset invalid')
   if (ctx.windowUncovered) errors.push('Blackout lighting requires closed curtains and zero outside light')
 
