@@ -1,4 +1,6 @@
+// LEGACY ENDPOINT — see api/generate-main-prompt.ts for the canonical flow. Any behavior change here MUST be mirrored there.
 import { createHash, timingSafeEqual } from 'node:crypto'
+import {MAX_SCENE_REQUEST_BYTES,validateSceneSpec} from './generate-main-prompt.ts'
 // Keep this route self-contained: Vercel's Node ESM runtime must not resolve
 // extensionless imports from src/engine after TypeScript compilation.
 // The contract below is mirrored in the local-only engine and guarded by parity tests.
@@ -62,8 +64,6 @@ export function buildEnhancedPrompt(basePrompt: string, selected: readonly Promp
 }
 
 
-type RequestBody = { prompt?: unknown; mode?: unknown; posture?: unknown; lighting?: unknown }
-
 const json = (payload: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(payload), {
     status,
@@ -74,6 +74,40 @@ const secretMatches = (provided: string, expected: string): boolean => {
   const a = createHash('sha256').update(provided).digest()
   const b = createHash('sha256').update(expected).digest()
   return timingSafeEqual(a, b)
+}
+
+// Bound memory even under high-cardinality source addresses. This limiter is
+// per warm serverless instance, not a distributed global quota.
+const RATE_WINDOW_MS = 60_000
+const RATE_LIMIT = 10
+const MAX_RATE_BUCKETS = 2048
+const requestBuckets = new Map<string,{count:number;resetsAt:number}>()
+
+function retryAfterForIp(request:Request, accessToken:string):number|null{
+  // These IP headers must originate from the trusted reverse proxy. Never
+  // include the raw address or token hash in diagnostics or response bodies.
+  const ip=(request.headers.get('x-real-ip') ||
+    request.headers.get('x-forwarded-for')?.split(',')[0] || 'anonymous').trim().slice(0,128)
+  const tokenHashPrefix=createHash('sha256').update(accessToken).digest('hex').slice(0,12)
+  const bucketKey=createHash('sha256').update(ip+'|'+tokenHashPrefix).digest('hex')
+  const now=Date.now()
+  const active=requestBuckets.get(bucketKey)
+  if(active && now<active.resetsAt){
+    if(active.count>=RATE_LIMIT) return Math.max(1,Math.ceil((active.resetsAt-now)/1000))
+    active.count++
+    return null
+  }
+  if(requestBuckets.size>=MAX_RATE_BUCKETS){
+    for(const [key,value] of requestBuckets){
+      if(value.resetsAt<=now) requestBuckets.delete(key)
+    }
+    if(requestBuckets.size>=MAX_RATE_BUCKETS){
+      const oldest=requestBuckets.keys().next().value
+      if(oldest) requestBuckets.delete(oldest)
+    }
+  }
+  requestBuckets.set(bucketKey,{count:1,resetsAt:now+RATE_WINDOW_MS})
+  return null
 }
 
 // Server logs contain only categorized errors. Never log prompts, access tokens,
@@ -94,31 +128,63 @@ export default {
   async fetch(request: Request): Promise<Response> {
     if (request.method !== 'POST') return json({ error: 'POST only' }, 405)
 
-    const apiKey = process.env.GEMINI_API_KEY
-    const accessToken = process.env.PROMPT_ENGINE_ACCESS_TOKEN
-    if (!apiKey || !accessToken) {
-      return safeFailure('GEMINI_NOT_CONFIGURED', 'ميزة Gemini غير مفعلة؛ تحقق من متغيرات Vercel ثم أعد النشر.', 503)
-    }
+    // Mirror the canonical route's cross-origin, JSON, and two-stage size checks.
     const origin = request.headers.get('origin')
-    if (origin && origin !== new URL(request.url).origin) return json({ error: 'Request origin rejected' }, 403)
-    const token = request.headers.get('x-prompt-engine-access') || ''
-    if (!token || !secretMatches(token, accessToken)) return json({ error: 'رمز الوصول غير صحيح.' }, 401)
+    if (origin && origin !== new URL(request.url).origin)
+      return safeFailure('ORIGIN_REJECTED', 'تم رفض مصدر الطلب.', 403)
+    const site = request.headers.get('sec-fetch-site')
+    if (site && !['same-origin','none'].includes(site))
+      return safeFailure('CROSS_SITE', 'الطلب ليس من التطبيق.', 403)
+    if (!(request.headers.get('content-type') || '').toLowerCase().includes('application/json'))
+      return safeFailure('JSON_REQUIRED', 'يُقبل JSON فقط.', 415)
+    if (Number(request.headers.get('content-length') || 0) > MAX_SCENE_REQUEST_BYTES)
+      return safeFailure('TOO_LARGE', 'حجم مواصفات المشهد كبير جدًا.', 413)
 
-    const size = Number(request.headers.get('content-length') || '0')
-    if (size > 45000) return json({ error: 'حجم البرومبت أكبر من الحد المسموح.' }, 413)
-    let body: RequestBody
-    try { body = await request.json() as RequestBody }
-    catch { return json({ error: 'بيانات الطلب غير صالحة.' }, 400) }
+    // This is a server-configured shared secret, NOT a user login/session token.
+    // Retain the existing header authentication before parsing attacker-controlled JSON.
+    const accessToken = process.env.PROMPT_ENGINE_ACCESS_TOKEN
+    // Fail closed: no missing/short/common-default bearer credentials.
+    // Validate per request so rotations in a warm process take effect.
+    if (!accessToken || accessToken.trim().length<32 ||
+        ['test','dev','changeme'].includes(accessToken.trim().toLowerCase()))
+      return safeFailure('GEMINI_NOT_CONFIGURED', 'ميزة Gemini غير مفعلة؛ تحقق من إعدادات الخادم.', 503)
 
-    const { prompt, mode, posture, lighting } = body
-    if (typeof prompt !== 'string' || prompt.trim().length < 100 || prompt.length > 35000 ||
-      !['front','mirror','rear','timer'].includes(String(mode)) ||
-      typeof posture !== 'string' || posture.length > 50 ||
-      (lighting !== undefined && (typeof lighting !== 'string' || !/^[a-z0-9_]{1,60}$/.test(lighting)))) {
-      return json({ error: 'يرجى توليد برومبت صحيح من التطبيق أولًا.' }, 400)
+    // Count attempted requests before verifying the bearer header, preventing
+    // an attacker from making unlimited incorrect-token attempts per IP.
+    const retryAfter=retryAfterForIp(request,accessToken)
+    if(retryAfter!==null){
+      const response=safeFailure('PROMPT_RATE_LIMIT', 'تم تجاوز حد الطلبات. حاول لاحقًا.', 429)
+      response.headers.set('Retry-After',String(retryAfter))
+      return response
     }
+    const token = request.headers.get('x-prompt-engine-access') || ''
+    if (!token || !secretMatches(token, accessToken))
+      return json({ error: 'رمز الوصول غير صحيح.' }, 401)
 
-    const eligible = eligibleHintIds(mode as CaptureMode, posture)
+    // Do not accept free-text prompt/mode/posture fields from callers.
+    // validateSceneSpec checks canonical geometry, body/bedding derivations,
+    // immutable derivedUnits, matching IDs, and integrity before any Gemini call.
+    let sceneSpec: ReturnType<typeof validateSceneSpec>
+    try {
+      const raw = await request.text()
+      if (new TextEncoder().encode(raw).length > MAX_SCENE_REQUEST_BYTES)
+        return safeFailure('TOO_LARGE', 'حجم مواصفات المشهد كبير جدًا.', 413)
+      const data:unknown = JSON.parse(raw)
+      if (!data || typeof data !== 'object' || Array.isArray(data) ||
+          Object.keys(data).join(',') !== 'sceneSpecification')
+        return safeFailure('STRUCTURED_SPEC_REQUIRED', 'مواصفات المشهد المحلية المنظمة مطلوبة.', 400)
+      sceneSpec = validateSceneSpec((data as {sceneSpecification:unknown}).sceneSpecification)
+    } catch (error) {
+      const code = error instanceof Error && /^[A-Z_]+$/.test(error.message)
+        ? error.message : 'BAD_JSON'
+      return safeFailure(code, 'مواصفات المشهد غير صالحة.', 400)
+    }
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) return safeFailure('GEMINI_NOT_CONFIGURED', 'ميزة Gemini غير مفعلة؛ تحقق من إعدادات الخادم.', 503)
+    // Read only validated capture metadata; never mutate or transmit derivedUnits.
+    const {mode,posture,lighting} = sceneSpec.capture
+    const eligible = eligibleHintIds(mode, posture)
+
     // This is a short classification task, not image generation or deep reasoning.
     // Owners can override the model using GEMINI_MODEL in Vercel.
     const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite'
@@ -167,13 +233,13 @@ export default {
         console.warn('[Gemini selector] model output did not match allowed hint selection')
         return safeFailure('GEMINI_INVALID_SELECTION', 'رد Gemini لم يجتز فحص قواعد التطبيق. لم يتغير البرومبت الأصلي.', 422)
       }
-      return json({ enhancedPrompt: buildEnhancedPrompt(prompt, ids), selectedHintIds: ids, model })
+      // Advisory IDs only. No prompt text, validated:true, or final authority is returned.
+      return json({ source: 'legacy-hints', authoritative: false, selectedHintIds: ids, model })
     } catch (error) {
-      const err = error as Error & { cause?: { code?: string } }
+      const err = error as Error
       const timeout = err?.name === 'TimeoutError' || err?.name === 'AbortError'
-      const causeCode = typeof err?.cause?.code === 'string' ? err.cause.code : 'UNSPECIFIED'
       // Only safe diagnostic classification is logged. No request payloads or secrets.
-      console.error('[Gemini selector] outbound failure:', timeout ? 'TIMEOUT' : 'NETWORK', String(causeCode).slice(0,48))
+      console.error('[Gemini selector] outbound failure:', timeout ? 'TIMEOUT' : 'NETWORK')
       return timeout
         ? safeFailure('GEMINI_TIMEOUT', 'انتهت مهلة اتصال Google. حاول مرة أخرى؛ البرومبت المحلي ما زال متاحًا.', 504)
         : safeFailure('GEMINI_NETWORK', 'فشل الاتصال الخارجي بخدمة Google من الخادم. البرومبت المحلي لم يتأثر.', 502)
