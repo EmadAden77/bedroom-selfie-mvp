@@ -90,7 +90,7 @@ describe('Vercel standalone constrained editor',()=>{
   expect(JSON.stringify(outgoing)).not.toContain('inlineData')
  })
  it('checks phone-only capture and emitter contract on the server before calling Gemini',async()=>{
-  const ctx={...base,bedroomShotId:'mirror_rear_flash',phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY' as const}
+  const ctx={...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash',phoneOnlyIlluminationMode:'OFF' as const}
   const spec=getSpec(ctx)
   vi.stubEnv('GEMINI_API_KEY','fake-key')
   const providerCall=vi.fn(async()=>provider(spec))
@@ -111,8 +111,8 @@ describe('Vercel standalone constrained editor',()=>{
   expect(providerCall).toHaveBeenCalledTimes(1)
  })
  it('accepts a front-only screen scene and rejects cross-mode client tampering before Gemini',async()=>{
-  const ctx:CompilationContext={...base,bedroomShotId:'bed_edge',nightLightingId:'led_spotlight',
-   phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY'}
+  const ctx:CompilationContext={...base,bedroomShotId:'bed_edge',nightLightingId:'phone_screen',
+   phoneOnlyIlluminationMode:'OFF'}
   const spec=getSpec(ctx)
   expect(spec.capture.mode).toBe('front')
   expect(spec.capture.lighting).toBe('phone_screen')
@@ -313,7 +313,7 @@ describe('Vercel standalone constrained editor',()=>{
  it('retains screen-only light, clothing selections and locked room objects unchanged',()=>{
   const ctx:CompilationContext={...base,bedroomShotId:'bed_edge',nightLightingId:'phone_screen'}
   const s=getSpec(ctx)
-  expect(s.derivedUnits.find(u=>u.id==='night_lighting_phone_screen')?.text).toContain('sole active light source')
+  expect(s.derivedUnits.find(u=>u.id==='night_lighting_phone_screen')?.text).toContain('The ONLY light source is')
   expect(s.selections.upperColor).toBe('apparent dark charcoal-gray as observed')
   expect(s.derivedUnits.find(u=>u.id==='upper_reference_garment_preserved')?.text).toContain('charcoal')
   const locked={...base,roomPhysicalState:{order:'clear' as const,surface:'dust' as const,zones:['bed','floor','dresser','nightstand'] as ('bed'|'floor'|'dresser'|'nightstand')[],sessionLocked:true}}

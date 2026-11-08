@@ -12,71 +12,55 @@ const selected:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'mirror_rear_flash',poseId:'standing',nightLightingId:'led_spotlight',
+ bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'phone_screen',
  windowUncovered:false,phoneOnlyIlluminationMode:'OFF'
 }
 const active=(x:CompilationContext)=>evaluatePhysicalReality(x).emitters.filter(e=>e.enabled).map(e=>e.id)
-
-describe('V1 stabilization — state transitions, causal light and downstream parity',()=>{
- it('overrides effective emitters without mutating retained lighting, identity, clothing or room state',()=>{
+describe('Blackout lighting state transition and authority regression',()=>{
+ it('never overrides selected emitters or unrelated identity, room and clothing',()=>{
   const original=structuredClone(selected)
-  const flash={...selected,phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY' as const}
-  expect(active(selected)).toEqual(['bedside','phone_display'])
-  expect(active(flash)).toEqual(['phone_rear_led'])
-  expect(effectivePhysicalContext(flash).nightLightingId).toBe('camera_flash')
+  const changed={...selected,nightLightingId:'led_spotlight'}
+  expect(active(selected)).toEqual(['phone_display'])
+  expect(active(changed)).toEqual(['ceiling'])
+  expect(effectivePhysicalContext(changed)).toEqual(changed)
   expect(selected).toEqual(original)
-  expect(evaluatePhysicalReality({...flash,phoneOnlyIlluminationMode:'OFF'}).effectiveLightingId).toBe('led_spotlight')
-  expect(active({...flash,phoneOnlyIlluminationMode:'OFF'})).toEqual(['bedside','phone_display'])
  })
- it('requires explicit camera choice when switching strict modes; no pose or clothing rewrites',()=>{
-  const flash={...selected,phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY' as const}
-  const front={...flash,phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY' as const}
-  expect(evaluatePhysicalReality(front).issues.some(i=>i.code==='FRONT_SELFIE_REQUIRED')).toBe(true)
-  expect(compilePrompt(front).result.promptText).toBe('')
-  const changed=reconcileCaptureSelection(front,{bedroomShotId:'bed_edge'})
-  expect(changed.poseId).toBe('standing')
-  expect(changed.upperGarmentId).toBe(selected.upperGarmentId)
-  expect(changed.nightLightingId).toBe('led_spotlight')
-  expect(evaluatePhysicalReality(changed).issues).toEqual([])
-  expect(active(changed)).toEqual(['phone_display'])
-  const compiled=compilePrompt(changed)
-  expect(compiled.validation.isValid).toBe(true)
-  expect(compiled.result.sections.find(s=>s.id==='night_lighting_phone_screen')).toBeDefined()
-  expect(compiled.result.sections.find(s=>s.id==='night_lighting_led_spotlight')).toBeUndefined()
+ it('requires users to correct invalid capture and lighting combinations',()=>{
+  const invalid={...selected,bedroomShotId:'mirror_rear_flash'}
+  expect(evaluatePhysicalReality(invalid).issues.map(i=>i.code)).toContain('MIRROR_FLASH_REQUIRED')
+  expect(compilePrompt(invalid).result.promptText).toBe('')
+  const corrected=reconcileCaptureSelection(invalid,{nightLightingId:'camera_flash'})
+  expect(corrected.bedroomShotId).toBe('mirror_rear_flash')
+  expect(corrected.upperGarmentId).toBe(selected.upperGarmentId)
+  expect(active(corrected)).toEqual(['phone_rear_led'])
+  expect(compilePrompt(corrected).validation.isValid).toBe(true)
  })
- it('preserves the captured lighting authority for Gemini and optional auxiliary editor brief',()=>{
-  for(const [shotId,mode,light,emitter] of [
-   ['mirror_rear_flash','DARK_ROOM_REAR_FLASH_ONLY','camera_flash','phone_rear_led'],
-   ['bed_edge','DARK_ROOM_FRONT_SCREEN_ONLY','phone_screen','phone_display']
+ it('preserves one local source throughout the Gemini specification and scene brief',()=>{
+  for(const [shotId,light,emitter,pose] of [
+   ['mirror_rear_flash','camera_flash','phone_rear_led','standing'],
+   ['bed_edge','phone_screen','phone_display','seated_bed']
   ] as const){
-   const ctx={...selected,bedroomShotId:shotId,phoneOnlyIlluminationMode:mode}
+   const ctx={...selected,bedroomShotId:shotId,nightLightingId:light,poseId:pose}
    const {result,validation}=compilePrompt(ctx)
    expect(validation.isValid).toBe(true)
    const spec=buildSceneSpecification(ctx,result,validation)
    expect(spec.capture.lighting).toBe(light)
-   expect(spec.selections.phoneOnlyIlluminationMode).toBe(mode)
    expect(spec.derivedUnits.find(u=>u.id==='physical_reality')?.text).toContain('Active physical emitters: '+emitter+' at ')
-   const brief=buildCreativeSceneBrief(ctx)
-   expect(brief).toContain('Real-world illumination choice: '+light)
-   expect(brief).toContain('Active physical emitters: '+emitter+' at ')
-   expect(brief).not.toContain('Real-world illumination choice: led_spotlight')
-   expect(ctx.nightLightingId).toBe('led_spotlight')
+   expect(buildCreativeSceneBrief(ctx)).toContain('Real-world illumination choice (sole emitter): '+light)
+   expect(ctx.nightLightingId).toBe(light)
   }
  })
- it('does not turn unverified external daylight into a simulated fact',()=>{
-  const state=evaluatePhysicalReality({...selected,phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY',bedroomShotId:'bed_edge',windowUncovered:false})
-  expect(state.certainty).toBe('estimated')
-  expect(state.warnings.some(w=>w.includes('النافذة'))).toBe(true)
-  expect(state.emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual(['phone_display'])
+ it('blocks entering daylight in an otherwise blacked-out bedroom',()=>{
+  const ctx={...selected,windowUncovered:true}
+  expect(evaluatePhysicalReality(ctx).issues.map(i=>i.code)).toContain('BLACKOUT_WINDOW')
+  expect(compilePrompt(ctx).result.promptText).toBe('')
+  expect(compilePrompt(selected).result.promptText).toContain('no daylight')
  })
- it('rejects explicit extra emitters in free-form AI responses, while allowing exclusions',()=>{
-  for(const mode of ['DARK_ROOM_REAR_FLASH_ONLY','DARK_ROOM_FRONT_SCREEN_ONLY'] as const){
-   expect(explicitUnauthorizedEmitter('A warm bedside lamp illuminates the face.',mode)).toBe('bedside lamp')
-   expect(explicitUnauthorizedEmitter('Portrait lit by ceiling lights.',mode)).toBe('ceiling lights')
-   expect(explicitUnauthorizedEmitter('The studio fill is on.',mode)).toBe('studio fill')
-   expect(explicitUnauthorizedEmitter('No bedside lamp; without ceiling lights; ring light off.',mode)).toBeNull()
-   expect(explicitUnauthorizedEmitter('Passive wall reflections from the phone emitter illuminate nearby skin.',mode)).toBeNull()
-  }
-  expect(explicitUnauthorizedEmitter('A warm bedside lamp illuminates the face.','OFF')).toBeNull()
+ it('detects active extra emitters even without a legacy override switch',()=>{
+  expect(explicitUnauthorizedEmitter('A warm bedside lamp illuminates the face.','OFF')).toBe('bedside lamp')
+  expect(explicitUnauthorizedEmitter('Portrait lit by ceiling lights.','OFF')).toBe('ceiling lights')
+  expect(explicitUnauthorizedEmitter('The studio fill is on.','OFF')).toBe('studio fill')
+  expect(explicitUnauthorizedEmitter('No bedside lamp; without ceiling lights; ring light off.','OFF')).toBeNull()
+  expect(explicitUnauthorizedEmitter('Passive wall reflections from the phone emitter illuminate nearby skin.','OFF')).toBeNull()
  })
 })

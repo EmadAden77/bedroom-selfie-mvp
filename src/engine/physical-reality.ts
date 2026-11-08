@@ -60,7 +60,7 @@ export function renderPhysicalReality(ctx:CompilationContext):string{
 
 /** A bounded safety check for free-form AI output. Does not claim full semantic verification. */
 export function explicitUnauthorizedEmitter(text:string,mode:PhoneOnlyMode):string|null{
- if(mode==='OFF')return null
+ // The single-source rule applies even when legacy override mode is OFF.
  const sources=/\b(?:ceiling lights?|ceiling leds?|ceiling fixtures?|bedside lamps?|room lamps?|window daylight|window light|streetlights?|laptop screens?|television screens?|decorative leds?|ring lights?|studio lights?|studio fill|ambient fill|hidden fill)\b/gi
  for(const hit of text.matchAll(sources)){
   const at=hit.index

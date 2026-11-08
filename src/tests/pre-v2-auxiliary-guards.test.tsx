@@ -11,8 +11,8 @@ const ctx:CompilationContext={
  upperGarmentId:'reference_garment_preserved',lowerGarmentId:null,
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',stateId:'observed_natural_state',
  color:'apparent dark charcoal-gray as observed',surface:'apparent knit-like surface character',
- referenceImagePresent:true,roomReferencePresent:true,bedroomShotId:'bed_edge',nightLightingId:'led_spotlight',
- phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY'
+ referenceImagePresent:true,roomReferencePresent:true,bedroomShotId:'bed_edge',nightLightingId:'phone_screen',
+ phoneOnlyIlluminationMode:'OFF'
 }
 const scene='A direct close-range bedroom selfie illuminated only by the phone screen. The background remains dark and the recording camera is front facing.'
 describe('Freeform auxiliary AI prompt safety in strict phone-only mode',()=>{
