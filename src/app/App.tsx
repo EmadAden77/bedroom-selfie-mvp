@@ -48,7 +48,7 @@ const defaultContext: CompilationContext = {
   roomPhysicalState: {...DEFAULT_ROOM_PHYSICAL_STATE,zones:[...DEFAULT_ROOM_PHYSICAL_STATE.zones]},
   roomSizePreset:'medium_bedroom',
   roomSizeConfirmed:false, 
-  nightLightingId: 'phone_screen_only',
+  nightLightingId: 'phone_screen',
   phoneOnlyIlluminationMode:'OFF',
   windowUncovered: false,
   poseId: 'seated_bed',
@@ -105,17 +105,9 @@ export const App: React.FC = () => {
       <ExpressionSelector selectedId={ctx.expressionVariantId} gaze={ctx.gazeId || 'auto'} micro={ctx.microExpressionId || 'none'} onAdvancedChange={handleContextChange} onSelect={(id) => handleContextChange({ expressionVariantId: id })} />
       <ClothingSelector ctx={ctxWithImage} onChange={handleContextChange} />
       <section className="card" aria-label="محرك الواقعية الفيزيائية">
-        <div style={{fontWeight:700,marginBottom:8}}>Physical Reality Engine V1 — مصادر الضوء</div>
-        <p style={{fontSize:12,color:'var(--muted)'}}>المصدر الفعلي منفصل عن أثر الإضاءة وعن تعريض الكاميرا. الوضع الصارم يوقف المصادر الأخرى فعليًا في المشهد الناتج، دون تغيير إعداداتك المحفوظة.</p>
-        <label style={{fontSize:12}}>وضع إضاءة الهاتف
-          <select className="input" value={ctx.phoneOnlyIlluminationMode||'OFF'} onChange={e=>handleContextChange({phoneOnlyIlluminationMode:e.target.value as CompilationContext['phoneOnlyIlluminationMode']})}>
-            <option value="OFF">عادي — استخدام الإضاءة المختارة</option>
-            <option value="DARK_ROOM_REAR_FLASH_ONLY">غرفة مظلمة — فلاش خلفي فقط أمام المرآة</option>
-            <option value="DARK_ROOM_FRONT_SCREEN_ONLY">غرفة مظلمة — شاشة الهاتف فقط بالكاميرا الأمامية</option>
-          </select>
-        </label>
-        <p style={{fontSize:12}}>المصادر الفعالة: {physical.emitters.filter(e=>e.enabled).map(e=>e.id).join('، ')||'لا يوجد مصدر محدد'}</p>
-        <p style={{fontSize:11,color:'var(--muted)'}}>الإضاءة المحفوظة: {ctx.nightLightingId||'phone_screen_only'}{physical.mode!=='OFF'&&<strong> (inactive: {physical.mode==='DARK_ROOM_REAR_FLASH_ONLY'?'mirror flash mode':'front screen mode'})</strong>} — الإضاءة المستخدمة: {physical.effectiveLightingId}. الانعكاسات ليست مصادر ضوء مستقلة.</p>
+        <div style={{fontWeight:700,marginBottom:8}}>Physical Reality Engine — مصدر واحد</div>
+        <p style={{fontSize:12,color:'var(--muted)'}}>الغرفة مظلمة تمامًا. الضوء الفعلي هو اختيارك فقط، والانعكاسات ليست مصادر جديدة. Gemini لا يقرر الإضاءة.</p>
+        <p style={{fontSize:12}}>المصدر الفعال: {physical.emitters.filter(e=>e.enabled).map(e=>e.id).join('، ')||'غير محدد'}</p>
         {physical.issues.map(i=><div key={i.code} role="alert" style={{fontSize:12,color:'var(--error)',marginBottom:8}}>{i.message}
           {i.corrections.map(c=><button type="button" key={c.label} className="option" style={{display:'block',marginTop:6}} onClick={()=>handleContextChange(c.patch)}>{c.label} (بعد موافقتك)</button>)}
         </div>)}
@@ -123,7 +115,7 @@ export const App: React.FC = () => {
       </section>
       <BodyMechanicsSelector ctx={ctxWithImage} onChange={handleContextChange}/>
       <BeddingPhysicsSelector ctx={ctxWithImage} onChange={handleContextChange}/>
-      <NightLightingSelector shotId={ctx.bedroomShotId} selectedId={ctx.nightLightingId || 'phone_screen_only'} exclusiveMode={physical.mode} windowUncovered={!!ctx.windowUncovered} onSelect={id=>handleContextChange({ nightLightingId:id })} onWindowChange={open=>handleContextChange({ windowUncovered:open })}/>
+      <NightLightingSelector shotId={ctx.bedroomShotId} selectedId={ctx.nightLightingId || 'phone_screen'} onSelect={id=>handleContextChange({nightLightingId:id})}/>
       <LightGeometrySelector poseId={ctx.poseId || 'seated_bed'} faceDirectionId={ctx.faceDirectionId || 'toward_camera'} lampSideId={ctx.lampSideId || 'left'} onChange={patch=>handleContextChange(patch)}/>
       <BedroomShotsSelector value={ctx.bedroomShotId || ''} onChange={id=>handleContextChange({bedroomShotId:id})}/>
       <MirrorSelfieSelector ctx={ctxWithImage} onChange={handleContextChange} onShotChange={id=>handleContextChange({bedroomShotId:id})}/>
