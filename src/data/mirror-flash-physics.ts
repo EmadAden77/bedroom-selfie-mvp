@@ -3,13 +3,13 @@ import {isMirrorShotId} from './mirror-controls'
 
 /** One rear LED, one fixed mirror, and a physically connected illumination path. */
 export function isMirrorFlash(ctx:CompilationContext):boolean{
- return isMirrorShotId(ctx.bedroomShotId)&&ctx.nightLightingId==='rear_flash'
+ return isMirrorShotId(ctx.bedroomShotId)&&ctx.nightLightingId==='camera_flash'
 }
 
 /** Preserve flash when changing mirror poses; never leave screen-only light aimed away from the mirror. */
-export function nextMirrorLighting(shotId:string,currentLighting:string):string{
- if(shotId==='mirror_rear_flash')return 'rear_flash'
- return currentLighting==='phone_screen_only'?'ceiling_neutral':currentLighting
+/** Never auto-correct a lighting choice when selecting a shot. */
+export function nextMirrorLighting(_shotId:string,currentLighting:string):string{
+ return currentLighting
 }
 
 export function renderMirrorFlashPhysics(ctx:CompilationContext):string{

@@ -47,16 +47,7 @@ export const MirrorSelfieSelector:React.FC<Props>=({ctx,onShotChange,onChange})=
    <p style={{fontSize:11,color:'var(--muted)',lineHeight:1.7,margin:'0 0 8px'}}>🔬 فحص المرآة الفيزيائي مُفعّل: هاتف واحد بكاميرته الخلفية، يد ماسكة متصلة، ارتكاز حقيقي للأقدام/الحوض، انعكاس بزاوية صحيحة، وقواعد فلاش وتعريض متوافقة مع الإضاءة المختارة.</p>
    <p style={{fontSize:11,color:'var(--muted)',lineHeight:1.7,margin:0}}>يظهر الأثاث فقط إذا سمحت زاوية الانعكاس وحدود المرآة برؤيته. لا تتحرك قطع الأثاث لإجبارها على الدخول في الكادر. {ctx.roomReferencePresent?'✓ صورة الغرفة مرفوعة؛ سيتم الاعتماد عليها عند استخدامها في توليد الصورة.':'⚠️ أرفق صورة الغرفة المرجعية لتحديد وجود الأريكة ومواضع الأثاث بدقة.'}</p>
   </div>}
-  {active&&<div style={{border:'1px solid var(--border)',borderRadius:12,padding:12,marginBottom:16}}>
-   <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>⚡ فلاش المرآة الفيزيائي</div>
-   <p style={{fontSize:11,color:'var(--muted)',lineHeight:1.8,margin:'0 0 9px'}}>يعمل مع جميع وضعيات المرآة: ضوء الفلاش يرتد من الزجاج إلى الشخص، والوهج والظلال والنويز تتبع مسار الضوء والتعريض الحقيقي.</p>
-   <div className="grid">
-    <button type="button" className={'option '+(ctx.nightLightingId!=='rear_flash'?'selected':'')} aria-pressed={ctx.nightLightingId!=='rear_flash'} disabled={shotId==='mirror_rear_flash'} onClick={()=>onChange({nightLightingId:'ceiling_neutral'})}>بدون فلاش · إضاءة منزلية</button>
-    <button type="button" className={'option '+(ctx.nightLightingId==='rear_flash'?'selected':'')} aria-pressed={ctx.nightLightingId==='rear_flash'} onClick={()=>onChange({nightLightingId:'rear_flash'})}>⚡ فلاش الكاميرا الخلفية</button>
-   </div>
-   {shotId==='mirror_rear_flash'&&<p style={{fontSize:11,color:'var(--muted)',margin:'8px 0 0'}}>هذه الوضعية مخصصة للفلاش؛ اختر وضعية مرآة أخرى لإيقافه.</p>}
-   {ctx.nightLightingId==='rear_flash'&&<p style={{fontSize:11,color:'var(--muted)',margin:'8px 0 0'}}>✓ محاكاة انعكاس LED، موقع الوهج، سقوط الضوء، ظلال الأثاث، عيوب الزجاج ومعالجة مستشعر الهاتف، في Gemini والنسخة المحلية.</p>}
-  </div>}
+  {active&&ctx.nightLightingId==='camera_flash'&&<p style={{fontSize:11,color:'var(--muted)'}}>⚡ فلاش المرآة: مصدر واحد من LED الكاميرا الخلفية؛ الانعكاس والتعريض يتبعان هندسة المرآة الحقيقية.</p>}
   {([{title:'الوقوف وزوايا الجسم',items:standing},{title:'الجلوس أمام المرآة',items:seated}]).map(group=>
    <div key={group.title} style={{marginBottom:16}}>
     <div style={{fontWeight:650,fontSize:13,marginBottom:8}}>{group.title}</div>

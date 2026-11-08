@@ -2,7 +2,7 @@ import type { CompilationContext } from '../domain/types'
 
 /** Immutable physical room anchors; select only visibility and illumination per shot. */
 export function renderBedroomEnvironment(ctx: CompilationContext): string {
-  const curtainState = ctx.windowUncovered ? 'Curtains may be parted only for a specifically selected window-light scene; do not move the window and furniture.' : 'Back-wall curtains stay fully closed, black-to-charcoal, with no exposed window.'
+  const curtainState = 'Back-wall curtains stay fully closed, black-to-charcoal, with no exposed window, daylight, streetlight or ambient leakage.'
   return [
     ...(ctx.roomReferencePresent ? ['ROOM IMAGE REFERENCE: The separately supplied room photograph is the authoritative visual reference for the room appearance and visible furniture. Keep fixed architectural boundaries and object positions consistent with that photograph. The subject identity reference controls the person only; do not copy a person shown in the room reference. Adapt furniture visibility to the camera viewpoint without rearranging the room. Where the photo differs from default room descriptions, trust the actual photographed geometry and furniture rather than the defaults. The separately user-confirmed layout may constrain the scene only when compatible with the image.'] : []),
     'BEDROOM ENVIRONMENT LOCK: The same established lived-in bedroom in every shot, using reference-consistent room proportions and actual ceiling height without invented measurements.',
