@@ -241,10 +241,10 @@ export const AiPromptEnhancer:React.FC<Props>=({ctx,result,validation,onReset,on
   {error&&<div role="alert" style={{marginTop:12,fontSize:12,color:'#b91c1c',lineHeight:1.8}}>{error}</div>}
   {generated&&<div style={{marginTop:16}}>
    <p style={{fontSize:12,fontWeight:650,margin:'0 0 8px'}}>
-    {engine==='gemini'
+    <span>{engine==='gemini'
      ?(isAuthoritative?'✓ نتيجة Gemini المحررة والمعتمدة برمجيًا — ':'نتيجة Gemini المحررة — غير معتمدة نهائيًا — ')+selectedTarget
-     :(isAuthoritative?'✓ البرومبت المحلي — دون اعتماد تحرير Gemini':'البرومبت المحلي — للعرض فقط، غير معتمد')}
-    {' — '}{isAuthoritative?'Authoritative':'Provisional'}
+     :(isAuthoritative?'✓ البرومبت المحلي — دون اعتماد تحرير Gemini':'البرومبت المحلي — للعرض فقط، غير معتمد')}</span>
+    {' — '}<strong>{isAuthoritative?'Authoritative':'Provisional'}</strong>
    </p>
    <div dir="ltr" className="preview-box" style={{textAlign:'left',whiteSpace:'pre-wrap',overflowWrap:'anywhere',maxHeight:520,overflowY:'auto'}}>{generated}</div>
    <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}>
