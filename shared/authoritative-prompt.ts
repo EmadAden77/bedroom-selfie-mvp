@@ -7,6 +7,16 @@ import {assembleEditorialPrompt,type EditableSceneSpec,type EditorialProposal} f
 import {roomGeometryIssues,type RoomGeometry} from './room-geometry-rules.ts'
 import {unverifiedRoomMeasurements,validateRoomAcknowledgement} from './room-acknowledgement.ts'
 
+/**
+ * Only these SPEC-ONLY units are absent from compilePrompt's local output.
+ * src/features/ai-prompt-enhancer/scene-specification.ts appends them AFTER
+ * result.sections has already been assembled by src/compiler/assemble.ts.
+ * They are provided as immutable context for the Gemini editor, not as
+ * local prompt paragraphs. Their text MUST NEVER appear in a final local prompt,
+ * even as a substring of another otherwise-approved section.
+ */
+export const ALLOWED_LOCAL_EXCLUSIONS = ['natural_scene_director','room_geometry'] as const
+
 export type FinalPromptSource='local'|'gemini-editor'
 export type AuthoritativeCandidate={
  source:string
@@ -29,6 +39,9 @@ function assertRoomAuthority(
  const issues=roomGeometryIssues(room)
  if(issues.some(x=>x.status==='invalid'))throw Error('FINAL_ROOM_INVALID')
  const gaps=unverifiedRoomMeasurements(room,posture)
+ // A room without explicit confirmation must always have an acknowledgement gap.
+ if(!room.userConfirmed&&!gaps.includes('Room size: preset not user-confirmed'))
+  throw Error('FINAL_ROOM_UNCONFIRMED')
  if(gaps.length)validateRoomAcknowledgement(acknowledgement,integrity,gaps)
  return gaps
 }
@@ -47,11 +60,16 @@ export function assertAuthoritative(
   if(Object.keys(c).sort().join(',')!=='prompt,source')
    throw Error('FINAL_UNEXPECTED_FIELDS')
   // Local compiler's exact approved (not editor-added) section sequence.
-  // 'natural_scene_director' is spec-only metadata not included by compilePrompt.
+  const excluded=spec.derivedUnits.filter(u=>ALLOWED_LOCAL_EXCLUSIONS.some(id=>id===u.id))
   const original=spec.derivedUnits
-   .filter(u=>u.id!=='natural_scene_director'&&u.id!=='room_geometry')
+   .filter(u=>!ALLOWED_LOCAL_EXCLUSIONS.some(id=>id===u.id))
    .map(u=>u.text).join('\n\n')
-  if(c.prompt!==original)throw Error('FINAL_LOCAL_MISMATCH')
+  const localPrompt=c.prompt
+  if(localPrompt!==original)throw Error('FINAL_LOCAL_MISMATCH')
+  // Defense in depth: equality alone does not prove that excluded-unit text
+  // is absent from an included unit. Deny any full-text overlap as a leak.
+  if(excluded.some(u=>u.text.length>0&&localPrompt.includes(u.text)))
+   throw Error('FINAL_LOCAL_MISMATCH')
   const acknowledgedMeasurements=assertRoomAuthority(spec.roomGeometry,spec.capture?.posture,spec.integrity,roomAcknowledgement)
   return {source:'local',prompt:c.prompt,validated:true,...(acknowledgedMeasurements.length?{acknowledgedMeasurements}:{})}
  }
