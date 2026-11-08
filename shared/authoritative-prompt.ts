@@ -5,6 +5,7 @@
  */
 import {assembleEditorialPrompt,type EditableSceneSpec,type EditorialProposal} from './editorial-contract.ts'
 import {roomGeometryIssues,type RoomGeometry} from './room-geometry-rules.ts'
+import {unverifiedRoomMeasurements,validateRoomAcknowledgement} from './room-acknowledgement.ts'
 
 export type FinalPromptSource='local'|'gemini-editor'
 export type AuthoritativeCandidate={
@@ -13,22 +14,27 @@ export type AuthoritativeCandidate={
  sectionOrder?:string[]
  openingLineSelection?:string
 }
-export type FinalAuthorization={source:FinalPromptSource;prompt:string;validated:true}
+export type FinalAuthorization={source:FinalPromptSource;prompt:string;validated:true;acknowledgedMeasurements?:string[]}
 
 /**
- * PR7b extends (does not replace) the PR4 final authority policy.
- * Preserve the original provenance/exact-byte tests, then deny promotion
- * until the room is explicitly confirmed and all RG rules are valid.
+ * PR7b-1 extends PR4's exact-byte and source checks without weakening them:
+ * 'invalid' is NEVER overridable; only provisional unknown/unconfirmed
+ * measurements can be explicitly acknowledged for final status.
  */
-function assertRoomAuthority(room:RoomGeometry|undefined):void{
- if(!room)throw Error('FINAL_ROOM_MISSING')
- if(!room.userConfirmed)throw Error('FINAL_ROOM_UNCONFIRMED')
+function assertRoomAuthority(
+ room:RoomGeometry|undefined,posture:string|undefined,integrity:string|undefined,
+ acknowledgement:unknown
+):string[]{
+ if(!room||!posture||!integrity)throw Error('FINAL_ROOM_MISSING')
  const issues=roomGeometryIssues(room)
  if(issues.some(x=>x.status==='invalid'))throw Error('FINAL_ROOM_INVALID')
- if(issues.some(x=>x.status==='unknown'))throw Error('FINAL_ROOM_UNVERIFIED')
+ const gaps=unverifiedRoomMeasurements(room,posture)
+ if(gaps.length)validateRoomAcknowledgement(acknowledgement,integrity,gaps)
+ return gaps
 }
 export function assertAuthoritative(
- spec:EditableSceneSpec&{roomGeometry?:RoomGeometry},candidate:unknown
+ spec:EditableSceneSpec&{roomGeometry?:RoomGeometry;capture?:{posture:string};integrity?:string},
+ candidate:unknown,roomAcknowledgement?:unknown
 ):FinalAuthorization{
  if(!candidate||typeof candidate!=='object'||Array.isArray(candidate))
   throw Error('FINAL_CANDIDATE_REQUIRED')
@@ -46,8 +52,8 @@ export function assertAuthoritative(
    .filter(u=>u.id!=='natural_scene_director'&&u.id!=='room_geometry')
    .map(u=>u.text).join('\n\n')
   if(c.prompt!==original)throw Error('FINAL_LOCAL_MISMATCH')
-  assertRoomAuthority(spec.roomGeometry)
-  return {source:'local',prompt:c.prompt,validated:true}
+  const acknowledgedMeasurements=assertRoomAuthority(spec.roomGeometry,spec.capture?.posture,spec.integrity,roomAcknowledgement)
+  return {source:'local',prompt:c.prompt,validated:true,...(acknowledgedMeasurements.length?{acknowledgedMeasurements}:{})}
  }
  if(Object.keys(c).sort().join(',')!=='openingLineSelection,prompt,sectionOrder,source')
   throw Error('FINAL_UNEXPECTED_FIELDS')
@@ -56,6 +62,6 @@ export function assertAuthoritative(
   openingLineSelection:c.openingLineSelection
  } as EditorialProposal)
  if(c.prompt!==editorial.prompt)throw Error('FINAL_EDITOR_MISMATCH')
- assertRoomAuthority(spec.roomGeometry)
- return {source:'gemini-editor',prompt:c.prompt,validated:true}
+ const acknowledgedMeasurements=assertRoomAuthority(spec.roomGeometry,spec.capture?.posture,spec.integrity,roomAcknowledgement)
+ return {source:'gemini-editor',prompt:c.prompt,validated:true,...(acknowledgedMeasurements.length?{acknowledgedMeasurements}:{})}
 }
