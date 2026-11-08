@@ -55,7 +55,7 @@ const baseline:CompilationContext={
 }
 const cases:[string,Partial<CompilationContext>][]=[
  ['front camera + phone-screen-only lighting',{bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'phone_screen',phoneOnlyIlluminationMode:'OFF'}],
- ['exclusive mirror rear flash + saved ceiling preference',{bedroomShotId:'mirror_rear_flash',poseId:'standing',nightLightingId:'led_spotlight',phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY'}],
+ ['mirror rear flash selected explicitly',{bedroomShotId:'mirror_rear_flash',poseId:'standing',nightLightingId:'camera_flash',phoneOnlyIlluminationMode:'OFF'}],
  ['regular wardrobe mirror + neutral ceiling lighting',{bedroomShotId:'mirror_wardrobe',poseId:'standing',nightLightingId:'led_spotlight',phoneOnlyIlluminationMode:'OFF'}],
  ['laptop typing with timer + laptop screen light',{bedroomShotId:'laptop_edge_typing_timer',poseId:'seated_bed',nightLightingId:'laptop_screen',phoneOnlyIlluminationMode:'OFF'}]
 ]

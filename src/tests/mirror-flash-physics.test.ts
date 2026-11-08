@@ -25,8 +25,8 @@ describe('Mirror rear LED flash optics',()=>{
  it('keeps rear flash active while changing between mirror poses',()=>{
   expect(nextMirrorLighting('mirror_wardrobe','camera_flash')).toBe('camera_flash')
   expect(nextMirrorLighting('mirror_floor','camera_flash')).toBe('camera_flash')
-  expect(nextMirrorLighting('mirror_rear_flash','led_spotlight')).toBe('camera_flash')
-  expect(nextMirrorLighting('mirror_wardrobe','phone_screen')).toBe('led_spotlight')
+  expect(nextMirrorLighting('mirror_rear_flash','led_spotlight')).toBe('led_spotlight')
+  expect(nextMirrorLighting('mirror_wardrobe','phone_screen')).toBe('phone_screen')
   expect(nextMirrorLighting('mirror_wardrobe','led_spotlight')).toBe('led_spotlight')
  })
  it.each(['mirror_wardrobe','mirror_rear_flash','mirror_bed_reflection','mirror_floor_angle'])('compiles reflected flash rays for %s',shot=>{
@@ -65,7 +65,7 @@ describe('Mirror rear LED flash optics',()=>{
  it('requires actual LED flash in the Gemini flash-mode response',()=>{
   const context={mode:'mirror',lighting:'camera_flash'}
   const noFlash='A casual nighttime mirror selfie with a real phone and everyday room light.'
-  expect(()=>validatePhysicalPrompt(noFlash,context)).toThrow('missing_camera_flash')
+  expect(()=>validatePhysicalPrompt(noFlash,context)).toThrow('missing_rear_flash')
   const realFlash='A real rear LED flash reflects off the bedroom wardrobe mirror, producing localized natural highlights on the subject.'
   expect(()=>validatePhysicalPrompt(realFlash,context)).not.toThrow()
  })

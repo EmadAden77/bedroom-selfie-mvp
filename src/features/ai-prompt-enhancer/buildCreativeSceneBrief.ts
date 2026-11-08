@@ -15,7 +15,7 @@ import {buildMirrorFlashGeminiBrief} from '../../data/mirror-flash-physics'
 import {buildBedroomClutterGeminiBrief} from '../../data/bedroom-clutter'
 import {buildLaptopGeminiBrief} from '../../data/laptop-selfie-physics'
 import {buildNaturalSceneDirection} from './natural-scene-director'
-import {effectivePhysicalContext,renderPhysicalReality} from '../../engine/physical-reality'
+import {effectivePhysicalContext} from '../../engine/physical-reality'
 import {renderValidatedBodyScene} from '../../engine/body-mechanics'
 import {renderValidatedBedding} from '../../engine/bedding-physics'
 
@@ -62,8 +62,8 @@ export function buildCreativeSceneBrief(selectedContext:CompilationContext):stri
     (lower?'; '+(lowerMaterial?.englishName||'')+'; '+(lowerFit?.englishName||'')+
       '; '+(lowerState?.englishName?.replace(/_/g,' ')||'')+
       '; color '+(ctx.lowerColor||'as selected')+'; fabric '+(ctx.lowerSurface||'natural'):'')+'.',
-  renderPhysicalReality(ctx),
-  'Real-world illumination choice (sole emitter): '+(light?.id||'invalid')+'. '+(light?.renderableFragment||'The source is invalid; generation must stop.'),
+  'BLACKOUT PHYSICS: The bedroom is pitch black without ambient light, daylight or window light. The selected physical emitter is the sole active source; distance, orientation, occlusion, real surface reflections and phone exposure govern visibility.',
+  'Real-world illumination choice (sole emitter): '+(light?.id||'invalid')+'. '+(light?.description||'The source is invalid; generation must stop.'),
   ...(shot?.mode==='mirror'
     ?['Eye direction and head position must follow the selected mirror-specific gaze and reachable rear-camera sightline; generic front-selfie gaze is not authoritative.']
     :['Gaze '+plain(ctx.gazeId)+'; face direction '+plain(ctx.faceDirectionId)+

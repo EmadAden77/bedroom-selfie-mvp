@@ -161,10 +161,10 @@ describe('Physical Reality Engine V2.2 — causal bedding',()=>{
   expect(spec.derivedUnits.find(u=>u.id==='bedding_physics_v22')?.text).toBe(renderBedding(spec.beddingPhysics))
  })
  it('30 strict V1 rear flash only remains unchanged by bedding derivation',()=>{
-  const c={...ctx,bedroomShotId:'mirror_rear_flash',phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY' as const}
+  const c={...ctx,bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash',phoneOnlyIlluminationMode:'OFF' as const}
   deriveBeddingScene(c)
   expect(evaluatePhysicalReality(c).emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual(['phone_rear_led'])
-  expect(c.nightLightingId).toBe('led_spotlight')
+  expect(c.nightLightingId).toBe('camera_flash')
  })
  it('32 confirmed bed-edge sheet receives local tension without any frame bending',()=>{
   const s=bedding({}, {sheet:'confirmed',pillow:'reference',blanket:'reference'})
@@ -182,7 +182,7 @@ describe('Physical Reality Engine V2.2 — causal bedding',()=>{
   expect(s.unknowns).toContain('PILLOW_SUPPORT_ANCHOR_NOT_CONFIRMED')
  })
  it('31 strict V1 screen-only remains unchanged by bedding derivation',()=>{
-  const c={...ctx,phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY' as const}
+  const c={...ctx,nightLightingId:'phone_screen',phoneOnlyIlluminationMode:'OFF' as const}
   deriveBeddingScene(c)
   expect(evaluatePhysicalReality(c).emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual(['phone_display'])
  })

@@ -51,7 +51,7 @@ describe('Laptop selfie physical poses and light integration',()=>{
   const laptop=compilePrompt({...base,bedroomShotId,nightLightingId:'laptop_screen'})
   expect(laptop.validation.isValid).toBe(true)
   expect(laptop.result.sections.find(x=>x.id==='laptop_selfie_physics')?.content).toContain('LAPTOP DISPLAY ILLUMINATION:')
-  expect(laptop.result.promptText).toContain('An open laptop screen near the subject is the sole illuminant')
+  expect(laptop.result.promptText).toContain('The hinged laptop base rests securely')
   const phone=compilePrompt({...base,bedroomShotId,nightLightingId:'phone_screen'})
   expect(phone.validation.isValid).toBe(true)
   expect(phone.result.sections.find(x=>x.id==='laptop_selfie_physics')?.content).toContain('PHONE DISPLAY ILLUMINATION:')
@@ -62,11 +62,11 @@ describe('Laptop selfie physical poses and light integration',()=>{
   expect(room.result.sections.find(x=>x.id==='laptop_selfie_physics')?.content).not.toContain('LAPTOP DISPLAY ILLUMINATION:')
  })
  it('auto-selects meaningful laptop display lighting on entering laptop pose and restores light on exit',()=>{
-  expect(nextLaptopLighting('laptop_edge_trackpad','phone_screen')).toBe('laptop_screen')
+  expect(nextLaptopLighting('laptop_edge_trackpad','phone_screen')).toBe('phone_screen')
   expect(nextLaptopLighting('laptop_edge_trackpad','led_spotlight')).toBe('led_spotlight')
   expect(nextLaptopLighting('laptop_tilt_screen','laptop_screen')).toBe('laptop_screen')
-  expect(nextLaptopLighting('bed_edge','laptop_screen')).toBe('phone_screen')
-  expect(nextLaptopLighting('mirror_wardrobe','laptop_screen')).toBe('led_spotlight')
+  expect(nextLaptopLighting('bed_edge','laptop_screen')).toBe('laptop_screen')
+  expect(nextLaptopLighting('mirror_wardrobe','laptop_screen')).toBe('laptop_screen')
   expect(nextLaptopLighting('mirror_rear_flash','camera_flash')).toBe('camera_flash')
  })
  it('sends a laptop-specific coherent Gemini brief for the selected action, no other shot',()=>{

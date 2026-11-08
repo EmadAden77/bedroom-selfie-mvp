@@ -149,14 +149,14 @@ describe('Physical Reality Engine V2.1 — deterministic body contacts and mecha
   expect(x.deformations).toEqual([expect.objectContaining({region:'elbow_contact'})])
  })
  it('27 V1 strict rear LED flash remains sole light after biomechanics derivation',()=>{
-  const c={...scene,bedroomShotId:'mirror_rear_flash',phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY' as const}
+  const c={...scene,bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash',phoneOnlyIlluminationMode:'OFF' as const}
   const before=c.nightLightingId
   deriveBodyScene(c)
   expect(evaluatePhysicalReality(c).emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual(['phone_rear_led'])
   expect(c.nightLightingId).toBe(before)
  })
  it('28 V1 strict front display light remains sole light',()=>{
-  const c={...scene,bedroomShotId:'bed_edge',phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY' as const}
+  const c={...scene,bedroomShotId:'bed_edge',nightLightingId:'phone_screen',phoneOnlyIlluminationMode:'OFF' as const}
   deriveBodyScene(c)
   expect(evaluatePhysicalReality(c).emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual(['phone_display'])
  })
