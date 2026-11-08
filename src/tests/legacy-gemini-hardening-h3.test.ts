@@ -3,7 +3,7 @@ import {afterEach,describe,expect,it,vi} from 'vitest'
 import endpoint from '../../api/generate-prompt'
 import {MAX_SCENE_REQUEST_BYTES} from '../../api/generate-main-prompt'
 import {compilePrompt} from '../compiler'
-import {buildSceneSpecification} from '../features/ai-prompt-enhancer/scene-specification'
+import {buildSceneSpecification,sceneFingerprint} from '../features/ai-prompt-enhancer/scene-specification'
 import type {CompilationContext} from '../domain/types'
 
 const url='https://bedroom-selfie-mvp.vercel.app/api/generate-prompt'
@@ -66,6 +66,30 @@ describe('H3 legacy Gemini endpoint: defensively bounded, advisory only',()=>{
    prompt:'old completely unverified prompt '.repeat(20),mode:'mirror',posture:'standing'
   }))
   expect(response.status).toBe(400)
+  expect(upstream).not.toHaveBeenCalled()
+ })
+ it('rejects malformed canonical SceneSpec with the precise schema error',async()=>{
+  setup()
+  const upstream=vi.fn(async()=>providerReply())
+  vi.stubGlobal('fetch',upstream)
+  const response=await endpoint.fetch(post({sceneSpecification:{version:1,derivedUnits:[]}}))
+  expect(response.status).toBe(400)
+  expect((await response.json() as {errorCode:string}).errorCode).toBe('SPEC_SCHEMA')
+  expect(upstream).not.toHaveBeenCalled()
+ })
+ it('rejects forged immutable room unit even with a recomputed shallow integrity hash',async()=>{
+  setup()
+  const upstream=vi.fn(async()=>providerReply())
+  vi.stubGlobal('fetch',upstream)
+  const scene=structuredClone(getSpec())
+  const room=scene.derivedUnits.find(u=>u.id==='room_geometry')
+  expect(room).toBeDefined()
+  room!.text='Injected invented room geometry that is not canonical.'
+  const {integrity,...unsigned}=scene
+  const forged={...unsigned,integrity:sceneFingerprint(unsigned as Omit<typeof scene,'integrity'>)}
+  const response=await endpoint.fetch(post({sceneSpecification:forged}))
+  expect(response.status).toBe(400)
+  expect((await response.json() as {errorCode:string}).errorCode).toBe('SPEC_ROOM_UNIT')
   expect(upstream).not.toHaveBeenCalled()
  })
  it('rejects cross-site Sec-Fetch-Site and foreign Origin',async()=>{
