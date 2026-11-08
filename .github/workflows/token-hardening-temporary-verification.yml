@@ -1,0 +1,27 @@
+name: Temporary Token Hardening Verification
+on:
+  push:
+    branches: ['security/prompt-engine-token-hardening']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Exact TypeScript command
+        run: npx tsc --noEmit
+      - name: Legacy route Node ESM smoke test
+        run: node --experimental-strip-types --input-type=module -e "const handler=await import('./api/generate-prompt.ts'); if (typeof handler.default?.fetch !== 'function') process.exit(1)"
+      - name: Exact Vitest command
+        run: npm run test:vitest
+      - name: Exact build command
+        run: npm run build
