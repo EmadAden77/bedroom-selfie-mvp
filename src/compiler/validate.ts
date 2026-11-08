@@ -125,7 +125,7 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
 
   const lighting = nightLightingPresets.find(p => p.id === (ctx.nightLightingId || 'phone_screen_only'))
   if (!lighting) errors.push('Night lighting preset invalid')
-  if (lighting?.requiresOpenWindow && !ctx.windowUncovered) errors.push('Streetlight requires an uncovered window and open curtains')
+  if (ctx.windowUncovered) errors.push('Blackout lighting requires closed curtains and zero outside light')
 
   if (!poseOptions.some(p=>p.id===(ctx.poseId || 'seated_bed'))) errors.push('Invalid pose geometry')
   if (!faceOptions.some(p=>p.id===(ctx.faceDirectionId || 'toward_camera'))) errors.push('Invalid face direction')
@@ -134,11 +134,11 @@ export function validateContext(ctx: CompilationContext): ValidationResult {
   if (ctx.bedroomShotId) {
     const shot=bedroomShots.find(s=>s.id===ctx.bedroomShotId)
     if (!shot) errors.push('Unknown bedroom shot')
-    if (shot?.requires==='openCurtains' && !ctx.windowUncovered) errors.push('Curtain shadow shot requires uncovered window')
-    if (shot?.requires==='sideLight' && !['bedside_warm','lamp_and_screen','hallway_spill','window_streetlight'].includes(ctx.nightLightingId||'phone_screen_only')) errors.push('Half-lit face requires an actual off-axis source')
-    if (mirrorRearFlashNeedsSource(shot?.id,ctx.nightLightingId||'')) errors.push('Rear flash mirror shot requires rear_flash lighting')
-    if (shot?.id==='silhouette' && !['bedside_warm','television_screen','sunset_projector'].includes(ctx.nightLightingId||'phone_screen_only')) errors.push('Silhouette needs an actual brighter source behind the subject')
-    if (shot?.mode==='mirror' && ctx.nightLightingId==='phone_screen_only') warnings.push('Mirror selfie may be severely underexposed with phone screen only')
+    if (shot?.requires==='openCurtains') errors.push('Curtain shadows require disallowed external light')
+    if (shot?.requires==='sideLight') errors.push('Half-lit face needs a disallowed secondary or off-axis source')
+    if (mirrorRearFlashNeedsSource(shot?.id,ctx.nightLightingId||'')) errors.push('Rear flash mirror shot requires camera_flash lighting')
+    if (shot?.id==='silhouette'||shot?.id==='door_light_strip') errors.push('Shot requires forbidden external lighting')
+    if (shot?.mode==='mirror' && ctx.nightLightingId==='phone_screen') warnings.push('Mirror selfie may be severely underexposed with phone screen only')
   }
 
   const mechanical=deriveBodyScene(ctx)
