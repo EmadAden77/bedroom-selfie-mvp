@@ -13,7 +13,7 @@ const base:CompilationContext={
  fitId:'regular',stateId:'observed_natural_state',
  color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',
- referenceImagePresent:false,nightLightingId:'ceiling_neutral'
+ referenceImagePresent:false,nightLightingId:'led_spotlight'
 }
 describe('Independent mirror photography with Gemini and physical geometry',()=>{
  it('preserves all 15 canonical mirror poses and all original bedroom shots',()=>{

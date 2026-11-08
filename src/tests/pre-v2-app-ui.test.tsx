@@ -17,20 +17,20 @@ describe('App V1 strict-light UI regression',()=>{
   render(<App/>)
   fireEvent.click(screen.getByRole('button',{name:/المصباح الجانبي الدافئ/}))
   const mode=screen.getByLabelText('وضع إضاءة الهاتف') as HTMLSelectElement
-  expect(screen.getByText(/الإضاءة المحفوظة: bedside_warm/)).toBeTruthy()
+  expect(screen.getByText(/الإضاءة المحفوظة: led_spotlight/)).toBeTruthy()
   fireEvent.change(mode,{target:{value:'DARK_ROOM_REAR_FLASH_ONLY'}})
   expect(screen.getAllByRole('alert').some(a=>a.textContent?.includes('فلاش الهاتف فقط'))).toBe(true)
-  expect(screen.getByText(/الإضاءة المحفوظة: bedside_warm — الإضاءة المستخدمة: rear_flash/)).toBeTruthy()
+  expect(screen.getByText(/الإضاءة المحفوظة: led_spotlight — الإضاءة المستخدمة: camera_flash/)).toBeTruthy()
   fireEvent.click(screen.getByRole('button',{name:/اختيار لقطة فلاش المرآة \(بعد موافقتك\)/}))
   expect(screen.getByText(/المصادر الفعالة: phone_rear_led/)).toBeTruthy()
   fireEvent.click(screen.getByRole('button',{name:/على البطن مع الكوعين/}))
   expect(screen.getAllByText(/فلاش الهاتف فقط يتطلب لقطة المرآة/).length).toBeGreaterThan(0)
   fireEvent.change(mode,{target:{value:'DARK_ROOM_FRONT_SCREEN_ONLY'}})
   expect(screen.getByText(/المصادر الفعالة: phone_display/)).toBeTruthy()
-  expect(screen.getByText(/الإضاءة المحفوظة: bedside_warm — الإضاءة المستخدمة: phone_screen_only/)).toBeTruthy()
+  expect(screen.getByText(/الإضاءة المحفوظة: led_spotlight — الإضاءة المستخدمة: phone_screen/)).toBeTruthy()
   fireEvent.change(mode,{target:{value:'OFF'}})
   expect(screen.getByText(/المصادر الفعالة: bedside/)).toBeTruthy()
-  expect(screen.getByText(/الإضاءة المحفوظة: bedside_warm — الإضاءة المستخدمة: bedside_warm/)).toBeTruthy()
+  expect(screen.getByText(/الإضاءة المحفوظة: led_spotlight — الإضاءة المستخدمة: led_spotlight/)).toBeTruthy()
   // PR7b Category 1: light-mode and reset behavior remain unchanged.
   // The default room is unconfirmed, so the formerly-authoritative local
   // button is now preview-only and must NOT call the server authority route.
@@ -42,6 +42,6 @@ describe('App V1 strict-light UI regression',()=>{
   await waitFor(()=>expect(screen.getByRole('button',{name:'إعادة تعيين الخيارات'})).toBeTruthy())
   fireEvent.click(screen.getByRole('button',{name:'إعادة تعيين الخيارات'}))
   expect((screen.getByLabelText('وضع إضاءة الهاتف') as HTMLSelectElement).value).toBe('OFF')
-  expect(screen.getByText(/الإضاءة المحفوظة: phone_screen_only — الإضاءة المستخدمة: phone_screen_only/)).toBeTruthy()
+  expect(screen.getByText(/الإضاءة المحفوظة: phone_screen — الإضاءة المستخدمة: phone_screen/)).toBeTruthy()
  })
 })

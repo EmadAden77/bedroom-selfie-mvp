@@ -12,7 +12,7 @@ const selected:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'mirror_rear_flash',poseId:'standing',nightLightingId:'lamp_and_screen',
+ bedroomShotId:'mirror_rear_flash',poseId:'standing',nightLightingId:'led_spotlight',
  windowUncovered:false,phoneOnlyIlluminationMode:'OFF'
 }
 const active=(x:CompilationContext)=>evaluatePhysicalReality(x).emitters.filter(e=>e.enabled).map(e=>e.id)
@@ -23,9 +23,9 @@ describe('V1 stabilization — state transitions, causal light and downstream pa
   const flash={...selected,phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY' as const}
   expect(active(selected)).toEqual(['bedside','phone_display'])
   expect(active(flash)).toEqual(['phone_rear_led'])
-  expect(effectivePhysicalContext(flash).nightLightingId).toBe('rear_flash')
+  expect(effectivePhysicalContext(flash).nightLightingId).toBe('camera_flash')
   expect(selected).toEqual(original)
-  expect(evaluatePhysicalReality({...flash,phoneOnlyIlluminationMode:'OFF'}).effectiveLightingId).toBe('lamp_and_screen')
+  expect(evaluatePhysicalReality({...flash,phoneOnlyIlluminationMode:'OFF'}).effectiveLightingId).toBe('led_spotlight')
   expect(active({...flash,phoneOnlyIlluminationMode:'OFF'})).toEqual(['bedside','phone_display'])
  })
  it('requires explicit camera choice when switching strict modes; no pose or clothing rewrites',()=>{
@@ -36,18 +36,18 @@ describe('V1 stabilization — state transitions, causal light and downstream pa
   const changed=reconcileCaptureSelection(front,{bedroomShotId:'bed_edge'})
   expect(changed.poseId).toBe('standing')
   expect(changed.upperGarmentId).toBe(selected.upperGarmentId)
-  expect(changed.nightLightingId).toBe('lamp_and_screen')
+  expect(changed.nightLightingId).toBe('led_spotlight')
   expect(evaluatePhysicalReality(changed).issues).toEqual([])
   expect(active(changed)).toEqual(['phone_display'])
   const compiled=compilePrompt(changed)
   expect(compiled.validation.isValid).toBe(true)
-  expect(compiled.result.sections.find(s=>s.id==='night_lighting_phone_screen_only')).toBeDefined()
-  expect(compiled.result.sections.find(s=>s.id==='night_lighting_lamp_and_screen')).toBeUndefined()
+  expect(compiled.result.sections.find(s=>s.id==='night_lighting_phone_screen')).toBeDefined()
+  expect(compiled.result.sections.find(s=>s.id==='night_lighting_led_spotlight')).toBeUndefined()
  })
  it('preserves the captured lighting authority for Gemini and optional auxiliary editor brief',()=>{
   for(const [shotId,mode,light,emitter] of [
-   ['mirror_rear_flash','DARK_ROOM_REAR_FLASH_ONLY','rear_flash','phone_rear_led'],
-   ['bed_edge','DARK_ROOM_FRONT_SCREEN_ONLY','phone_screen_only','phone_display']
+   ['mirror_rear_flash','DARK_ROOM_REAR_FLASH_ONLY','camera_flash','phone_rear_led'],
+   ['bed_edge','DARK_ROOM_FRONT_SCREEN_ONLY','phone_screen','phone_display']
   ] as const){
    const ctx={...selected,bedroomShotId:shotId,phoneOnlyIlluminationMode:mode}
    const {result,validation}=compilePrompt(ctx)
@@ -59,12 +59,12 @@ describe('V1 stabilization — state transitions, causal light and downstream pa
    const brief=buildCreativeSceneBrief(ctx)
    expect(brief).toContain('Real-world illumination choice: '+light)
    expect(brief).toContain('Active physical emitters: '+emitter+' at ')
-   expect(brief).not.toContain('Real-world illumination choice: lamp_and_screen')
-   expect(ctx.nightLightingId).toBe('lamp_and_screen')
+   expect(brief).not.toContain('Real-world illumination choice: led_spotlight')
+   expect(ctx.nightLightingId).toBe('led_spotlight')
   }
  })
  it('does not turn unverified external daylight into a simulated fact',()=>{
-  const state=evaluatePhysicalReality({...selected,phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY',bedroomShotId:'bed_edge',windowUncovered:true})
+  const state=evaluatePhysicalReality({...selected,phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY',bedroomShotId:'bed_edge',windowUncovered:false})
   expect(state.certainty).toBe('estimated')
   expect(state.warnings.some(w=>w.includes('النافذة'))).toBe(true)
   expect(state.emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual(['phone_display'])

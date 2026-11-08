@@ -36,7 +36,7 @@ describe('Cancelled Gemini requests never overwrite newer UI state',()=>{
    upperGarmentId:'reference_garment_preserved',lowerGarmentId:null,
    materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',stateId:'observed_natural_state',
    color:'apparent dark charcoal-gray as observed',surface:'apparent knit-like surface character',referenceImagePresent:false,
-   bedroomShotId:'',nightLightingId:'phone_screen_only'
+   bedroomShotId:'',nightLightingId:'phone_screen'
   }
   const {result,validation}=compilePrompt(ctx)
   expect(validation.isValid).toBe(true)

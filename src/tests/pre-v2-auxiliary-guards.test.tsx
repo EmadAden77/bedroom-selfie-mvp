@@ -11,7 +11,7 @@ const ctx:CompilationContext={
  upperGarmentId:'reference_garment_preserved',lowerGarmentId:null,
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',stateId:'observed_natural_state',
  color:'apparent dark charcoal-gray as observed',surface:'apparent knit-like surface character',
- referenceImagePresent:true,roomReferencePresent:true,bedroomShotId:'bed_edge',nightLightingId:'ceiling_neutral',
+ referenceImagePresent:true,roomReferencePresent:true,bedroomShotId:'bed_edge',nightLightingId:'led_spotlight',
  phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY'
 }
 const scene='A direct close-range bedroom selfie illuminated only by the phone screen. The background remains dark and the recording camera is front facing.'
@@ -35,7 +35,7 @@ describe('Freeform auxiliary AI prompt safety in strict phone-only mode',()=>{
   fireEvent.click(screen.getByRole('button',{name:'تدقيق وإصلاح البرومبت — v8'}))
   await waitFor(()=>expect(screen.getByRole('alert').textContent).toContain('إضاءة غير مصرّح بها'))
   const body=JSON.parse((fetcher.mock.calls[0] as unknown as [string,{body:string}])[1].body)
-  expect(body.lighting).toBe('phone_screen_only')
+  expect(body.lighting).toBe('phone_screen')
   expect(body.captureMode).toBe('front')
   expect(screen.queryByText(bad)).toBeNull()
   expect(onPromptReady).not.toHaveBeenCalled()
