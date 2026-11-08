@@ -1,7 +1,7 @@
 // @vitest-environment node
 import {describe,it,expect} from 'vitest'
 import endpoint from '../../api/authorize-final-prompt'
-import {assertAuthoritative} from '../../shared/authoritative-prompt'
+import {assertAuthoritative,ALLOWED_LOCAL_EXCLUSIONS} from '../../shared/authoritative-prompt'
 import {assembleEditorialPrompt} from '../../shared/editorial-contract'
 import {compilePrompt} from '../compiler'
 import {buildSceneSpecification} from '../features/ai-prompt-enhancer/scene-specification'
@@ -110,6 +110,7 @@ describe('PR4 unified server-side Final Prompt authority gate',()=>{
    .toThrow('FINAL_LOCAL_MISMATCH')
  })
  it('C1 Case B: the full genuine local compiled prompt passes the source-byte and exclusion guards',()=>{
+  expect(ALLOWED_LOCAL_EXCLUSIONS).toEqual(['natural_scene_director','room_geometry'])
   const {spec,prompt}=getReady()
   // The real PR7b environment has unknown geometry, so isolate the C1 source
   // gate with an explicitly synthetic eligibility state; no physical fact is inferred.
