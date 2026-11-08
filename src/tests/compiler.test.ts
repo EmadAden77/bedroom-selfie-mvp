@@ -204,7 +204,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(new Set(ids).size).toBe(ids.length)
     expect(ids).toContain('ceiling_led_neutral')
     for (const mode of additionalWhiteLedModes) expect(ids).toContain(mode.id)
-    expect(ids.filter(id => additionalWhiteLedModes.some(m => m.id === id))).toHaveLength(4)
+    expect(ids.filter(id => additionalWhiteLedModes.some(m => (m.id as string) === (id as string)))).toHaveLength(4)
   })
 
   it.each(additionalWhiteLedModes)('White LED $id selects one real light setup without additional sources', mode => {

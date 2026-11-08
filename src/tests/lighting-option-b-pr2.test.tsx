@@ -4,11 +4,10 @@ import React from 'react'
 import type {CompilationContext} from '../domain/types'
 import {compilePrompt} from '../compiler'
 import {buildSceneSpecification,sceneFingerprint} from '../features/ai-prompt-enhancer/scene-specification'
-import {naturalSceneSelectionIssues} from '../features/ai-prompt-enhancer/natural-scene-director'
 import {NightLightingSelector} from '../features/night-lighting/NightLightingSelector'
 import {nightLightingPresets} from '../data/night-lighting'
 import {evaluatePhysicalReality} from '../engine/physical-reality'
-import {LIGHTING_PRESET_IDS,deriveLightingDecision,validateLightingDecision} from '../../shared/lighting-decision'
+import {LIGHTING_PRESET_IDS,deriveLightingDecision,validateLightingDecision,lightingSectionText,physicalRealityText} from '../../shared/lighting-decision'
 import handler,{validateSceneSpec} from '../../api/generate-main-prompt'
 
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals()})
@@ -18,156 +17,95 @@ const base:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'phone_screen_only'
+ bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'phone_screen'
 }
-const mirror=(lighting:string):CompilationContext=>({
- ...base,bedroomShotId:'mirror_rear_flash',poseId:'standing',nightLightingId:lighting,
- phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY'
-})
-const front=(lighting:string):CompilationContext=>({
- ...base,bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:lighting,
- phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY'
-})
+const cases=[
+ ['led_spotlight','bed_edge','ceiling'],
+ ['camera_flash','mirror_rear_flash','phone_rear_led'],
+ ['phone_screen','bed_edge','phone_display'],
+ ['laptop_screen','laptop_cross_legs_trackpad','laptop']
+] as const
 const getSpec=(ctx:CompilationContext)=>{
  const {validation,result}=compilePrompt(ctx)
  expect(validation.errors).toEqual([])
- expect(validation.isValid).toBe(true)
  expect(result.errors).toEqual([])
  const spec=buildSceneSpecification(ctx,result,validation)
  expect(validateSceneSpec(spec)).toEqual(spec)
  return {spec,result}
 }
-const crossProducts=[
- ...LIGHTING_PRESET_IDS.filter(id=>id!=='rear_flash').map(id=>['rear flash',id] as const),
- ...LIGHTING_PRESET_IDS.filter(id=>id!=='phone_screen_only').map(id=>['front screen',id] as const)
-]
-
-describe('PR2 Option B: authoritative active source and inactive saved preference',()=>{
- it('shares every catalog ID with the existing lighting selector',()=>{
-  expect([...LIGHTING_PRESET_IDS].sort()).toEqual(nightLightingPresets.map(x=>x.id).sort())
+const forge=(spec:ReturnType<typeof getSpec>['spec'],change:Partial<ReturnType<typeof getSpec>['spec']>)=>{
+ const modified={...spec,...change}
+ const {integrity:_integrity,...unsigned}=modified
+ return {...unsigned,integrity:sceneFingerprint(unsigned)}
+}
+describe('Four-source blackout contract replacing legacy Option B',()=>{
+ it('has exactly four selectors and a strict shared typed catalog',()=>{
+  expect(LIGHTING_PRESET_IDS).toEqual(['led_spotlight','camera_flash','phone_screen','laptop_screen'])
+  expect(nightLightingPresets.map(x=>x.id)).toEqual([...LIGHTING_PRESET_IDS])
+  expect(new Set(nightLightingPresets.map(x=>x.id)).size).toBe(4)
  })
- it('C1/C3a: default saved screen + mirror rear flash activates one LED only',()=>{
-  const ctx=mirror('phone_screen_only')
+ it.each(cases)('%s is deterministic, single emitter and server authoritative', (lighting,shotId,emitter)=>{
+  const ctx={...base,nightLightingId:lighting,bedroomShotId:shotId}
   const {spec,result}=getSpec(ctx)
-  expect(spec.lighting).toEqual({
-   activeLightSource:'rear_flash',
-   savedLightingPreference:'phone_screen_only',
-   savedLightingPreferenceActive:false
-  })
-  expect(spec.capture.lighting).toBe(spec.lighting.activeLightSource)
-  expect(evaluatePhysicalReality(ctx).emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual(['phone_rear_led'])
-  expect(result.sections.filter(x=>x.id.startsWith('night_lighting_')).map(x=>x.id)).toEqual(['night_lighting_rear_flash'])
-  expect(result.promptText).toContain('Active physical emitters: phone_rear_led at ')
-  expect(result.promptText).not.toContain('Active physical emitters: phone_display at ')
-  expect(naturalSceneSelectionIssues(ctx)).toEqual([])
+  const copy=getSpec(structuredClone(ctx)).spec
+  expect(JSON.stringify(copy)).toEqual(JSON.stringify(spec))
+  expect(evaluatePhysicalReality(ctx).emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual([emitter])
+  expect(spec.capture.lighting).toBe(lighting)
+  expect(spec.lighting).toEqual({activeLightSource:lighting,savedLightingPreference:lighting,savedLightingPreferenceActive:true})
+  expect(result.sections.filter(x=>x.id.startsWith('night_lighting_')))
+    .toEqual([{id:'night_lighting_'+lighting,content:lightingSectionText(lighting)}])
+  expect(result.sections.find(x=>x.id==='physical_reality')?.content).toBe(physicalRealityText(lighting))
+  expect(result.promptText).toContain('PITCH-BLACK BEDROOM:')
+  expect(result.promptText).toContain('NO ambient light, NO window light and NO daylight')
  })
- it('C1: normal mode uses the selected preference as the active source',()=>{
+ it('does not silently override the selected light when shot changes',()=>{
+  expect(deriveLightingDecision('led_spotlight')).toEqual({
+   activeLightSource:'led_spotlight',savedLightingPreference:'led_spotlight',savedLightingPreferenceActive:true
+  })
+  expect(compilePrompt({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'led_spotlight'}).validation.isValid).toBe(false)
+ })
+ it.each(['rear_flash','phone_screen_only','ceiling_neutral','laptop_screen_only','bedside_warm','window_streetlight','near_darkness'])('rejects deprecated preset %s',old=>{
+  const compiled=compilePrompt({...base,nightLightingId:old})
+  expect(compiled.validation.isValid).toBe(false)
+  expect(compiled.result.promptText).toBe('')
+ })
+ it('rejects legacy phone override rather than silently replacing the selected source',()=>{
+  const compiled=compilePrompt({...base,phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY'})
+  expect(compiled.validation.isValid).toBe(false)
+  expect(compiled.validation.errors.some(x=>x.includes('أُلغيت أوضاع'))).toBe(true)
+ })
+ it('rejects an uncovered window and forbidden ambient-dependent shots',()=>{
+  expect(compilePrompt({...base,windowUncovered:true}).validation.isValid).toBe(false)
+  for(const shot of ['curtain_shadows','door_light_strip','silhouette','half_light'])
+   expect(compilePrompt({...base,nightLightingId:'led_spotlight',bedroomShotId:shot}).validation.isValid).toBe(false)
+ })
+ it('rejects forged source mismatch before any Gemini request',async()=>{
   const {spec}=getSpec(base)
-  expect(spec.lighting).toEqual({
-   activeLightSource:'phone_screen_only',
-   savedLightingPreference:'phone_screen_only',
-   savedLightingPreferenceActive:true
-  })
- })
- it('C3b: disable exclusive mode and restore the preserved saved preference',()=>{
-  const ctx=front('ceiling_neutral')
-  const exclusive=getSpec(ctx).spec
-  expect(exclusive.lighting).toEqual({
-   activeLightSource:'phone_screen_only',
-   savedLightingPreference:'ceiling_neutral',
-   savedLightingPreferenceActive:false
-  })
-  const off=getSpec({...ctx,phoneOnlyIlluminationMode:'OFF'}).spec
-  expect(off.lighting).toEqual({
-   activeLightSource:'ceiling_neutral',
-   savedLightingPreference:'ceiling_neutral',
-   savedLightingPreferenceActive:true
-  })
-  expect(ctx.nightLightingId).toBe('ceiling_neutral')
- })
- it('C3c: an explicit request to activate the saved source alongside flash fails before Gemini',async()=>{
-  const {spec}=getSpec(mirror('ceiling_neutral'))
-  const tampered={...spec,lighting:{...spec.lighting,savedLightingPreferenceActive:true}}
-  const {integrity:discarded,...unsigned}=tampered
-  const forged={...tampered,integrity:sceneFingerprint(unsigned)}
-  expect(()=>validateLightingDecision(forged.lighting,forged.selections.phoneOnlyIlluminationMode,forged.capture.lighting))
-   .toThrow('SPEC_SECOND_ACTIVE_LIGHT')
-  expect(()=>validateSceneSpec(forged)).toThrow('SPEC_SECOND_ACTIVE_LIGHT')
-  vi.stubEnv('GEMINI_API_KEY','fake-key')
+  const forged=forge(spec,{lighting:{...spec.lighting,activeLightSource:'led_spotlight'}})
+  expect(()=>validateLightingDecision(forged.lighting,'OFF',forged.capture.lighting)).toThrow('SPEC_LIGHTING_CONFLICT')
+  expect(()=>validateSceneSpec(forged)).toThrow('SPEC_LIGHTING_CONFLICT')
+  vi.stubEnv('GEMINI_API_KEY','test-key')
   const upstream=vi.fn()
   vi.stubGlobal('fetch',upstream)
   const response=await handler.fetch(new Request('https://bedroom-selfie-mvp.vercel.app/api/generate-main-prompt',{
-   method:'POST',headers:{'content-type':'application/json','x-forwarded-for':'option-b-two-lights'},
+   method:'POST',headers:{'content-type':'application/json','x-forwarded-for':'blackout-forged-light'},
    body:JSON.stringify({sceneSpecification:forged})
   }))
   expect(response.status).toBe(400)
   expect(upstream).not.toHaveBeenCalled()
  })
- it('rejects a forged different active source in an exclusive scene',()=>{
-  const {spec}=getSpec(front('bedside_warm'))
-  expect(()=>validateLightingDecision({...spec.lighting,activeLightSource:'bedside_warm'},
-   spec.selections.phoneOnlyIlluminationMode,spec.capture.lighting)).toThrow('SPEC_LIGHTING_CONFLICT')
+ it('rejects forged physical narrative before Gemini even when fingerprint is updated',()=>{
+  const {spec}=getSpec(base)
+  const forged=forge(spec,{derivedUnits:spec.derivedUnits.map(u=>u.id==='physical_reality'?{
+   ...u,text:u.text.replace('NO ambient light','with ambient light')
+  }:u)})
+  expect(()=>validateSceneSpec(forged)).toThrow('SPEC_PHYSICAL_REALITY')
  })
- it('rejects unknown saved IDs instead of silently overwriting them',()=>{
-  const bad=compilePrompt(mirror('imaginary_ceiling_laser'))
-  expect(bad.validation.isValid).toBe(false)
-  expect(bad.result.promptText).toBe('')
-  expect(bad.validation.errors.some(x=>x.includes('Night lighting preset invalid'))).toBe(true)
- })
- it('treats empty saved value as the default and preserves window warning',()=>{
-  expect(getSpec(mirror('')).spec.lighting).toEqual({
-   activeLightSource:'rear_flash',savedLightingPreference:'phone_screen_only',savedLightingPreferenceActive:false
-  })
-  const opened=compilePrompt({...mirror('ceiling_neutral'),windowUncovered:true})
-  expect(opened.validation.isValid).toBe(true)
-  expect(opened.validation.warnings.some(x=>x.includes('النافذة مكشوفة'))).toBe(true)
- })
- it.each(crossProducts)('%s + saved %s: accepted with inactive preference; deterministic', (kind,saved)=>{
-  const ctx=kind==='rear flash'?mirror(saved):front(saved)
-  const {spec:first,result}=getSpec(ctx)
-  const second=getSpec(structuredClone(ctx)).spec
-  const active=kind==='rear flash'?'rear_flash':'phone_screen_only'
-  const singleEmitter=kind==='rear flash'?'phone_rear_led':'phone_display'
-  expect(evaluatePhysicalReality(ctx).emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual([singleEmitter])
-  expect(result.sections.filter(x=>x.id.startsWith('night_lighting_')).map(x=>x.id))
-   .toEqual(['night_lighting_'+active])
-  expect(result.promptText).toContain('Active physical emitters: '+singleEmitter+' at ')
-  expect(first.lighting).toEqual({
-   activeLightSource:active,
-   savedLightingPreference:saved,
-   savedLightingPreferenceActive:false
-  })
-  expect(first.capture.lighting).toBe(active)
-  expect(naturalSceneSelectionIssues(ctx)).toEqual([])
-  expect(JSON.stringify(second.lighting)).toBe(JSON.stringify(first.lighting))
-  expect(JSON.stringify(second)).toBe(JSON.stringify(first))
- })
- it('C2 snapshot: saved lighting shows the exact inactive mirror flash mode label',()=>{
-  render(<NightLightingSelector
-   shotId="mirror_rear_flash" selectedId="phone_screen_only"
-   exclusiveMode="DARK_ROOM_REAR_FLASH_ONLY"
-   windowUncovered={false} onSelect={vi.fn()} onWindowChange={vi.fn()}
-  />)
-  expect(screen.getByRole('status').textContent?.trim())
-   .toMatchInlineSnapshot('"(inactive: mirror flash mode)"')
- })
- it('C2 snapshot: saved lighting shows the exact inactive front screen mode label',()=>{
-  render(<NightLightingSelector
-   shotId="bed_edge" selectedId="ceiling_neutral"
-   exclusiveMode="DARK_ROOM_FRONT_SCREEN_ONLY"
-   windowUncovered={false} onSelect={vi.fn()} onWindowChange={vi.fn()}
-  />)
-  expect(screen.getByRole('status').textContent?.trim())
-   .toMatchInlineSnapshot('"(inactive: front screen mode)"')
- })
- it('C2: labels inactive preference visibly without mutating selected preset',()=>{
-  const common={shotId:'mirror_rear_flash',selectedId:'phone_screen_only',
-   windowUncovered:false,onSelect:vi.fn(),onWindowChange:vi.fn()}
-  const r=render(<NightLightingSelector {...common} exclusiveMode="DARK_ROOM_REAR_FLASH_ONLY"/>)
-  expect(screen.getByRole('status')).toHaveTextContent('inactive: mirror flash mode')
-  const saved=screen.getByRole('button',{name:/شاشة الهاتف فقط/})
-  expect(saved.getAttribute('aria-pressed')).toBe('true')
-  r.rerender(<NightLightingSelector {...common} exclusiveMode="OFF"/>)
-  expect(screen.queryByText(/inactive: mirror flash mode/)).toBeNull()
+ it('provides four visible choices and disables incompatible capture modes',()=>{
+  render(<NightLightingSelector shotId="bed_edge" selectedId="phone_screen" onSelect={vi.fn()}/>)
+  expect(screen.getAllByRole('button')).toHaveLength(4)
+  expect(screen.getByRole('button',{name:/فلاش الكاميرا الخلفية/})).toBeDisabled()
+  expect(screen.getByRole('button',{name:/شاشة اللابتوب/})).toBeDisabled()
+  expect(screen.getByRole('button',{name:/شاشة الهاتف/})).toHaveAttribute('aria-pressed','true')
  })
 })

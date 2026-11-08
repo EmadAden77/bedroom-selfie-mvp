@@ -16,7 +16,7 @@ describe('PR5 canonical capture/light rule relocation (behavior equivalence)',()
  it('CL-1: all shot/light combinations preserve the original mirror flash requirement',()=>{
   for(const shotId of shots){
    for(const lighting of lights){
-    const before=shotId==='mirror_rear_flash'&&lighting!=='rear_flash'
+    const before=shotId==='mirror_rear_flash'&&lighting!=='camera_flash'
     expect(mirrorRearFlashNeedsSource(shotId,lighting)).toBe(before)
    }
   }
@@ -30,7 +30,7 @@ describe('PR5 canonical capture/light rule relocation (behavior equivalence)',()
  it('CL-3: all capture/light combinations preserve the screen-only rear conflict',()=>{
   for(const mode of modes){
    for(const lighting of lights){
-    const before=lighting==='phone_screen_only'&&mode==='rear'
+    const before=lighting==='phone_screen'&&mode==='rear'
     expect(rearCaptureScreenOnlyConflict(mode,lighting)).toBe(before)
    }
   }
