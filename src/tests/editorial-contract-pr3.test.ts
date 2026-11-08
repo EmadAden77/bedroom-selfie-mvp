@@ -14,7 +14,7 @@ const ctx:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'mirror_rear_flash',poseId:'standing',nightLightingId:'ceiling_neutral',
+ bedroomShotId:'mirror_rear_flash',poseId:'standing',nightLightingId:'led_spotlight',
  phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY'
 }
 const spec=()=>{

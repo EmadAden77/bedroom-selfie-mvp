@@ -14,7 +14,7 @@ const base:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'mirror_wardrobe',nightLightingId:'ceiling_neutral'
+ bedroomShotId:'mirror_wardrobe',nightLightingId:'led_spotlight'
 }
 const build=(ctx:CompilationContext=base)=>{
  const compiled=compilePrompt(ctx)

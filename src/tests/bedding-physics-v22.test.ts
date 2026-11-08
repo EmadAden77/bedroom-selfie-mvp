@@ -13,7 +13,7 @@ const ctx:CompilationContext={hairVariantId:'reference_natural_dry',expressionVa
  upperGarmentId:'reference_garment_preserved',lowerGarmentId:null,materialId:'lightweight_cotton_appearance_jersey',
  fitId:'regular',stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'ceiling_neutral'}
+ bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'led_spotlight'}
 const errors=(s:ReturnType<typeof bedding>)=>s.issues.map(i=>i.code)
 
 describe('Physical Reality Engine V2.2 — causal bedding',()=>{
@@ -164,7 +164,7 @@ describe('Physical Reality Engine V2.2 — causal bedding',()=>{
   const c={...ctx,bedroomShotId:'mirror_rear_flash',phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY' as const}
   deriveBeddingScene(c)
   expect(evaluatePhysicalReality(c).emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual(['phone_rear_led'])
-  expect(c.nightLightingId).toBe('ceiling_neutral')
+  expect(c.nightLightingId).toBe('led_spotlight')
  })
  it('32 confirmed bed-edge sheet receives local tension without any frame bending',()=>{
   const s=bedding({}, {sheet:'confirmed',pillow:'reference',blanket:'reference'})

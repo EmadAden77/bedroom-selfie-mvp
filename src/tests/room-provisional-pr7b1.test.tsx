@@ -17,7 +17,7 @@ const base:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'mirror_wardrobe',poseId:'standing',nightLightingId:'ceiling_neutral'
+ bedroomShotId:'mirror_wardrobe',poseId:'standing',nightLightingId:'led_spotlight'
 }
 const makeScene=(patch:Partial<CompilationContext>={})=>{
  const ctx={...base,...patch}
@@ -53,7 +53,7 @@ describe('PR7b-1 provisional opt-in, strict physics, and server-issued audit',()
   expect((await response.json() as {errorCode:string}).errorCode).toBe('ROOM_UNVERIFIED')
   const onPromptReady=vi.fn()
   render(<>
-   <RoomSizeSelector ctx={ctx} posture="standing" activeLighting="ceiling_neutral" onChange={vi.fn()}/>
+   <RoomSizeSelector ctx={ctx} posture="standing" activeLighting="led_spotlight" onChange={vi.fn()}/>
    <AiPromptEnhancer ctx={ctx} validation={validation} result={result} onReset={vi.fn()}
     onPromptReady={onPromptReady} onAdvisoryReady={vi.fn()}/>
   </>)
@@ -116,7 +116,7 @@ describe('PR7b-1 provisional opt-in, strict physics, and server-issued audit',()
  })
  it('C: explicit confirmation CANNOT override RG invalid; both authority gate and server reject',async()=>{
   const {result,spec}=makeScene({roomSizePreset:'custom',roomCustomWidthMeters:2,
-   roomCustomDepthMeters:2,roomCustomHeightMeters:2.6,nightLightingId:'phone_screen_only'})
+   roomCustomDepthMeters:2,roomCustomHeightMeters:2.6,nightLightingId:'phone_screen'})
   expect(spec.roomGeometry.bedFitValid.status).toBe('invalid')
   const measurementNames=unverifiedRoomMeasurements(spec.roomGeometry,spec.capture.posture)
   const ack={accepted:true,sceneIntegrity:spec.integrity,measurements:measurementNames}

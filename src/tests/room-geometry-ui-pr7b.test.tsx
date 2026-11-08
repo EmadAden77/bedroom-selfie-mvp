@@ -15,7 +15,7 @@ const ctx:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'mirror_wardrobe',poseId:'standing',nightLightingId:'ceiling_neutral'
+ bedroomShotId:'mirror_wardrobe',poseId:'standing',nightLightingId:'led_spotlight'
 }
 const scene=()=>{
  const {validation,result}=compilePrompt(ctx)
@@ -30,7 +30,7 @@ const ui=(ready=vi.fn())=>{
 }
 describe('PR7b: room selector warning and non-authoritative draft display',()=>{
  it('shows exact unconfirmed medium banner and measurement-specific RG-1/RG-2 warnings',()=>{
-  render(<RoomSizeSelector ctx={ctx} posture="standing" activeLighting="ceiling_neutral"
+  render(<RoomSizeSelector ctx={ctx} posture="standing" activeLighting="led_spotlight"
    onChange={vi.fn()}/>)
   expect(screen.getByText('Room size assumed as medium. Confirm for accuracy.')).toBeTruthy()
   expect(screen.getByText(/implicit distances pending PR8/)).toBeTruthy()
@@ -40,7 +40,7 @@ describe('PR7b: room selector warning and non-authoritative draft display',()=>{
  it('custom has blank inputs, requests numeric input without a fabricated default',()=>{
   const change=vi.fn()
   render(<RoomSizeSelector ctx={{...ctx,roomSizePreset:'custom'}} posture="standing"
-   activeLighting="phone_screen_only" onChange={change}/>)
+   activeLighting="phone_screen" onChange={change}/>)
   for(const name of ['العرض (متر)','العمق (متر)','الارتفاع (متر)']){
    expect((screen.getByRole('spinbutton',{name}) as HTMLInputElement).value).toBe('')
   }

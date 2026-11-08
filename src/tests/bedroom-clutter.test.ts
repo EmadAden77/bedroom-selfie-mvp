@@ -11,7 +11,7 @@ const base:CompilationContext={
  fitId:'regular',stateId:'observed_natural_state',
  color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',
- referenceImagePresent:false,nightLightingId:'ceiling_neutral',
+ referenceImagePresent:false,nightLightingId:'led_spotlight',
  bedroomClutterId:'reference'
 }
 describe('Optional realistic lived-in bedroom clutter',()=>{
@@ -29,7 +29,7 @@ describe('Optional realistic lived-in bedroom clutter',()=>{
   expect(invalid.validation.errors).toContain('Invalid bedroom clutter appearance')
  })
  it.each(['','mirror_wardrobe','mirror_rear_flash','bed_edge'])('produces valid realistic local prompt for shot %s',shot=>{
-  const light=shot==='mirror_rear_flash'?'rear_flash':'ceiling_neutral'
+  const light=shot==='mirror_rear_flash'?'camera_flash':'led_spotlight'
   const c=compilePrompt({...base,bedroomClutterId:'lived_in_messy',bedroomShotId:shot,nightLightingId:light})
   expect(c.validation.isValid).toBe(true)
   expect(c.result.errors).toHaveLength(0)
@@ -46,9 +46,9 @@ describe('Optional realistic lived-in bedroom clutter',()=>{
   }
  })
  it('does not add unselected daylight or replace the selected screen-only light',()=>{
-  const c=compilePrompt({...base,bedroomClutterId:'lived_in_messy',nightLightingId:'phone_screen_only'})
+  const c=compilePrompt({...base,bedroomClutterId:'lived_in_messy',nightLightingId:'phone_screen'})
   expect(c.validation.isValid).toBe(true)
-  expect(c.result.sections.find(s=>s.id==='night_lighting_phone_screen_only')?.content).toContain('sole active light source')
+  expect(c.result.sections.find(s=>s.id==='night_lighting_phone_screen')?.content).toContain('sole active light source')
   expect(c.result.sections.filter(s=>s.id.startsWith('night_lighting_'))).toHaveLength(1)
   expect(c.result.sections.find(s=>s.id==='lived_in_bedroom_clutter')?.content).toContain('selected lighting')
  })
