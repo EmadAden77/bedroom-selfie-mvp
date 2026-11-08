@@ -55,10 +55,11 @@ export function assertAuthoritative(
   const original=spec.derivedUnits
    .filter(u=>!ALLOWED_LOCAL_EXCLUSIONS.some(id=>id===u.id))
    .map(u=>u.text).join('\n\n')
-  if(c.prompt!==original)throw Error('FINAL_LOCAL_MISMATCH')
+  const localPrompt=c.prompt
+  if(localPrompt!==original)throw Error('FINAL_LOCAL_MISMATCH')
   // Defense in depth: equality alone does not prove that excluded-unit text
   // is absent from an included unit. Deny any full-text overlap as a leak.
-  if(excluded.some(u=>u.text.length>0&&c.prompt.includes(u.text)))
+  if(excluded.some(u=>u.text.length>0&&localPrompt.includes(u.text)))
    throw Error('FINAL_LOCAL_MISMATCH')
   assertRoomAuthority(spec.roomGeometry)
   return {source:'local',prompt:c.prompt,validated:true}
