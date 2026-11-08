@@ -90,6 +90,52 @@ describe('PR4 unified server-side Final Prompt authority gate',()=>{
   expect(response.status).toBe(400)
   expect((await response.json() as {errorCode:string}).errorCode).toBe('FINAL_EDITOR_MISMATCH')
  })
+ it('C1 Case A: natural_scene_director text cannot leak into an otherwise byte-identical local prompt',()=>{
+  const {spec,prompt}=getReady()
+  const forged=structuredClone(spec)
+  // Deliberately alias excluded metadata to an INCLUDED compiler section.
+  // Existing exact-byte comparison alone accepts this overlap (regression proof).
+  const included=forged.derivedUnits.find(u=>u.id==='reference_identity')!
+  expect(included.text.length).toBeGreaterThan(8)
+  expect(prompt).toContain(included.text)
+  const meta=forged.derivedUnits.find(u=>u.id==='natural_scene_director')
+  if(meta)meta.text=included.text
+  else forged.derivedUnits.push({id:'natural_scene_director',text:included.text,authority:'local_physics',immutable:true})
+  // Straight append is already blocked by old exact-match logic.
+  expect(()=>assertAuthoritative(forged,{source:'local',prompt:prompt+'\\n\\n'+included.text}))
+   .toThrow('FINAL_LOCAL_MISMATCH')
+  // More subtle: metadata text overlaps existing allowed prompt bytes.
+  // It must be rejected even though the candidate equals the real compiled prompt.
+  expect(()=>assertAuthoritative(forged,{source:'local',prompt}))
+   .toThrow('FINAL_LOCAL_MISMATCH')
+ })
+ it('C1 Case B: the full genuine local compiled prompt passes the source-byte and exclusion guards',()=>{
+  const {spec,prompt}=getReady()
+  // The real PR7b environment has unknown geometry, so isolate the C1 source
+  // gate with an explicitly synthetic eligibility state; no physical fact is inferred.
+  const syntheticEligibleSpec={...spec,roomGeometry:{...spec.roomGeometry,
+   userConfirmed:true,
+   bedFitValid:{status:'valid' as const},
+   mirrorFitValid:{status:'valid' as const},
+   lightingFitValid:{status:'valid' as const}
+  }}
+  const final=assertAuthoritative(syntheticEligibleSpec,{source:'local',prompt})
+  expect(final).toEqual({source:'local',prompt,validated:true})
+ })
+ it('C1 Case C: room_geometry text cannot leak into an otherwise byte-identical local prompt',()=>{
+  const {spec,prompt}=getReady()
+  const forged=structuredClone(spec)
+  const included=forged.derivedUnits.find(u=>u.id==='reference_identity')!
+  expect(prompt).toContain(included.text)
+  const geometry=forged.derivedUnits.find(u=>u.id==='room_geometry')!
+  // Existing old comparison cannot tell that an excluded room unit's bytes
+  // have been injected into already-accepted compiler text.
+  geometry.text=included.text
+  expect(()=>assertAuthoritative(forged,{source:'local',prompt:prompt+'\\n\\n'+geometry.text}))
+   .toThrow('FINAL_LOCAL_MISMATCH')
+  expect(()=>assertAuthoritative(forged,{source:'local',prompt}))
+   .toThrow('FINAL_LOCAL_MISMATCH')
+ })
  it('server refuses direct prompt submissions without a validated SceneSpecification',async()=>{
   const response=await endpoint.fetch(post({candidate:{source:'local',prompt:'some text'}}))
   expect(response.status).toBe(400)
