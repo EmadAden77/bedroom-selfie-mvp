@@ -39,6 +39,11 @@ const forge=(spec:ReturnType<typeof getSpec>['spec'],change:Partial<ReturnType<t
  return {...unsigned,integrity:sceneFingerprint(unsigned)}
 }
 describe('Four-source blackout contract replacing legacy Option B',()=>{
+ it('reference-free scene can compile without hidden lighting defaults',()=>{
+  const ctx={...base,bedroomShotId:'',referenceImagePresent:false,roomReferencePresent:false};
+  const compiled=compilePrompt(ctx);
+  expect(compiled.validation.errors).toEqual([])
+ })
  it('has exactly four selectors and a strict shared typed catalog',()=>{
   expect(LIGHTING_PRESET_IDS).toEqual(['led_spotlight','camera_flash','phone_screen','laptop_screen'])
   expect(nightLightingPresets.map(x=>x.id)).toEqual([...LIGHTING_PRESET_IDS])
