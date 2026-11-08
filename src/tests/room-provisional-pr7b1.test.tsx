@@ -71,7 +71,7 @@ describe('PR7b-1 provisional opt-in, strict physics, and server-issued audit',()
   let auditResponse:any
   const fetcher=vi.fn(async(_url:string,options:RequestInit)=>{
    const request=new Request(endpoint,{
-    method:'POST',headers:options.headers,body:options.body,signal:options.signal
+    method:'POST',headers:options.headers,body:options.body
    })
    const response=await authority.fetch(request)
    auditResponse={status:response.status,...await response.clone().json()}
