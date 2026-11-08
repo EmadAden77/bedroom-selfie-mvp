@@ -12,14 +12,13 @@ const selected:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'phone_screen',
- windowUncovered:false,phoneOnlyIlluminationMode:'OFF'
-}
+ bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'phone_screen' as const,
+ windowUncovered:false}
 const active=(x:CompilationContext)=>evaluatePhysicalReality(x).emitters.filter(e=>e.enabled).map(e=>e.id)
 describe('Blackout lighting state transition and authority regression',()=>{
  it('never overrides selected emitters or unrelated identity, room and clothing',()=>{
   const original=structuredClone(selected)
-  const changed={...selected,nightLightingId:'led_spotlight'}
+  const changed={...selected,nightLightingId:'led_spotlight' as const}
   expect(active(selected)).toEqual(['phone_display'])
   expect(active(changed)).toEqual(['ceiling'])
   expect(effectivePhysicalContext(changed)).toEqual(changed)
@@ -29,7 +28,7 @@ describe('Blackout lighting state transition and authority regression',()=>{
   const invalid={...selected,bedroomShotId:'mirror_rear_flash'}
   expect(evaluatePhysicalReality(invalid).issues.map(i=>i.code)).toContain('MIRROR_FLASH_REQUIRED')
   expect(compilePrompt(invalid).result.promptText).toBe('')
-  const corrected=reconcileCaptureSelection(invalid,{nightLightingId:'camera_flash'})
+  const corrected=reconcileCaptureSelection(invalid,{nightLightingId:'camera_flash' as const})
   expect(corrected.bedroomShotId).toBe('mirror_rear_flash')
   expect(corrected.upperGarmentId).toBe(selected.upperGarmentId)
   expect(active(corrected)).toEqual(['phone_rear_led'])
@@ -57,10 +56,10 @@ describe('Blackout lighting state transition and authority regression',()=>{
   expect(compilePrompt(selected).result.promptText).toContain('no daylight')
  })
  it('detects active extra emitters even without a legacy override switch',()=>{
-  expect(explicitUnauthorizedEmitter('A warm bedside lamp illuminates the face.','OFF')).toBe('bedside lamp')
-  expect(explicitUnauthorizedEmitter('Portrait lit by ceiling lights.','OFF')).toBe('ceiling lights')
-  expect(explicitUnauthorizedEmitter('The studio fill is on.','OFF')).toBe('studio fill')
-  expect(explicitUnauthorizedEmitter('No bedside lamp; without ceiling lights; ring light off.','OFF')).toBeNull()
-  expect(explicitUnauthorizedEmitter('Passive wall reflections from the phone emitter illuminate nearby skin.','OFF')).toBeNull()
+  expect(explicitUnauthorizedEmitter('A warm bedside lamp illuminates the face.','phone_screen')).toBe('bedside lamp')
+  expect(explicitUnauthorizedEmitter('Portrait lit by ceiling lights.','phone_screen')).toBe('ceiling lights')
+  expect(explicitUnauthorizedEmitter('The studio fill is on.','phone_screen')).toBe('studio fill')
+  expect(explicitUnauthorizedEmitter('No bedside lamp; without ceiling lights; ring light off.','phone_screen')).toBeNull()
+  expect(explicitUnauthorizedEmitter('Passive wall reflections from the phone emitter illuminate nearby skin.','phone_screen')).toBeNull()
  })
 })

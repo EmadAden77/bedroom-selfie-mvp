@@ -9,7 +9,7 @@ const ctx:CompilationContext={
  upperGarmentId:'reference_garment_preserved',lowerGarmentId:null,
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',stateId:'observed_natural_state',
  color:'apparent dark charcoal-gray as observed',surface:'apparent knit-like surface character',
- referenceImagePresent:false,bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'phone_screen_only'
+ referenceImagePresent:false,bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'phone_screen' as const
 }
 describe('V2.2 Arabic bedding UI and consent',()=>{
  it('shows derived causal counts without altering selections',()=>{
@@ -26,7 +26,7 @@ describe('V2.2 Arabic bedding UI and consent',()=>{
   fireEvent.change(screen.getByLabelText('الشرشف'),{target:{value:'confirmed'}})
   expect(onChange).toHaveBeenCalledWith({beddingSelection:{sheet:'confirmed',pillow:'reference',blanket:'reference'}})
   expect(ctx.bedroomShotId).toBe('bed_edge')
-  expect(ctx.nightLightingId).toBe('phone_screen_only')
+  expect(ctx.nightLightingId).toBe('phone_screen')
  })
  it('rejects missing selected pillow and applies correction only after explicit click',()=>{
   const onChange=vi.fn()

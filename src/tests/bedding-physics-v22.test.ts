@@ -13,7 +13,7 @@ const ctx:CompilationContext={hairVariantId:'reference_natural_dry',expressionVa
  upperGarmentId:'reference_garment_preserved',lowerGarmentId:null,materialId:'lightweight_cotton_appearance_jersey',
  fitId:'regular',stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'led_spotlight'}
+ bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'led_spotlight' as const}
 const errors=(s:ReturnType<typeof bedding>)=>s.issues.map(i=>i.code)
 
 describe('Physical Reality Engine V2.2 — causal bedding',()=>{
@@ -161,7 +161,7 @@ describe('Physical Reality Engine V2.2 — causal bedding',()=>{
   expect(spec.derivedUnits.find(u=>u.id==='bedding_physics_v22')?.text).toBe(renderBedding(spec.beddingPhysics))
  })
  it('30 strict V1 rear flash only remains unchanged by bedding derivation',()=>{
-  const c={...ctx,bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash',phoneOnlyIlluminationMode:'OFF' as const}
+  const c={...ctx,bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash' as const}
   deriveBeddingScene(c)
   expect(evaluatePhysicalReality(c).emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual(['phone_rear_led'])
   expect(c.nightLightingId).toBe('camera_flash')
@@ -182,7 +182,7 @@ describe('Physical Reality Engine V2.2 — causal bedding',()=>{
   expect(s.unknowns).toContain('PILLOW_SUPPORT_ANCHOR_NOT_CONFIRMED')
  })
  it('31 strict V1 screen-only remains unchanged by bedding derivation',()=>{
-  const c={...ctx,nightLightingId:'phone_screen',phoneOnlyIlluminationMode:'OFF' as const}
+  const c={...ctx,nightLightingId:'phone_screen' as const}
   deriveBeddingScene(c)
   expect(evaluatePhysicalReality(c).emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual(['phone_display'])
  })

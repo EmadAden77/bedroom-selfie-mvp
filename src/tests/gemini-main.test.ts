@@ -23,7 +23,7 @@ const base:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',stateId:'observed_natural_state',
  color:'apparent dark charcoal-gray as observed',surface:'apparent knit-like surface character',
  referenceImagePresent:true,roomReferencePresent:true,bedroomShotId:'mirror_wardrobe',
- nightLightingId:'led_spotlight',poseId:'standing'
+ nightLightingId:'led_spotlight' as const,poseId:'standing'
 }
 const getSpec=(ctx:CompilationContext=base)=>{
  const compiled=compilePrompt(ctx)
@@ -90,7 +90,7 @@ describe('Vercel standalone constrained editor',()=>{
   expect(JSON.stringify(outgoing)).not.toContain('inlineData')
  })
  it('checks phone-only capture and emitter contract on the server before calling Gemini',async()=>{
-  const ctx={...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash',phoneOnlyIlluminationMode:'OFF' as const}
+  const ctx={...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash' as const}
   const spec=getSpec(ctx)
   vi.stubEnv('GEMINI_API_KEY','fake-key')
   const providerCall=vi.fn(async()=>provider(spec))
@@ -99,7 +99,7 @@ describe('Vercel standalone constrained editor',()=>{
   expect(valid.status).toBe(200)
   expect(providerCall).toHaveBeenCalledTimes(1)
   for(const tamper of [
-   {...spec,selections:{...spec.selections,phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY'}},
+   {...spec,selections:{...spec.selections,extraLightingOverride:'bedside'}},
    {...spec,capture:{...spec.capture,lighting:'phone_screen'}},
    {...spec,derivedUnits:spec.derivedUnits.filter(u=>u.id!=='physical_reality')}
   ]){
@@ -111,8 +111,7 @@ describe('Vercel standalone constrained editor',()=>{
   expect(providerCall).toHaveBeenCalledTimes(1)
  })
  it('accepts a front-only screen scene and rejects cross-mode client tampering before Gemini',async()=>{
-  const ctx:CompilationContext={...base,bedroomShotId:'bed_edge',nightLightingId:'phone_screen',
-   phoneOnlyIlluminationMode:'OFF'}
+  const ctx:CompilationContext={...base,bedroomShotId:'bed_edge',nightLightingId:'phone_screen' as const}
   const spec=getSpec(ctx)
   expect(spec.capture.mode).toBe('front')
   expect(spec.capture.lighting).toBe('phone_screen')
@@ -124,7 +123,7 @@ describe('Vercel standalone constrained editor',()=>{
   const tampered=[
    {...spec,capture:{...spec.capture,mode:'mirror' as const}},
    {...spec,capture:{...spec.capture,lighting:'camera_flash'}},
-   {...spec,selections:{...spec.selections,phoneOnlyIlluminationMode:'DARK_ROOM_REAR_FLASH_ONLY'}}
+   {...spec,selections:{...spec.selections,extraLightingOverride:'bedside'}}
   ]
   for(const item of tampered){
    const {integrity,...rest}=item
@@ -311,7 +310,7 @@ describe('Vercel standalone constrained editor',()=>{
   expect(floor.references.userConfirmedLayout).toEqual(mirror.references.userConfirmedLayout)
  })
  it('retains screen-only light, clothing selections and locked room objects unchanged',()=>{
-  const ctx:CompilationContext={...base,bedroomShotId:'bed_edge',nightLightingId:'phone_screen'}
+  const ctx:CompilationContext={...base,bedroomShotId:'bed_edge',nightLightingId:'phone_screen' as const}
   const s=getSpec(ctx)
   expect(s.derivedUnits.find(u=>u.id==='night_lighting_phone_screen')?.text).toContain('The ONLY light source is')
   expect(s.selections.upperColor).toBe('apparent dark charcoal-gray as observed')
@@ -352,7 +351,7 @@ describe('Concise creative scene selection',()=>{
   color:'white',surface:'solid',
   referenceImagePresent:true,roomReferencePresent:true,
   bedroomShotId:'dresser_mirror',
-  nightLightingId:'led_spotlight',
+  nightLightingId:'led_spotlight' as const,
   realismIntensity:'natural'
  }
  it('uses selected clothing and hair, not the huge assembled local prompt',()=>{
@@ -379,7 +378,7 @@ describe('Selected hairstyle genuinely reaches ChatGPT via Gemini',()=>{
   materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
   stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
   surface:'apparent knit-like surface character',referenceImagePresent:true,
-  nightLightingId:'led_spotlight'
+  nightLightingId:'led_spotlight' as const
  }
  it('puts clear apply instructions and every advanced control into the concise Gemini brief',()=>{
   const brief=buildCreativeSceneBrief(base)

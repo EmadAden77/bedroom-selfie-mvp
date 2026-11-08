@@ -17,7 +17,7 @@ const base:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'phone_screen'
+ bedroomShotId:'bed_edge',poseId:'seated_bed',nightLightingId:'phone_screen' as const
 }
 const cases=[
  ['led_spotlight','bed_edge','ceiling'],
@@ -64,14 +64,14 @@ describe('Four-source blackout contract replacing legacy Option B',()=>{
   expect(result.promptText).toContain('There is no ambient light, no window light, and no daylight.')
  })
  it('phone screen generates the exact blackout, blue cast and rectangular catchlight',()=>{
-  const {result}=getSpec({...base,nightLightingId:'phone_screen',bedroomShotId:'bed_edge'})
+  const {result}=getSpec({...base,nightLightingId:'phone_screen' as const,bedroomShotId:'bed_edge'})
   expect(result.promptText).toContain('absolute pitch blackness')
   expect(result.promptText).toContain('cool blue color cast')
   expect(result.promptText).toContain('rectangular catchlight')
   expect(result.promptText).toContain('The ONLY light source is the soft, diffused light from a smartphone screen.')
  })
  it('rear flash produces strict skin texture and hard shadows',()=>{
-  const {result}=getSpec({...base,nightLightingId:'camera_flash',bedroomShotId:'mirror_rear_flash'})
+  const {result}=getSpec({...base,nightLightingId:'camera_flash' as const,bedroomShotId:'mirror_rear_flash'})
   expect(result.promptText).toContain('microscopic skin texture')
   expect(result.promptText).toContain('hard-edged shadows')
   expect(result.promptText).toContain('The ONLY light source is a harsh, direct camera flash.')
@@ -86,27 +86,27 @@ describe('Four-source blackout contract replacing legacy Option B',()=>{
   expect(deriveLightingDecision('led_spotlight')).toEqual({
    activeLightSource:'led_spotlight',savedLightingPreference:'led_spotlight',savedLightingPreferenceActive:true
   })
-  expect(compilePrompt({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'led_spotlight'}).validation.isValid).toBe(false)
+  expect(compilePrompt({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'led_spotlight' as const}).validation.isValid).toBe(false)
  })
  it.each(['rear_flash','phone_screen_only','ceiling_neutral','laptop_screen_only','bedside_warm','window_streetlight','near_darkness'])('rejects deprecated preset %s',old=>{
-  const compiled=compilePrompt({...base,nightLightingId:old})
+  const compiled=compilePrompt({...base,nightLightingId:old as CompilationContext['nightLightingId']})
   expect(compiled.validation.isValid).toBe(false)
   expect(compiled.result.promptText).toBe('')
  })
- it('rejects legacy phone override rather than silently replacing the selected source',()=>{
-  const compiled=compilePrompt({...base,phoneOnlyIlluminationMode:'DARK_ROOM_FRONT_SCREEN_ONLY'})
-  expect(compiled.validation.isValid).toBe(false)
-  expect(compiled.validation.errors.some(x=>x.includes('أُلغيت أوضاع'))).toBe(true)
+ it('rejects an unexpected secondary-light field in the server specification',()=>{
+  const {spec}=getSpec(base)
+  const forged={...spec,selections:{...spec.selections,extraLightingOverride:'bedside'}}
+  expect(()=>validateSceneSpec(forged)).toThrow('SPEC_LIGHTING_SCHEMA')
  })
  it('rejects an uncovered window and forbidden ambient-dependent shots',()=>{
   expect(compilePrompt({...base,windowUncovered:true}).validation.isValid).toBe(false)
   for(const shot of ['curtain_shadows','door_light_strip','silhouette','half_light'])
-   expect(compilePrompt({...base,nightLightingId:'led_spotlight',bedroomShotId:shot}).validation.isValid).toBe(false)
+   expect(compilePrompt({...base,nightLightingId:'led_spotlight' as const,bedroomShotId:shot}).validation.isValid).toBe(false)
  })
  it('rejects forged source mismatch before any Gemini request',async()=>{
   const {spec}=getSpec(base)
   const forged=forge(spec,{lighting:{...spec.lighting,activeLightSource:'led_spotlight'}})
-  expect(()=>validateLightingDecision(forged.lighting,'OFF',forged.capture.lighting)).toThrow('SPEC_LIGHTING_CONFLICT')
+  expect(()=>validateLightingDecision(forged.lighting,forged.capture.lighting)).toThrow('SPEC_LIGHTING_CONFLICT')
   expect(()=>validateSceneSpec(forged)).toThrow('SPEC_LIGHTING_CONFLICT')
   vi.stubEnv('GEMINI_API_KEY','test-key')
   const upstream=vi.fn()

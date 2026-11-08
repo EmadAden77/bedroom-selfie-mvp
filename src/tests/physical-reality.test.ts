@@ -10,9 +10,7 @@ const base:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,roomReferencePresent:true,
- bedroomShotId:'mirror_rear_flash',poseId:'standing',nightLightingId:'camera_flash',
- phoneOnlyIlluminationMode:'OFF'
-}
+ bedroomShotId:'mirror_rear_flash',poseId:'standing',nightLightingId:'camera_flash' as const}
 describe('Single-emitter blackout physical reality',()=>{
  it('respects explicitly selected rear flash with no automatic light switching',()=>{
   const snapshot=structuredClone(base)
@@ -25,7 +23,7 @@ describe('Single-emitter blackout physical reality',()=>{
   expect(renderPhysicalReality(base)).toContain('microscopic skin texture')
  })
  it('permits a front selfie lit only by the phone screen',()=>{
-  const ctx={...base,bedroomShotId:'bed_edge',nightLightingId:'phone_screen',poseId:'seated_bed'}
+  const ctx={...base,bedroomShotId:'bed_edge',nightLightingId:'phone_screen' as const,poseId:'seated_bed'}
   const result=evaluatePhysicalReality(ctx)
   expect(result.issues).toEqual([])
   expect(result.emitters.filter(e=>e.enabled).map(e=>e.id)).toEqual(['phone_display'])
@@ -33,7 +31,7 @@ describe('Single-emitter blackout physical reality',()=>{
   expect(result.effects.join(' ')).toContain('rectangular catchlight')
  })
  it('rejects incompatible mirror-flash selections without rewriting the shot',()=>{
-  const ctx={...base,nightLightingId:'led_spotlight'}
+  const ctx={...base,nightLightingId:'led_spotlight' as const}
   const physical=evaluatePhysicalReality(ctx)
   expect(physical.issues.map(i=>i.code)).toContain('MIRROR_FLASH_REQUIRED')
   expect(ctx.bedroomShotId).toBe('mirror_rear_flash')
@@ -43,7 +41,7 @@ describe('Single-emitter blackout physical reality',()=>{
  })
  it('rejects rear-camera flash in a front selfie and laptop light without a laptop',()=>{
   expect(evaluatePhysicalReality({...base,bedroomShotId:'bed_edge'}).issues.map(i=>i.code)).toContain('FLASH_CAMERA_REQUIRED')
-  expect(evaluatePhysicalReality({...base,bedroomShotId:'bed_edge',nightLightingId:'laptop_screen'}).issues.map(i=>i.code)).toContain('LAPTOP_REQUIRED')
+  expect(evaluatePhysicalReality({...base,bedroomShotId:'bed_edge',nightLightingId:'laptop_screen' as const}).issues.map(i=>i.code)).toContain('LAPTOP_REQUIRED')
  })
  it('locks selected flash physics into the Gemini scene specification',()=>{
   const {validation,result}=compilePrompt(base)

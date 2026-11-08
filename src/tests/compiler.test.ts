@@ -165,19 +165,19 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
   })
   it('Rejects windows and every deprecated source; keeps one selected spotlight',()=>{
     for(const removed of ['window_streetlight','bedside_warm','ceiling_neutral','ceiling_led_neutral','ceiling_dim','near_darkness']){
-      const invalid=compilePrompt({...defaultCtx,nightLightingId:removed})
+      const invalid=compilePrompt({...defaultCtx,nightLightingId:removed as CompilationContext['nightLightingId']})
       expect(invalid.validation.isValid).toBe(false)
     }
-    const invalidWindow=compilePrompt({...defaultCtx,nightLightingId:'led_spotlight',windowUncovered:true})
+    const invalidWindow=compilePrompt({...defaultCtx,nightLightingId:'led_spotlight' as const,windowUncovered:true})
     expect(invalidWindow.validation.isValid).toBe(false)
-    const compiled=compilePrompt({...defaultCtx,nightLightingId:'led_spotlight'})
+    const compiled=compilePrompt({...defaultCtx,nightLightingId:'led_spotlight' as const})
     expect(compiled.validation.isValid).toBe(true)
     expect(compiled.result.sections.find(x=>x.id==='night_lighting_led_spotlight')?.content).toContain('a single white LED ceiling spotlight')
     expect(compiled.result.sections.find(x=>x.id==='light_pose_geometry')?.content).toContain('Ceiling fixtures remain above')
     expect(compiled.result.sections.filter(x=>x.id.startsWith('night_lighting_'))).toHaveLength(1)
   })
   it.each(['mirror_wardrobe','side_knee_tucked','edge_one_knee_raised'])('Single ceiling spotlight supports %s geometry',bedroomShotId=>{
-    const compiled=compilePrompt({...defaultCtx,bedroomShotId,nightLightingId:'led_spotlight'})
+    const compiled=compilePrompt({...defaultCtx,bedroomShotId,nightLightingId:'led_spotlight' as const})
     expect(compiled.validation.isValid).toBe(true)
     expect(compiled.result.errors).toEqual([])
   })
@@ -186,11 +186,11 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(nightLightingPresets.map(p=>p.id)).toEqual(['led_spotlight','camera_flash','phone_screen','laptop_screen'])
   })
   it('Unknown lighting preset is rejected', () => {
-    expect(compilePrompt({ ...defaultCtx, nightLightingId: 'invented_fill' }).validation.isValid).toBe(false)
+    expect(compilePrompt({ ...defaultCtx, nightLightingId: 'invented_fill' as CompilationContext['nightLightingId'] }).validation.isValid).toBe(false)
   })
   it('Changes geometry for side-lying while keeping the only spotlight fixed', () => {
-    const right = compilePrompt({ ...defaultCtx, nightLightingId: 'led_spotlight', poseId: 'side_lying_right', lampSideId: 'left' })
-    const left = compilePrompt({ ...defaultCtx, nightLightingId: 'led_spotlight', poseId: 'side_lying_left', lampSideId: 'left' })
+    const right = compilePrompt({ ...defaultCtx, nightLightingId:'led_spotlight' as const, poseId: 'side_lying_right' })
+    const left = compilePrompt({ ...defaultCtx, nightLightingId:'led_spotlight' as const, poseId: 'side_lying_left' })
     expect(right.validation.isValid).toBe(true)
     expect(right.result.promptText).toContain('right cheek and shoulder')
     expect(left.result.promptText).toContain('left cheek and shoulder')
@@ -200,7 +200,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(compilePrompt({ ...defaultCtx, poseId: 'floating' }).validation.isValid).toBe(false)
   })
   it('Phone-only pose cannot imply ceiling light', () => {
-    const result = compilePrompt({ ...defaultCtx, poseId: 'supine', nightLightingId: 'phone_screen' })
+    const result = compilePrompt({ ...defaultCtx, poseId: 'supine', nightLightingId:'phone_screen' as const })
     expect(result.validation.isValid).toBe(true)
     expect(result.result.promptText).toContain('The ONLY light source is the soft, diffused light from a smartphone screen')
     expect(result.result.sections.filter(s=>s.id==='light_pose_geometry')).toHaveLength(1)
@@ -213,7 +213,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
   })
   it('Rejects mirror flash shot without actual flash lighting', () => {
     expect(compilePrompt({...defaultCtx, bedroomShotId:'mirror_rear_flash'}).validation.isValid).toBe(false)
-    expect(compilePrompt({...defaultCtx, bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash'}).validation.isValid).toBe(true)
+    expect(compilePrompt({...defaultCtx, bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash' as const}).validation.isValid).toBe(true)
   })
   it('Timer shot never claims hand held camera in pose geometry', () => {
     const result=compilePrompt({...defaultCtx,bedroomShotId:'phone_on_floor'})
@@ -246,7 +246,7 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
 
   it('Selecting supine shot overrides old seated state throughout prompt geometry', () => {
     const {result,validation} = compilePrompt({...defaultCtx,poseId:'seated_bed',
-      bedroomShotId:'supine_high_phone',nightLightingId:'led_spotlight'})
+      bedroomShotId:'supine_high_phone',nightLightingId:'led_spotlight' as const})
     expect(validation.isValid).toBe(true)
     expect(result.promptText).toContain('Lying on the back')
     expect(result.promptText).not.toContain('Seated on the bed; upright')
@@ -348,13 +348,13 @@ describe('Bedroom Selfie Builder - Frozen Systems', () => {
     expect(compiled.result.promptText).not.toMatch(/Face oriented toward the held front camera|FRONT SELFIE CAPTURE:|Subject holds front-facing smartphone/)
   })
   it('Front selfie preserves its own camera-facing text', () => {
-    const compiled=compilePrompt({...defaultCtx,bedroomShotId:'edge_one_knee_raised',nightLightingId:'led_spotlight'})
+    const compiled=compilePrompt({...defaultCtx,bedroomShotId:'edge_one_knee_raised',nightLightingId:'led_spotlight' as const})
     expect(compiled.validation.isValid).toBe(true)
     expect(compiled.result.sections.find(s=>s.id==='light_pose_geometry')?.content).toContain('Face oriented toward the actual recording camera')
   })
   it('Final realism rejects any front-camera instructions leaked into a mirror prompt', async () => {
     const {validateFinalRealism}=await import('../compiler/final-realism')
-    const ctx={...defaultCtx,bedroomShotId:'mirror_wardrobe',nightLightingId:'led_spotlight'}
+    const ctx={...defaultCtx,bedroomShotId:'mirror_wardrobe',nightLightingId:'led_spotlight' as const}
     const compiled=compilePrompt(ctx)
     expect(compiled.validation.isValid).toBe(true)
     const sections=compiled.result.sections.map(s=>s.id==='light_pose_geometry'

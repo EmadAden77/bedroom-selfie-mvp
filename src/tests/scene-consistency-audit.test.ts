@@ -12,8 +12,8 @@ const base:CompilationContext={
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',
  stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
  surface:'apparent knit-like surface character',referenceImagePresent:true,
- roomReferencePresent:true,bedroomShotId:'mirror_wardrobe',nightLightingId:'led_spotlight',
- poseId:'standing',faceDirectionId:'toward_camera',lampSideId:'left'
+ roomReferencePresent:true,bedroomShotId:'mirror_wardrobe',nightLightingId:'led_spotlight' as const,
+ poseId:'standing',faceDirectionId:'toward_camera'
 }
 
 describe('Cross-engine scene invariants',()=>{
@@ -43,17 +43,17 @@ describe('Cross-engine scene invariants',()=>{
   expect(room).toContain('original dresser mirror')
  })
  it('never lets a capture mode borrow a light source facing away from the person',()=>{
-  expect(captureLightingIssues({...base,bedroomShotId:'bed_edge',nightLightingId:'camera_flash'})).toHaveLength(1)
-  expect(captureLightingIssues({...base,bedroomShotId:'ultrawide_rear',nightLightingId:'phone_screen'})).toHaveLength(1)
-  expect(captureLightingIssues({...base,bedroomShotId:'mirror_wardrobe',nightLightingId:'camera_flash'})).toEqual([])
-  expect(captureLightingIssues({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'led_spotlight'})).toHaveLength(1)
-  expect(captureLightingIssues({...base,bedroomShotId:'bed_edge',nightLightingId:'laptop_screen'})).toHaveLength(1)
+  expect(captureLightingIssues({...base,bedroomShotId:'bed_edge',nightLightingId:'camera_flash' as const})).toHaveLength(1)
+  expect(captureLightingIssues({...base,bedroomShotId:'ultrawide_rear',nightLightingId:'phone_screen' as const})).toHaveLength(1)
+  expect(captureLightingIssues({...base,bedroomShotId:'mirror_wardrobe',nightLightingId:'camera_flash' as const})).toEqual([])
+  expect(captureLightingIssues({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'led_spotlight' as const})).toHaveLength(1)
+  expect(captureLightingIssues({...base,bedroomShotId:'bed_edge',nightLightingId:'laptop_screen' as const})).toHaveLength(1)
  })
  it('does not silently change pose, shot or unrelated selections when user switches light',()=>{
-  const selected=reconcileCaptureSelection({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash'},{nightLightingId:'led_spotlight'})
+  const selected=reconcileCaptureSelection({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash' as const},{nightLightingId:'led_spotlight' as const})
   expect(selected.bedroomShotId).toBe('mirror_rear_flash')
   expect(selected.nightLightingId).toBe('led_spotlight')
-  const explicit=reconcileCaptureSelection({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash'},{bedroomShotId:'mirror_floor',nightLightingId:'led_spotlight'})
+  const explicit=reconcileCaptureSelection({...base,bedroomShotId:'mirror_rear_flash',nightLightingId:'camera_flash' as const},{bedroomShotId:'mirror_floor',nightLightingId:'led_spotlight' as const})
   expect(explicit.bedroomShotId).toBe('mirror_floor')
   expect(explicit.poseId).toBe('standing') // pose updates are the responsibility of the explicit shot selector
   const clothing=reconcileCaptureSelection(base,{color:'blue'})

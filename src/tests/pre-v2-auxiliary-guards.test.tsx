@@ -11,16 +11,14 @@ const ctx:CompilationContext={
  upperGarmentId:'reference_garment_preserved',lowerGarmentId:null,
  materialId:'lightweight_cotton_appearance_jersey',fitId:'regular',stateId:'observed_natural_state',
  color:'apparent dark charcoal-gray as observed',surface:'apparent knit-like surface character',
- referenceImagePresent:true,roomReferencePresent:true,bedroomShotId:'bed_edge',nightLightingId:'phone_screen',
- phoneOnlyIlluminationMode:'OFF'
-}
+ referenceImagePresent:true,roomReferencePresent:true,bedroomShotId:'bed_edge',nightLightingId:'phone_screen' as const}
 const scene='A direct close-range bedroom selfie illuminated only by the phone screen. The background remains dark and the recording camera is front facing.'
 describe('Freeform auxiliary AI prompt safety in strict phone-only mode',()=>{
  it('rejects Ghalyon output that explicitly turns on a room lamp',async()=>{
   const generated='A direct bedroom selfie with a single phone display. A warm bedside lamp illuminates the face and room. The background is bright.'
   vi.stubGlobal('fetch',vi.fn(async()=>json({status:'complete',questions:[],optimizedPrompt:generated,improvements:['تنظيم'],proTip:'اختبار'})))
   const onPromptReady=vi.fn()
-  render(<GhalyonPromptOptimizer sourcePrompt="" scenePrompt={scene} phoneOnlyMode="DARK_ROOM_FRONT_SCREEN_ONLY" onAdvisoryReady={onPromptReady}/>)
+  render(<GhalyonPromptOptimizer sourcePrompt="" scenePrompt={scene} selectedLighting="phone_screen" onAdvisoryReady={onPromptReady}/>)
   fireEvent.click(screen.getByRole('button',{name:'تحسين البرومبت'}))
   await waitFor(()=>expect(screen.getByRole('alert').textContent).toContain('إضاءة غير مصرّح بها'))
   expect(screen.queryByText(generated)).toBeNull()

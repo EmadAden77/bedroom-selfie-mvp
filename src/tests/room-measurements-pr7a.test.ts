@@ -64,9 +64,7 @@ describe('PR7a: sourced measurement inventory (no new geometry validation)',()=>
    stateId:'observed_natural_state',color:'apparent dark charcoal-gray as observed',
    surface:'apparent knit-like surface character',referenceImagePresent:true,
    roomReferencePresent:true,bedroomShotId:'mirror_rear_flash',
-   poseId:'standing',nightLightingId:'camera_flash',
-   phoneOnlyIlluminationMode:'OFF'
-  }
+   poseId:'standing',nightLightingId:'camera_flash' as const}
   const {result,validation}=compilePrompt(ctx)
   expect(validation.isValid).toBe(true)
   expect(result.errors).toEqual([])
