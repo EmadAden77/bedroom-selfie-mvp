@@ -112,6 +112,8 @@ describe('PR7b: explicit dimensions and strict tri-state room authority',()=>{
   expect(large.bedFitValid).toEqual({status:'unknown',reason:'implicit distances pending PR8'})
   expect(small.mirrorFitValid.status).toBe('unknown')
  })
+ // PR7b-1 Category 1: old HTTP 400 FINAL_ROOM_UNVERIFIED → HTTP 403 ROOM_UNVERIFIED
+ // without an acknowledgement; unknown remains unknown and source/byte checks remain.
  it('g: unknown still compiles protected content but cannot be promoted, even after room confirmation',async()=>{
   const {compiled,spec}=scene({roomSizePreset:'large_bedroom',roomSizeConfirmed:true})
   expect(compiled.result.promptText.length).toBeGreaterThan(100)
@@ -119,12 +121,12 @@ describe('PR7b: explicit dimensions and strict tri-state room authority',()=>{
   expect(spec.roomGeometry.mirrorFitValid.status).toBe('unknown')
   expect(roomGeometryIssues(spec.roomGeometry)).toHaveLength(2)
   expect(()=>assertAuthoritative(spec,{source:'local',prompt:compiled.result.promptText}))
-   .toThrow('FINAL_ROOM_UNVERIFIED')
+   .toThrow('ROOM_UNVERIFIED')
   const response=await auth.fetch(post(authorityEndpoint,{
    sceneSpecification:spec,candidate:{source:'local',prompt:compiled.result.promptText}
   }))
-  expect(response.status).toBe(400)
-  expect((await response.json() as {errorCode:string}).errorCode).toBe('FINAL_ROOM_UNVERIFIED')
+  expect(response.status).toBe(403)
+  expect((await response.json() as {errorCode:string}).errorCode).toBe('ROOM_UNVERIFIED')
  })
  it('h: RG-3 invalid is rejected by server before Gemini fetch is invoked',async()=>{
   const {spec}=scene({roomSizePreset:'custom',roomCustomWidthMeters:4,
@@ -145,19 +147,23 @@ describe('PR7b: explicit dimensions and strict tri-state room authority',()=>{
   expect(a.userConfirmed).toBe(false)
   expect(a.bedFitValid.status).toBe('unknown')
  })
+ // PR7b-1 Category 1: old HTTP 400 FINAL_ROOM_UNCONFIRMED → HTTP 403 ROOM_UNVERIFIED
+ // without confirmation; no ability to silently promote a provisional scene.
  it('l / positive A: unconfirmed default room compiles a local prompt but is never authoritative',async()=>{
   const {compiled,spec}=scene()
   expect(compiled.result.promptText).toContain('MIRROR')
   expect(spec.roomGeometry.presetId).toBe('medium_bedroom')
   expect(spec.roomGeometry.userConfirmed).toBe(false)
   expect(()=>assertAuthoritative(spec,{source:'local',prompt:compiled.result.promptText}))
-   .toThrow('FINAL_ROOM_UNCONFIRMED')
+   .toThrow('ROOM_UNVERIFIED')
   const response=await auth.fetch(post(authorityEndpoint,{
    sceneSpecification:spec,candidate:{source:'local',prompt:compiled.result.promptText}
   }))
-  expect(response.status).toBe(400)
-  expect((await response.json() as {errorCode:string}).errorCode).toBe('FINAL_ROOM_UNCONFIRMED')
+  expect(response.status).toBe(403)
+  expect((await response.json() as {errorCode:string}).errorCode).toBe('ROOM_UNVERIFIED')
  })
+ // PR7b-1 Category 1: old direct error FINAL_ROOM_UNCONFIRMED → ROOM_UNVERIFIED
+ // until explicit acknowledgement; Gemini still cannot edit protected section text.
  it('m / positive B: Gemini editorial verification can succeed, but unconfirmed geometry forbids final authority',async()=>{
   const {spec}=scene()
   const reply={sectionOrder:[...spec.mandatoryUnitIds],openingLineSelection:'canonical' as const}
@@ -176,7 +182,7 @@ describe('PR7b: explicit dimensions and strict tri-state room authority',()=>{
   expect(data.prompt).toContain(spec.derivedUnits.find(u=>u.id==='room_geometry')!.text)
   expect(upstream).toHaveBeenCalledTimes(1)
   expect(()=>assertAuthoritative(spec,{source:'gemini-editor',prompt:data.prompt,...reply}))
-   .toThrow('FINAL_ROOM_UNCONFIRMED')
+   .toThrow('ROOM_UNVERIFIED')
  })
  it('Gemini dimension tampering cannot pass the existing exact-byte final validator',()=>{
   const {spec}=scene()
