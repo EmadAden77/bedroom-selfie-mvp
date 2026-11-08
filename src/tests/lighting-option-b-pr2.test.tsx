@@ -60,8 +60,27 @@ describe('Four-source blackout contract replacing legacy Option B',()=>{
   expect(result.sections.filter(x=>x.id.startsWith('night_lighting_')))
     .toEqual([{id:'night_lighting_'+lighting,content:lightingSectionText(lighting)}])
   expect(result.sections.find(x=>x.id==='physical_reality')?.content).toBe(physicalRealityText(lighting))
-  expect(result.promptText).toContain('PITCH-BLACK BEDROOM:')
-  expect(result.promptText).toContain('NO ambient light, NO window light and NO daylight')
+  expect(result.promptText).toContain('The room is in absolute pitch blackness.')
+  expect(result.promptText).toContain('There is no ambient light, no window light, and no daylight.')
+ })
+ it('phone screen generates the exact blackout, blue cast and rectangular catchlight',()=>{
+  const {result}=getSpec({...base,nightLightingId:'phone_screen',bedroomShotId:'bed_edge'})
+  expect(result.promptText).toContain('absolute pitch blackness')
+  expect(result.promptText).toContain('cool blue color cast')
+  expect(result.promptText).toContain('rectangular catchlight')
+  expect(result.promptText).toContain('The ONLY light source is the soft, diffused light from a smartphone screen.')
+ })
+ it('rear flash produces strict skin texture and hard shadows',()=>{
+  const {result}=getSpec({...base,nightLightingId:'camera_flash',bedroomShotId:'mirror_rear_flash'})
+  expect(result.promptText).toContain('microscopic skin texture')
+  expect(result.promptText).toContain('hard-edged shadows')
+  expect(result.promptText).toContain('The ONLY light source is a harsh, direct camera flash.')
+ })
+ it.each(LIGHTING_PRESET_IDS)('%s has the exact base and one physical emitter',light=>{
+  const passage=lightingSectionText(light)
+  expect(passage).toContain('The room is in absolute pitch blackness.')
+  expect(passage).toContain('There is no ambient light, no window light, and no daylight.')
+  expect(passage.match(/The ONLY light source is /g)).toHaveLength(1)
  })
  it('does not silently override the selected light when shot changes',()=>{
   expect(deriveLightingDecision('led_spotlight')).toEqual({

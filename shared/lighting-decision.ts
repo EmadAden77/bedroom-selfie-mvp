@@ -6,8 +6,6 @@
 export const LIGHTING_PRESET_IDS = ['led_spotlight','camera_flash','phone_screen','laptop_screen'] as const
 export type LightingOption = 'led_spotlight' | 'camera_flash' | 'phone_screen' | 'laptop_screen'
 export type LightingPresetId = LightingOption
-/** Deprecated ingress field; old exclusive switches are rejected, not silently applied. */
-export type ExclusiveLightingMode = 'OFF'|'DARK_ROOM_REAR_FLASH_ONLY'|'DARK_ROOM_FRONT_SCREEN_ONLY'
 export type LightingDecision = {
  activeLightSource: LightingOption
  savedLightingPreference: LightingOption
@@ -16,11 +14,12 @@ export type LightingDecision = {
 export const DEFAULT_LIGHTING_PREFERENCE: LightingOption = 'phone_screen'
 
 /** Immutable, physically grounded descriptions used identically by compiler and API gate. */
+/** The four exact, user-authoritative physics prompts. No additional emitters. */
 export const LIGHTING_FRAGMENTS:Record<LightingOption,string>={
- led_spotlight: 'PITCH-BLACK BEDROOM: Absolute darkness before illumination. The ONLY active light is one real white ceiling LED spotlight at its existing, physically supported ceiling position. Its finite downward beam creates a localized pool, realistic hard-to-soft shadow transitions under eyebrows, nose, chin, hands and furniture, falloff toward unlit corners, occlusion and contact shadows at actual support points. White reflected bounce from existing walls and bedding is secondary reflected energy from this same LED, never an additional emitter. The handset screen, rear flash, laptop display, every other fixture, all windows and the hallway emit no light. Capture sensor exposure, white balance, clipping and noise follow the real spot brightness; no studio fill, window glow, daylight, general ambient illumination.',
- camera_flash: 'PITCH-BLACK BEDROOM: Absolute darkness except for the brief rear-camera LED flash during exposure; it is the ONLY active light. The flash originates beside the actual rear camera lens on the physically held recording phone. For a wardrobe mirror selfie, light hits the real glass and follows equal-angle specular reflections and plausible diffuse bounce to illuminated surfaces; the reflection hotspot appears only where the geometry permits. For a direct rear-camera shot, light travels outward from the phone to visible surfaces. The LED-to-surface distance, lens/hand occlusion, local highlight clipping, cast shadows and sensor exposure govern visibility; distant corners remain black. Phone screen, laptop, ceiling fixtures, room lamps, windows and hallway are all unlit, with no ambient light, daylight, studio fill, fabricated flare.',
- phone_screen: 'PITCH-BLACK BEDROOM: Absolute darkness except for the recording phone display, the ONLY active light. The real display faces the subject within physically feasible reach; its broad weak emission softly illuminates only surfaces it faces, strongest near the eyes, nose and cheeks, decaying quickly toward the neck and upper chest. Arms, bedding, clothing and the background darken with actual distance, screen angle and occlusion. The front camera lens is not a light. No rear LED, laptop glow, ceiling fixture, bedside lamp, window light, daylight, ambient illumination. Automatic exposure can increase noise and reveal limited shadow detail but cannot create photons, brighten distant walls, selectively beautify the face.',
- laptop_screen: 'PITCH-BLACK BEDROOM: Absolute darkness except for ONE real open laptop display, the ONLY active light. The hinged laptop base rests securely on the chosen physical support, with its screen normal directed toward the subject. Its weak broad light reaches screen-facing hands, face and nearby clothing/bedding with strong distance falloff, natural contact shadows and realistic occlusion; remote walls and corners remain unlit. The recording phone display stays dark and does not act as a second emitter. No rear flash, ceiling fixture, bedside lamp, window light, daylight, ambient illumination. The real phone sensor records believable underexposure, high-ISO grain and imperfect automatic white balance without false bright background detail.'
+ led_spotlight: "The room is in absolute pitch blackness. There is no ambient light, no window light, and no daylight. The ONLY light source is a single white LED ceiling spotlight. It casts hard-edged shadows directly downward. The light temperature is neutral white (5600K). Strong specular highlights are visible on the forehead and nose. The light falls off rapidly due to the inverse-square law, leaving the rest of the room in absolute darkness.",
+ camera_flash: "The room is in absolute pitch blackness. There is no ambient light, no window light, and no daylight. The ONLY light source is a harsh, direct camera flash. This creates extremely hard-edged, high-contrast shadows directly behind the subject on the wall. The intense flash reveals microscopic skin texture, visible pores, and a glossy specular highlight on the T-zone. A tiny, sharp catchlight is visible in the eyes. The background falls into complete darkness instantly due to rapid light falloff.",
+ phone_screen: "The room is in absolute pitch blackness. There is no ambient light, no window light, and no daylight. The ONLY light source is the soft, diffused light from a smartphone screen. This creates a cool blue color cast on the subject's face. The light source is rectangular, producing a small rectangular catchlight in the eyes. Shadows are extremely soft. The light intensity drops off quickly, leaving the background in pitch blackness.",
+ laptop_screen: "The room is in absolute pitch blackness. There is no ambient light, no window light, and no daylight. The ONLY light source is a glowing laptop screen. This creates a slightly larger, softer light source than a phone. It casts gentle, soft-edged shadows (butterfly shadow) under the nose and jawline. The color cast depends on the screen content. The rest of the room is completely unlit."
 }
 export const LIGHTING_EMITTER:Record<LightingOption,{id:string;origin:string;direction:string}>={
  led_spotlight:{id:'ceiling',origin:'one existing white ceiling LED spotlight',direction:'downward finite spotlight beam'},
@@ -36,7 +35,7 @@ export function normalizeSavedLightingPreference(v:unknown):LightingOption{
  if(!isLightingPresetId(normalized))throw Error('UNKNOWN_LIGHTING_PREFERENCE')
  return normalized
 }
-export function deriveLightingDecision(saved:unknown,_mode:ExclusiveLightingMode='OFF'):LightingDecision{
+export function deriveLightingDecision(saved:unknown):LightingDecision{
  const selected=normalizeSavedLightingPreference(saved)
  return {activeLightSource:selected,savedLightingPreference:selected,savedLightingPreferenceActive:true}
 }

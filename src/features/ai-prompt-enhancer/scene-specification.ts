@@ -77,7 +77,7 @@ export function buildSceneSpecification(ctx:CompilationContext,result:Compilatio
  // Invalid saved IDs already block compilation. Keep the UI stable while reporting
  // those errors; only validated scenes can carry an authoritative lighting block.
  const savedForInvalidScene=ctx.nightLightingId&&!isLightingPresetId(ctx.nightLightingId)?undefined:ctx.nightLightingId
- const lighting=deriveLightingDecision(savedForInvalidScene,ctx.phoneOnlyIlluminationMode||'OFF')
+ const lighting=deriveLightingDecision(savedForInvalidScene)
  const shot=bedroomShots.find(item=>item.id===ctx.bedroomShotId)
  const capture:SceneCapture={
   mode:shot?.mode||'front',shotId:shot?.id||'',
